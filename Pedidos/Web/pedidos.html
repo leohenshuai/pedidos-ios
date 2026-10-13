@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>订货单管理器</title>
+<style>
+:root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif;background:#fbf4ea;color:#3a2e2a;max-width:760px;margin:0 auto;padding-bottom:calc(110px + var(--sab));min-height:100vh}
+button,select{font-family:inherit;cursor:pointer}
+button:disabled{opacity:.35}
+.top{position:sticky;top:0;z-index:5;background:#3a2e2a;color:#fbf4ea;padding:calc(10px + var(--sat)) 12px 10px}
+.r1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.top h1{font-size:17px;letter-spacing:1px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top b{color:#f0c987;font-size:15px;white-space:nowrap}
+.back{border:0;background:#ffffff26;color:#fff;border-radius:10px;padding:6px 12px;font-size:15px;flex:none}
+.sq,#q{width:100%;margin-top:8px;padding:10px 12px;border:0;border-radius:12px;font-size:16px;background:#fff;color:#3a2e2a;font-family:inherit}
+.qc{display:flex;gap:6px;overflow-x:auto;padding-top:8px;-webkit-overflow-scrolling:touch}
+.qc:empty{display:none}
+.qc button{flex:none;border:0;border-radius:16px;padding:6px 12px;font-size:13px;background:#ffffff26;color:#fff;white-space:nowrap}
+.qc button.on{background:var(--c,#f0c987);color:#fff;font-weight:700;box-shadow:0 0 0 2px #fff6}
+.qc button.all.on{background:#f0c987;color:#3a2e2a}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px}
+.oc{background:#fff;border-radius:14px;border-top:7px solid var(--c);padding:12px;box-shadow:0 2px 10px #0001;display:flex;flex-direction:column;gap:4px;min-height:140px;cursor:pointer}
+.oct{font-size:18px;font-weight:700;line-height:1.2;word-break:break-word}
+.ocm{font-size:12px;color:#888;min-height:15px}
+.ocs{font-size:13px;color:#555;margin-top:auto}.ocs b{font-size:22px;color:var(--c)}
+.oca{display:flex;gap:5px;margin-top:6px}
+.oca button{flex:1;border:0;border-radius:8px;background:#f1eee9;padding:7px 0;font-size:13px;color:#3a2e2a}
+.oca button.arm{background:#d9534f!important;color:#fff!important}
+.newo{border:2px dashed #b9a88f;border-radius:14px;background:none;color:#8a7a68;font-size:16px;min-height:140px}
+.empty{margin:30px 20px;text-align:center;color:#999;line-height:1.7;grid-column:1/3}
+.hl{margin:12px}.hs{font-size:13px;color:#888;margin:4px 4px 8px}
+.hr{display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:10px 12px;margin-bottom:8px;border-left:6px solid var(--c);box-shadow:0 1px 6px #0001;cursor:pointer}
+.hr div{flex:1;min-width:0}.hr b{font-size:16px}.hr small{display:block;font-size:12px;color:#999;margin-top:2px}
+.pill{background:var(--c);color:#fff;border-radius:16px;padding:2px 12px;font-weight:700;font-size:16px}
+.foot{margin:6px 14px;font-size:12px;color:#999;line-height:1.7}
+.foot .bk{display:flex;gap:8px;margin-bottom:8px}
+.foot button,.foot label{flex:1;text-align:center;border:1px solid #ddd;background:#fff;border-radius:10px;padding:9px 4px;font-size:13px;color:#3a2e2a}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 12px 0}
+.meta label{font-size:11px;color:#999;display:block;margin:0 0 2px 4px}
+.meta input{width:100%;padding:9px 10px;border:1px solid #e3d8c8;border-radius:10px;font-size:14px;background:#fff;font-family:inherit}
+.meta2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 12px 0}
+.seg{grid-column:1/3;display:flex;background:#fff;border:1px solid #e3d8c8;border-radius:10px;overflow:hidden}
+.seg button{flex:1;border:0;background:none;padding:8px 0;font-size:13px;color:#7a6a60}
+.seg button.on{background:var(--c);color:#fff;font-weight:700}
+.meta2 select{width:100%;padding:9px 8px;border:1px solid #e3d8c8;border-radius:10px;font-size:14px;background:#fff;color:#3a2e2a}
+.ptog{display:flex;gap:6px}
+.ptog button{flex:1;border:1px solid #e3d8c8;background:#fff;border-radius:10px;font-size:14px;padding:8px;color:#7a6a60}
+.ptog button.on{background:#3a2e2a;color:#fff;border-color:#3a2e2a}
+.ptog input{width:46px;border:1px solid #e3d8c8;border-radius:10px;text-align:center;font-size:14px;font-family:inherit}
+.st{display:inline-block;border-radius:10px;padding:3px 9px;font-size:12px;color:#fff}
+section{margin:12px;background:#fff;border-radius:16px;overflow:hidden;border-top:8px solid var(--c);box-shadow:0 2px 10px #0001}
+.sh{display:flex;align-items:center;gap:6px;padding:8px 10px 0}
+.sh input.cn{font-size:19px;font-weight:700;color:var(--c);border:0;background:none;flex:1;letter-spacing:1px;min-width:0;font-family:inherit}
+.sh .cnt{font-size:12px;color:#888;white-space:nowrap}
+.dot{width:24px;height:24px;border-radius:50%;border:0;background:var(--c);flex:none}
+.x{border:0;background:#f1eee9;border-radius:8px;color:#a33;font-size:13px;padding:6px 8px;flex:none}
+.x.arm{background:#d9534f;color:#fff}
+input.cs{display:block;width:100%;font-size:13px;color:#999;border:0;background:none;padding:2px 10px 0;font-family:inherit}
+.items{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 10px}
+.ic{background:#faf7f1;border:1px solid #eee;border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.ic.zero{opacity:.45}
+.ic.dup{border-color:#e9a23b;background:#fff8e8}
+.dupb{font-size:11px;color:#c07d10;margin-top:-2px}
+textarea.nm{width:100%;height:38px;resize:none;border:0;border-bottom:1px dashed #d8cfc0;background:none;font-size:15px;line-height:1.25;padding:0 0 2px;color:#3a2e2a;font-family:inherit;overflow:hidden;border-radius:0}
+textarea.nm:focus{outline:none;border-bottom:2px solid var(--c);background:#fffbe9}
+.ctr{display:flex;align-items:center;gap:4px}
+.ctr button{width:32px;height:32px;border:0;border-radius:9px;background:var(--c);color:#fff;font-size:19px;flex:none;padding:0}
+.ctr button.m{background:#e9e5de;color:#3a2e2a}
+.ctr button.d{background:#f1eee9;color:#a33;font-size:15px;width:28px}
+.ctr input{flex:1;min-width:0;width:100%;height:32px;text-align:center;font-size:17px;font-weight:700;border:1px solid #e5e0d7;border-radius:8px;background:#fff;font-family:inherit}
+.pr{display:flex;align-items:center;gap:4px;font-size:13px;color:#888}
+.pr input{flex:1;min-width:0;height:28px;border:1px solid #e5e0d7;border-radius:8px;text-align:right;padding:0 6px;font-size:14px;background:#fff;font-family:inherit}
+.pr em{font-style:normal;color:#3a2e2a;font-weight:600;min-width:44px;text-align:right;font-size:13px}
+.hint{grid-column:1/3;text-align:center;color:#bbb;font-size:13px;padding:8px}
+.add{display:flex;gap:6px;padding:10px;background:#faf6ef;border-top:1px solid #eee}
+.add input{min-width:0;padding:8px 10px;border:1px solid #e3d8c8;border-radius:10px;font-size:15px;background:#fff;font-family:inherit}
+.add input.an{flex:1}.add input.aq{width:54px;text-align:center}
+.add button{border:0;border-radius:10px;background:var(--c);color:#fff;padding:0 14px;font-size:14px}
+.sug{display:flex;gap:6px;flex-wrap:wrap;padding:0 10px 10px;background:#faf6ef}
+.sug:empty{display:none}
+.sug button{border:1px solid #e3d8c8;border-radius:14px;background:#fff;padding:5px 10px;font-size:13px;color:#3a2e2a}
+.card{margin:12px;background:#fff;border-radius:14px;padding:12px;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chips button{border:0;border-radius:16px;padding:7px 12px;color:#fff;font-size:14px}
+.row2{display:flex;gap:6px;margin:12px}
+.row2 input{flex:1;min-width:0;padding:10px;border:1px dashed #b9a88f;border-radius:12px;font-size:15px;background:#fff;font-family:inherit}
+.row2 button{border:0;border-radius:12px;background:#3a2e2a;color:#fff;padding:0 14px;font-size:14px}
+.row2 button.g{background:#fff;color:#3a2e2a;border:1px solid #ddd;flex:1;padding:10px}
+.row2 button.arm{background:#d9534f;color:#fff;border-color:#d9534f}
+.bar{position:fixed;left:0;right:0;bottom:0;max-width:760px;margin:0 auto;display:flex;gap:6px;padding:10px 12px calc(18px + var(--sab));background:#fbf4eaee;backdrop-filter:blur(6px);z-index:6}
+.bar button{flex:1;padding:13px 2px;border:0;border-radius:12px;font-size:14px;background:#3a2e2a;color:#fff;white-space:nowrap}
+.bar button.g{background:#fff;color:#3a2e2a;border:1px solid #ddd}
+.bar button.sm{flex:none;width:40px;padding:13px 0;font-size:17px}
+#pv{position:fixed;inset:0;z-index:20;background:#000d;display:none;overflow:auto;padding:calc(12px + var(--sat)) 12px calc(12px + var(--sab))}
+#pv .in{max-width:760px;margin:0 auto}
+#pv img{width:100%;border-radius:10px;display:block}
+.pbw{position:sticky;top:0;z-index:2;background:#000c;margin:calc(-12px - var(--sat)) -12px 8px;padding:calc(12px + var(--sat)) 12px 12px}
+.pb{display:flex;gap:8px;margin-bottom:8px}
+.pb button,.pb a{flex:1;text-align:center;padding:11px 4px;border:0;border-radius:12px;font-size:15px;background:#fff;color:#3a2e2a;text-decoration:none}
+.po{display:flex;align-items:center;gap:8px;color:#fff;font-size:13px}
+.po .th{width:30px;height:30px;border-radius:50%;border:3px solid transparent;padding:0}
+.po .th.on{border-color:#fff;box-shadow:0 0 0 2px #0008}
+.po .lg{margin-left:auto;display:flex;border-radius:10px;overflow:hidden}
+.po .lg button{border:0;background:#ffffff33;color:#fff;padding:7px 14px;font-size:13px}
+.po .lg button.on{background:#fff;color:#3a2e2a;font-weight:700}
+#pv p{color:#fff9;font-size:12px;text-align:center;margin:8px 0 30px}
+#md{position:fixed;inset:0;z-index:40;background:#0007;display:none;align-items:flex-end;justify-content:center}
+#md.c{align-items:center;padding:20px}
+#mb{background:#fff;width:100%;max-width:760px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:14px 14px calc(14px + var(--sab))}
+#md.c #mb{border-radius:18px;max-width:420px}
+.mh{font-size:18px;font-weight:700;margin-bottom:6px}
+.mt{font-size:13px;color:#888;line-height:1.5;margin-bottom:8px}
+#mb textarea{width:100%;min-height:200px;border:1px solid #e3d8c8;border-radius:12px;padding:10px;font-size:15px;font-family:inherit;line-height:1.4;background:#fffdf8;color:#3a2e2a}
+.mb2{display:flex;gap:8px;margin-top:10px}
+.mb2 button,.ab button{flex:1;border:0;border-radius:12px;padding:12px 6px;font-size:15px;background:#3a2e2a;color:#fff}
+.mb2 button.g,.ab button.g{background:#f1eee9;color:#3a2e2a}
+.am{font-size:16px;line-height:1.5;margin-bottom:12px}
+.ab{display:flex;flex-direction:column;gap:8px}
+.ig{border:1px solid #eee;border-radius:12px;margin:8px 0;overflow:hidden}
+.igh{display:flex;gap:6px;align-items:center;background:#faf6ef;padding:8px;font-size:14px}
+.igh span{font-weight:700;max-width:34%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.igh select,.igh input{min-width:0;flex:1;padding:6px;border:1px solid #e3d8c8;border-radius:8px;font-size:14px;background:#fff;font-family:inherit}
+.ir{display:flex;gap:6px;align-items:center;padding:6px 8px;border-top:1px solid #f1eee9}
+.ir.dup{background:#fff8e8}
+.ir input.irn{flex:1;min-width:0;border:0;border-bottom:1px dashed #d8cfc0;padding:6px 2px;font-size:15px;background:none;font-family:inherit}
+.ir input.irq{width:52px;text-align:center;border:1px solid #e5e0d7;border-radius:8px;padding:6px 0;font-size:15px;font-family:inherit}
+.ir button{border:0;background:#f1eee9;color:#a33;border-radius:8px;width:30px;height:30px}
+.tag{font-size:11px;color:#c07d10;white-space:nowrap}
+.opt{display:flex;gap:8px;align-items:center;font-size:14px;margin:8px 0;flex-wrap:wrap}
+.opt select{padding:7px;border:1px solid #e3d8c8;border-radius:8px;font-size:14px;background:#fff}
+.vr{display:flex;align-items:center;justify-content:space-between;padding:8px 2px;border-bottom:1px solid #f1eee9;font-size:15px}
+.vr small{color:#999;margin-left:8px}
+.vr button{border:0;background:#f1eee9;color:#a33;border-radius:8px;padding:5px 10px}
+.xp{max-height:52vh;overflow:auto;border:1px solid #e3d8c8;border-radius:10px;margin-top:6px}
+.xp table{border-collapse:collapse;width:100%;font-size:14px}
+.xp th{position:sticky;top:0;background:#3a2e2a;color:#fff;padding:8px 6px;font-weight:600;z-index:1}
+.xp td{border:1px solid #d9d2c5;padding:6px 8px}
+.xp td.q,.xp th.q,.xp td.n,.xp th.n{text-align:center}.xp td.r{text-align:right}
+.xp tr.tot td{background:#f0c987;font-weight:700;position:sticky;bottom:0}
+.xp td.c{font-weight:700;text-align:center;vertical-align:middle;word-break:break-word}
+.xm{font-size:12px;color:#888;margin-top:6px;word-break:break-all}
+#toast{position:fixed;left:50%;bottom:calc(96px + var(--sab));transform:translateX(-50%);background:#3a2e2af0;color:#fff;border-radius:22px;padding:10px 16px;font-size:14px;z-index:50;display:none;max-width:92vw;text-align:center}
+#toast u{color:#f0c987;margin-left:12px;cursor:pointer}
+</style></head><body>
+
+<div id="vHome">
+ <div class="top"><div class="r1"><h1>📦 订货单管理器</h1><b id="hCnt"></b></div>
+  <input id="hq" class="sq" type="search" placeholder="🔍 搜索所有订单里的品项（如 Lola）" oninput="HQ=this.value;renderHome()">
+  <div id="hf" class="qc"></div></div>
+ <div id="olist"></div>
+ <div class="foot">
+  <div class="bk"><button onclick="exportAll()">导出全部备份</button><label>导入备份<input type="file" accept=".json,application/json" style="display:none" onchange="importAll(this)"></label><button onclick="vocabModal()">品名库</button></div>
+  <div id="stat"></div>
+ </div>
+</div>
+
+<div id="vEdit" style="display:none">
+ <div class="top">
+  <div class="r1"><button class="back" onclick="goHome()">‹ 列表</button><h1 id="eTitle"></h1><b id="eTotal"></b></div>
+  <input id="q" type="search" placeholder="🔍 搜索品名（忽略重音/大小写）" oninput="Q=this.value;renderEdit()">
+  <div id="qc" class="qc"></div>
+ </div>
+ <div class="meta">
+  <div><label>供应商 / 标题</label><input id="eSup" oninput="setf('sup',this.value)" placeholder="例如 SAPHIRUS"></div>
+  <div><label>日期</label><input id="eDt" oninput="setf('dt',this.value)" placeholder="dd/mm/aaaa"></div>
+ </div>
+ <div class="meta2">
+  <div class="seg" id="eSt"></div>
+  <select id="eSort" onchange="setf('sort',this.value);renderEdit()"><option value="manual">排序：手动</option><option value="az">排序：A → Z</option><option value="qty">排序：数量多→少</option></select>
+  <div class="ptog"><button id="ePr" onclick="togglePrice()">💲 单价</button><input id="eCur" maxlength="4" oninput="setf('cur',this.value||'$');renderEdit()" title="货币符号"></div>
+ </div>
+ <div id="list"></div>
+ <div class="row2"><input id="ncn" placeholder="+ 新增种类（如 JABÓN LÍQUIDO）" autocapitalize="characters" oninput="liveCase(this,'upper')" onkeydown="if(event.key=='Enter')addCat()"><button onclick="addCat()">添加种类</button></div>
+ <div class="row2"><button class="g" onclick="arm(this,clearQty,'确认清零?')">全部数量清零</button></div>
+ <div class="bar">
+  <button class="g sm" onclick="goHome()" title="订单列表">‹</button>
+  <button class="g sm" id="bUndo" onclick="undo()" title="撤销">↶</button>
+  <button class="g sm" id="bRedo" onclick="redo()" title="重做">↷</button>
+  <button class="g" onclick="importModal()">批量导入</button>
+  <button class="g" onclick="sendSheet()">发送表格</button>
+  <button onclick="poster()">生成海报</button>
+ </div>
+</div>
+
+<div id="md" onclick="if(event.target==this)mdBack()"><div id="mb"></div></div>
+<div id="toast"></div>
+<div id="pv"><div class="in">
+ <div class="pbw">
+  <div class="pb"><button onclick="$('pv').style.display='none'">← 返回</button><a id="dl" download="pedido.png">保存图片</a><button onclick="exportPdf()">导出 PDF</button></div>
+  <div class="po"><span>主题</span><span id="thm" style="display:flex;gap:8px"></span><div class="lg"><button id="lgEs" onclick="setLang('es')">Español</button><button id="lgZh" onclick="setLang('zh')">中文</button></div></div>
+ </div>
+ <img id="pimg"><p>也可以长按图片 → 存储到照片 / 分享</p>
+</div></div>
+<script>
+const COLORS=["#e8788a","#4aa3a0","#e9a23b","#7a6bc4","#5b9bd5","#8bb34a","#c9645b","#b0824f"];
+const KEY="pedidos_v2",KEY1="pedidos_v1",OLD="saphirus_pedido_editor_v1";
+const STAT={draft:["草稿","#999"],sent:["已发送","#e9a23b"],recv:["已收货","#3aa655"]};
+const THEMES=[["经典","#fbf4ea","#3a2e2a","#f0c987"],["海蓝","#eef3f8","#1d3557","#ffd166"],["墨绿","#eef5ee","#1f4d3a","#f0d27a"],["酒红","#f8eeee","#6d2230","#f3c98b"],["黑白","#f4f4f4","#111111","#dddddd"]];
+const LANG={
+ es:{p1:s=>s?"PEDIDO A":"PEDIDO",big:"ORDEN",p2:s=>"ORDEN DE COMPRA",date:"Fecha",total:n=>"TOTAL GENERAL: "+n+" unidades",head:s=>s?"PEDIDO A "+s:"PEDIDO",amount:"Importe estimado"},
+ zh:{p1:s=>s?"订货给":"",big:"订货单",p2:s=>s?"订 货 单":"",date:"日期",total:n=>"合计："+n+" 件",head:s=>s?"订货单 · "+s:"订货单",amount:"预计金额"}};
+const NATIVE=!!window.__NATIVE__;
+let S=null,Q="",QC=-1,PQ="",HQ="",HF="all",HR=[],draft={},SG={},SERVER=false,REV=0,tt=null,MI=null,MT=null,DCB=null,PCV=null,pushT=null,pending=false,pushing=false,dirty=false;
+const $=id=>document.getElementById(id);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const norm=s=>String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const today=()=>{const d=new Date(),p=n=>String(n).padStart(2,"0");return p(d.getDate())+"/"+p(d.getMonth()+1)+"/"+d.getFullYear()};
+const fmt=n=>(Math.round(n*100)/100).toLocaleString(undefined,{maximumFractionDigits:2});
+const sumO=o=>o.cats.reduce((a,c)=>a+c.items.reduce((s,i)=>s+i.q,0),0);
+const amtC=c=>c.items.reduce((s,i)=>s+(i.p?i.q*i.p:0),0);
+const amtO=o=>o.cats.reduce((s,c)=>s+amtC(c),0);
+const cnt=o=>o.cats.reduce((a,c)=>a+c.items.length,0);
+const isTyping=()=>{const a=document.activeElement;return a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)};
+
+/* ---------- 名称处理 / 品名库 ---------- */
+function tcName(s){s=String(s).replace(/\s+/g," ").trim();if(!s)return s;
+ if(s===s.toUpperCase()&&s!==s.toLowerCase()){const small=new Set(["y","de","del","la","el","en","con","e","o","a","las","los"]);return s.toLowerCase().split(" ").map((w,i)=>(i&&small.has(w))?w:w.charAt(0).toUpperCase()+w.slice(1)).join(" ")}
+ return s.charAt(0).toUpperCase()+s.slice(1)}
+function vocabFind(n){const k=norm(n);return S.vocab.find(v=>norm(v)==k)||null}
+function fixName(s){s=tcName(s);return s?(vocabFind(s)||s):s}
+function addVocab(n){const k=norm(n);if(!k)return;if(!vocabFind(n))S.vocab.push(n)}
+function lev(a,b){const m=a.length,n=b.length;if(Math.abs(m-n)>2)return 9;let p=[...Array(n+1).keys()];for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]==b[j-1]?0:1));p=c}return p[n]}
+function fuzzy(n,lim){const k=norm(n);if(k.length<4)return[];const r=[];S.vocab.forEach(v=>{const kv=norm(v);if(kv==k)return;const d=lev(k,kv);if(d<=(k.length<=5?1:2))r.push([d,v])});r.sort((a,b)=>a[0]-b[0]);return r.slice(0,lim||3).map(x=>x[1])}
+
+/* ---------- 示例 / 空白 ---------- */
+function sample(){
+ const mk=(name,sub,ci,arr)=>({name,sub,color:COLORS[ci],items:arr.map(([n,q])=>({n,q,p:null}))});
+ return {id:uid(),sup:"SAPHIRUS",dt:today(),upd:Date.now(),status:"draft",cats:[
+ mk("AROMA","Aromatizante",0,[["Breeze",6],["Velocity",6],["Mix Tropical",3],["Naranja y Pimienta",3],["Citrus",3],["Pitanga",3],["Mery",6],["Mango",3],["Uva",3],["Lola",6],["Nina",6]]),
+ mk("TEXTIL","Perfume para telas",1,[["Velocity",6],["Rocío",6],["Bamboo",3],["Papaya",6],["Limón Dulce y Vainilla",3],["Tropical",3],["Limón",3],["Capri Summer",6],["Bebé",3],["Coco",3],["Vainilla",3],["Flores Blancas",6],["Rosas",3],["Cony",6],["Golden Lady",3]]),
+ mk("DIFUSORES","Difusores de varillas",2,[["Bubblegum",6],["Lola",3],["Magnolia y Fresias",4],["Limón",6],["Papaya",3],["Manzana Canela",3],["Coco",3],["Bamboo",3],["Rocío",4]])]};
+}
+function blank(){return {id:uid(),sup:"",dt:today(),upd:Date.now(),status:"draft",cats:[{name:"GENERAL",sub:"",color:COLORS[0],items:[]}]}}
+
+/* ---------- 存取 ---------- */
+function fix(s){
+ if(!s||!Array.isArray(s.orders))return null;
+ s.vocab=Array.isArray(s.vocab)?s.vocab.filter(v=>typeof v=="string"&&v.trim()):null;
+ s.del=(s.del&&typeof s.del=="object")?s.del:{};
+ s.orders.forEach(o=>{o.id=o.id||uid();o.upd=o.upd||0;o.sup=o.sup||"";o.dt=o.dt||"";
+  o.status=STAT[o.status]?o.status:"draft";o.sort=["manual","az","qty"].includes(o.sort)?o.sort:"manual";
+  o.price=!!o.price;o.cur=o.cur||"$";o.lang=o.lang=="zh"?"zh":"es";o.theme=(o.theme>=0&&o.theme<THEMES.length)?(o.theme|0):0;
+  o.cats=(o.cats||[]).map((c,i)=>({name:c.name||"",sub:c.sub||"",color:c.color||COLORS[i%8],items:(c.items||[]).map(it=>Array.isArray(it)?{n:String(it[0]),q:parseInt(it[1])||0,p:null}:{n:String(it.n||""),q:Math.max(0,parseInt(it.q)||0),p:(it.p==null||it.p==="")?null:Math.max(0,parseFloat(it.p)||0)})}))});
+ if(!s.vocab){const m=new Map();s.orders.forEach(o=>o.cats.forEach(c=>c.items.forEach(i=>{const k=norm(i.n);if(k&&!m.has(k))m.set(k,i.n)})));s.vocab=[...m.values()]}
+ return s}
+function loadLocal(){
+ for(const k of [KEY,KEY1]){try{const s=fix(JSON.parse(localStorage.getItem(k)));if(s)return s}catch(e){}}
+ try{const old=JSON.parse(localStorage.getItem(OLD));if(old&&old.cats){return fix({orders:[{id:uid(),sup:old.sup||"",dt:old.dt||today(),upd:Date.now(),cats:old.cats}]})}}catch(e){}
+ return fix({orders:[sample()]});
+}
+function lsSave(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast("⚠ 浏览器存储失败，请导出备份")}}
+function save(){lsSave();if(SERVER){pending=true;clearTimeout(pushT);pushT=setTimeout(push,300)}}
+function merge(j){
+ S.del=Object.assign({},j.del,S.del);
+ const map=new Map();[...j.orders,...S.orders].forEach(o=>{const e=map.get(o.id);if(!e||(o.upd||0)>=(e.upd||0))map.set(o.id,o)});
+ S.orders=[...map.values()].filter(o=>!(S.del[o.id]&&S.del[o.id]>=(o.upd||0)));
+ const have=new Set(S.vocab.map(norm));(j.vocab||[]).forEach(v=>{if(!have.has(norm(v))){S.vocab.push(v);have.add(norm(v))}});
+}
+function push(){
+ pending=false;if(pushing){dirty=true;return}pushing=true;
+ fetch("api/data",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({},S,{rev:REV}))})
+ .then(async r=>{
+  if(r.status==409){const j=fix(await r.json());merge(j);REV=j.rev||0;lsSave();pushing=false;rerender();push();return}
+  if(!r.ok)throw 0;const j=await r.json();REV=j.rev;pushing=false;if(dirty){dirty=false;push()}})
+ .catch(()=>{pushing=false;toast("⚠ 写入本地文件失败")});
+}
+async function poll(){
+ if(!SERVER||document.hidden||pushing||pending||MOPEN||isTyping())return;
+ try{const r=await fetch("api/data",{cache:"no-store"});if(!r.ok)return;const j=fix(await r.json());
+  if(j.fresh||(j.rev||0)===REV)return;
+  if(pending||pushing)return;merge(j);REV=j.rev||0;lsSave();rerender();toast("已同步另一台设备的修改")}catch(e){}
+}
+function rerender(){if(MOPEN||isTyping())return;route(true)}
+async function boot(){
+ S=loadLocal();route();
+ try{const r=await fetch("api/data",{cache:"no-store"});
+  if(r.ok){const j=fix(await r.json());SERVER=true;
+   if(j.fresh){REV=0;push()}else{REV=j.rev||0;S=j;lsSave()}
+   route();setInterval(poll,4000)}}catch(e){}
+}
+
+/* ---------- 路由 ---------- */
+const curId=()=>(location.hash.match(/^#o=(.+)$/)||[])[1];
+const cur=()=>S.orders.find(o=>o.id==curId());
+function route(keep){
+ const o=cur();
+ $("vHome").style.display=o?"none":"block";$("vEdit").style.display=o?"block":"none";
+ if(o){renderEdit()}else{renderHome();if(!keep)scrollTo(0,0)}
+}
+addEventListener("hashchange",()=>{Q=PQ;PQ="";QC=-1;$("q").value=Q;route()});
+function open_(id){location.hash="o="+id;scrollTo(0,0)}
+function goHome(){location.hash=""}
+
+/* ---------- 提示 / 弹窗 ---------- */
+let MOPEN=false;
+function toast(msg,undoFn){const t=$("toast");t.innerHTML=esc(msg)+(undoFn?"<u>撤销</u>":"");t.style.display="block";if(undoFn)t.querySelector("u").onclick=()=>{undoFn();t.style.display="none"};clearTimeout(tt);tt=setTimeout(()=>t.style.display="none",undoFn?5000:2200)}
+function arm(b,fn,label){if(b.classList.contains("arm")){fn();return}const t=b.textContent;b.textContent=label;b.classList.add("arm");setTimeout(()=>{b.textContent=t;b.classList.remove("arm")},2500)}
+function modal(html,center){$("mb").innerHTML=html;$("md").className=center?"c":"";$("md").style.display="flex";MOPEN=true}
+function closeModal(){$("md").style.display="none";MOPEN=false;MI=null;MT=null;DCB=null}
+function mdBack(){closeModal()}
+function ask(msg,buttons,cb){DCB=cb;modal(`<div class="am">${msg}</div><div class="ab">${buttons.map(([k,t,g])=>`<button class="${g?'g':''}" onclick="const f=DCB;closeModal();f&&f('${k}')">${t}</button>`).join("")}</div>`,true)}
+
+/* ---------- 撤销 / 重做（每个订单独立） ---------- */
+const HS={};
+const snap=o=>{const c=JSON.parse(JSON.stringify(o));delete c.upd;return JSON.stringify(c)};
+const hist=o=>HS[o.id]||(HS[o.id]={u:[],r:[],tag:"",t:0});
+function mut(fn,tag,noRender){
+ const o=cur();if(!o)return;const h=hist(o),before=snap(o);fn(o);
+ if(snap(o)==before)return;
+ const now=Date.now();
+ if(!(tag&&h.tag===tag&&now-h.t<1500)){h.u.push(before);if(h.u.length>100)h.u.shift()}
+ h.tag=tag||"";h.t=now;h.r=[];o.upd=now;save();
+ if(!noRender)renderEdit();else syncUndo();
+}
+function restore(o,s){const c=JSON.parse(s);Object.keys(o).forEach(k=>{if(k!="id")delete o[k]});Object.assign(o,c);o.upd=Date.now();save();renderEdit()}
+function undo(){const o=cur();if(!o)return;const h=hist(o);if(!h.u.length)return;h.r.push(snap(o));h.tag="";restore(o,h.u.pop())}
+function redo(){const o=cur();if(!o)return;const h=hist(o);if(!h.r.length)return;h.u.push(snap(o));h.tag="";restore(o,h.r.pop())}
+function syncUndo(){const o=cur();if(!o)return;const h=hist(o);$("bUndo").disabled=!h.u.length;$("bRedo").disabled=!h.r.length}
+addEventListener("keydown",e=>{if(!(e.ctrlKey||e.metaKey)||e.key.toLowerCase()!="z"||isTyping()||!cur())return;e.preventDefault();e.shiftKey?redo():undo()});
+
+/* ---------- 主页 ---------- */
+function renderHome(){
+ const os=[...S.orders].sort((a,b)=>b.upd-a.upd);
+ $("hCnt").textContent=os.length+" 个订单";
+ const cn={all:os.length};Object.keys(STAT).forEach(k=>cn[k]=os.filter(o=>o.status==k).length);
+ $("hf").innerHTML=[["all","全部"],...Object.entries(STAT).map(([k,v])=>[k,v[0]])].map(([k,t])=>`<button class="${HF==k?'on':''} ${k=='all'?'all':''}" style="--c:${k=='all'?'#f0c987':STAT[k][1]}" onclick="HF='${k}';renderHome()">${t} ${cn[k]}</button>`).join("");
+ $("stat").innerHTML=(SERVER?(NATIVE?"数据保存在：手机“文件”App → 我的 iPhone → 订货单 文件夹里的 pedidos_data.json":"数据保存在：启动器所在文件夹的 pedidos_data.json（同时缓存于浏览器）"):"数据保存在：当前浏览器（清除浏览器数据会丢失，建议定期导出备份）")+"<br>品名库："+S.vocab.length+" 个，输入时会自动提示";
+ const nq=norm(HQ);
+ if(nq){
+  HR=[];os.forEach(o=>o.cats.forEach(c=>c.items.forEach(it=>{if(norm(it.n).includes(nq))HR.push({o,c,it})})));
+  const orders=new Set(HR.map(x=>x.o.id)).size,tot=HR.reduce((a,x)=>a+x.it.q,0);
+  $("olist").innerHTML=`<div class="hl"><div class="hs">“${esc(HQ.trim())}”：${HR.length} 条，涉及 ${orders} 个订单，累计 ${tot} 件（点击进入订单）</div>`+
+   HR.slice(0,150).map((x,i)=>`<div class="hr" style="--c:${x.c.color}" onclick="openHit(${i})"><div><b>${esc(x.it.n)}</b><small>${esc(x.c.name)} · ${esc(x.o.sup||"未命名订单")} · ${esc(x.o.dt)} · ${STAT[x.o.status][0]}</small></div><span class="pill">${x.it.q}</span></div>`).join("")+
+   (HR.length?"":`<div class="empty">没有找到包含这个名字的品项</div>`)+`</div>`;
+  return;
+ }
+ const list=os.filter(o=>HF=="all"||o.status==HF);
+ $("olist").innerHTML=`<div class="g2">`+list.map(o=>{const c=(o.cats[0]||{}).color||COLORS[0],st=STAT[o.status];
+  return `<div class="oc" style="--c:${c}" onclick="open_('${o.id}')"><div class="oct">${esc(o.sup||"未命名订单")}</div><div class="ocm"><span class="st" style="background:${st[1]}" onclick="event.stopPropagation();cycleSt('${o.id}')">${st[0]}</span> ${esc(o.dt)}</div><div class="ocs"><b>${sumO(o)}</b> 件 · ${o.cats.length} 类 ${cnt(o)} 项${o.price&&amtO(o)?"<br>"+esc(o.cur)+fmt(amtO(o)):""}</div><div class="oca"><button onclick="event.stopPropagation();dup('${o.id}')">复制</button><button onclick="event.stopPropagation();arm(this,()=>delOrder('${o.id}'),'确认删除?')">删除</button></div></div>`}).join("")
+  +`<button class="newo" onclick="newOrder()">＋ 新建订单</button>`+(list.length?"":`<div class="empty">这个状态下没有订单</div>`)+`</div>`;
+}
+function openHit(i){const h=HR[i];if(!h)return;PQ=h.it.n;open_(h.o.id)}
+function cycleSt(id){const o=S.orders.find(x=>x.id==id);if(!o)return;const k=Object.keys(STAT);o.status=k[(k.indexOf(o.status)+1)%k.length];o.upd=Date.now();save();renderHome()}
+function newOrder(){const o=blank();S.orders.push(o);save();open_(o.id);setTimeout(()=>$("eSup").focus(),50)}
+function dup(id){const s=S.orders.find(o=>o.id==id);if(!s)return;const o=JSON.parse(JSON.stringify(s));o.id=uid();o.sup=(s.sup||"未命名订单")+" 副本";o.dt=today();o.status="draft";o.upd=Date.now();S.orders.push(o);save();renderHome();toast("已复制，数量保留，进入后可“全部数量清零”")}
+function delOrder(id){const i=S.orders.findIndex(o=>o.id==id);if(i<0)return;const o=S.orders[i];S.orders.splice(i,1);S.del[id]=Date.now();save();renderHome();
+ toast("已删除："+(o.sup||"未命名订单"),()=>{delete S.del[id];o.upd=Date.now();S.orders.splice(i,0,o);save();renderHome()})}
+function exportAll(){dlBlob(new Blob([JSON.stringify(S,null,1)],{type:"application/json"}),"pedidos_backup_"+today().replace(/\//g,"-")+".json")}
+function importAll(inp){const f=inp.files[0];if(!f)return;f.text().then(t=>{const j=fix(JSON.parse(t));if(!j||!j.orders.length)throw 0;const have=new Set(S.orders.map(o=>o.id));let n=0;j.orders.forEach(o=>{if(have.has(o.id))o.id=uid();S.orders.push(o);n++});(j.vocab||[]).forEach(addVocab);save();renderHome();toast("已导入 "+n+" 个订单")}).catch(()=>toast("⚠ 备份文件无法识别")).finally(()=>inp.value="")}
+function nativeSave(name,b64){try{window.webkit.messageHandlers.native.postMessage({type:"save",name:name,b64:b64})}catch(e){toast("⚠ 无法保存文件")}}
+function dlBlob(b,name){if(NATIVE){const r=new FileReader();r.onload=()=>nativeSave(name,String(r.result).split(",")[1]||"");r.readAsDataURL(b);return}const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove()}
+function vocabModal(){
+ modal(`<div class="mh">品名库（${S.vocab.length}）</div><div class="mt">所有订单里用过的品名会自动记下来，用于输入提示和拼写纠正。删掉某个名字只影响提示，不会改已有订单。</div><input class="sq" style="border:1px solid #e3d8c8;margin:0 0 8px" placeholder="搜索" oninput="vocabList(this.value)"><div id="vl"></div><div class="mb2"><button onclick="closeModal()">关闭</button></div>`);vocabList("")}
+function vocabList(q){const k=norm(q);const l=[...S.vocab].sort((a,b)=>norm(a).localeCompare(norm(b))).filter(v=>!k||norm(v).includes(k));
+ $("vl").innerHTML=l.map(v=>`<div class="vr"><span>${esc(v)}</span><button onclick="vocabDel(${S.vocab.indexOf(v)})">删除</button></div>`).join("")||`<div class="hint" style="padding:12px;text-align:center;color:#bbb">没有匹配</div>`}
+function vocabDel(i){S.vocab.splice(i,1);save();vocabModal()}
+
+/* ================= 编辑页 ================= */
+// 输入时实时转换，并保持光标位置
+function liveCase(el,mode){
+ const a=el.selectionStart,b=el.selectionEnd,v=el.value;
+ let nv;
+ if(mode=="upper")nv=v.toLocaleUpperCase();
+ else nv=v.replace(/^(\s*)(\S)/,(m,sp,ch)=>sp+ch.toLocaleUpperCase()); // 首字母大写，其余保持原样
+ if(nv!==v){el.value=nv;try{el.setSelectionRange(a,b)}catch(e){}}
+ return el.value}
+function sorted(o,c){const idx=c.items.map((_,i)=>i);
+ if(o.sort=="az")idx.sort((a,b)=>norm(c.items[a].n).localeCompare(norm(c.items[b].n)));
+ else if(o.sort=="qty")idx.sort((a,b)=>c.items[b].q-c.items[a].q||a-b);
+ return idx}
+function dupMap(c){const m={};c.items.forEach(it=>{const k=norm(it.n);if(k)m[k]=(m[k]||0)+1});return m}
+function setIn(id,v){const e=$(id);if(document.activeElement!==e)e.value=v}
+function setf(k,v){mut(o=>{o[k]=v},"f:"+k,true);const o=cur();if(o)$("eTitle").textContent=o.sup||"未命名订单"}
+function setSt(k){mut(o=>{o.status=k})}
+function togglePrice(){mut(o=>{o.price=!o.price})}
+function renderEdit(){
+ const o=cur();if(!o){goHome();return}
+ if(QC>=o.cats.length)QC=-1;
+ $("qc").innerHTML=o.cats.length>1?`<button class="all ${QC<0?'on':''}" onclick="QC=-1;renderEdit()">全部</button>`+o.cats.map((c,i)=>`<button class="${QC==i?'on':''}" style="--c:${c.color}" onclick="setQC(${i})">${esc(c.name||"未命名")}</button>`).join(""):"";
+ $("q").placeholder=QC>=0?"🔍 只在 "+(o.cats[QC].name||"该类")+" 内搜索":"🔍 搜索品名（忽略重音/大小写）";
+ const nq=norm(Q);let h="",anyMatch=false,exact=false;
+ o.cats.forEach((c,ci)=>{
+  if(QC>=0&&ci!=QC)return;
+  c.items.forEach(it=>{if(nq&&norm(it.n)==nq)exact=true});
+  const dm=dupMap(c);
+  const idx=sorted(o,c).filter(i=>!nq||norm(c.items[i].n).includes(nq));
+  if(nq&&!idx.length)return;anyMatch=true;
+  const sum=c.items.reduce((a,b)=>a+b.q,0),am=amtC(c);
+  const cards=idx.map(i=>{const it=c.items[i],isDup=dm[norm(it.n)]>1;
+   return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><textarea class="nm" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button><button class="d" onclick="delItem(${ci},${i})">×</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="hint">这个种类还没有品项，在下面添加</div>`);
+  const d=draft[ci]||{n:"",q:3};
+  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper')" onchange="cat(${ci},'name',this.value)"><span class="cnt">${sum}件${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="arm(this,()=>delCat(${ci}),'删?')">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" onchange="cat(${ci},'sub',this.value)"><div class="items">${cards}</div>
+  <div class="add"><input class="an" id="an${ci}" placeholder="添加品名" autocomplete="off" value="${esc(d.n)}" oninput="dr(${ci}).n=liveCase(this,'first');sug(${ci})" onkeydown="if(event.key=='Enter')addItem(${ci})"><input class="aq" type="number" inputmode="numeric" value="${d.q}" oninput="dr(${ci}).q=this.value"><button onclick="addItem(${ci})">添加</button></div><div class="sug" id="sg${ci}"></div></section>`;
+ });
+ if(nq&&!exact&&o.cats.length)h+=`<div class="card">${QC>=0?"在 "+esc(o.cats[QC].name)+" 内":""}没有名为 “<b>${esc(Q.trim())}</b>” 的品项${anyMatch?"（上面是相近的）":""}。添加到：<div class="chips">${o.cats.map((c,ci)=>({c,ci})).filter(x=>QC<0||x.ci==QC).map(({c,ci})=>`<button style="background:${c.color}" onclick="quick(${ci})">${esc(c.name||"未命名")}</button>`).join("")}</div></div>`;
+ $("list").innerHTML=h;
+ $("eTitle").textContent=o.sup||"未命名订单";$("eTotal").textContent="共 "+sumO(o)+" 件"+(o.price&&amtO(o)?" · "+o.cur+fmt(amtO(o)):"");
+ setIn("eSup",o.sup);setIn("eDt",o.dt);setIn("eCur",o.cur);$("eSort").value=o.sort;
+ $("ePr").className=o.price?"on":"";
+ $("eSt").innerHTML=Object.entries(STAT).map(([k,v])=>`<button class="${o.status==k?'on':''}" style="--c:${v[1]}" onclick="setSt('${k}')">${v[0]}</button>`).join("");
+ syncUndo();
+}
+function setQC(i){QC=(QC==i)?-1:i;renderEdit()}
+const dr=ci=>draft[ci]||(draft[ci]={n:"",q:3});
+function adj(ci,i,d){mut(o=>{const it=o.cats[ci].items[i];it.q=Math.max(0,it.q+d)},"q:"+ci+":"+i)}
+function setq(ci,i,v){mut(o=>{o.cats[ci].items[i].q=Math.max(0,parseInt(v)||0)})}
+function setp(ci,i,v){mut(o=>{o.cats[ci].items[i].p=v===""?null:Math.max(0,parseFloat(v)||0)})}
+function rename(ci,i,v){const nv=fixName(v);if(!nv)return renderEdit();mut(o=>{o.cats[ci].items[i].n=nv});addVocab(nv);save();
+ const c=cur().cats[ci];if(c.items.filter(x=>norm(x.n)==norm(nv)).length>1)toast("⚠ 本类别里已有同名品项，请确认是否重复")}
+function delItem(ci,i){const n=cur().cats[ci].items[i].n;mut(o=>{o.cats[ci].items.splice(i,1)});toast("已删除："+n,undo)}
+function cat(ci,k,v){mut(o=>{o.cats[ci][k]=k=="name"?v.trim().toUpperCase():v.trim()})}
+function recolor(ci){mut(o=>{const c=o.cats[ci];c.color=COLORS[(COLORS.indexOf(c.color)+1)%COLORS.length]})}
+function delCat(ci){const n=cur().cats[ci].name;QC=-1;mut(o=>{o.cats.splice(ci,1)});toast("已删除种类："+n,undo)}
+function addCat(){const n=$("ncn").value.trim();if(!n)return;mut(o=>{o.cats.push({name:n.toUpperCase(),sub:"",color:COLORS[o.cats.length%COLORS.length],items:[]})});$("ncn").value="";scrollTo(0,document.body.scrollHeight)}
+function clearQty(){mut(o=>o.cats.forEach(c=>c.items.forEach(i=>i.q=0)));toast("所有数量已清零",undo)}
+
+/* 添加: 重名提醒 + 近似拼写提醒 */
+function addItem(ci,force){
+ const d=dr(ci);let n=fixName(d.n);if(!n)return;
+ const o=cur(),c=o.cats[ci],q=Math.max(0,parseInt(d.q)||1);
+ const ex=c.items.findIndex(x=>norm(x.n)==norm(n));
+ if(ex>=0&&force!="new"){
+  ask(`<b>${esc(c.name)}</b> 里已经有 <b>${esc(c.items[ex].n)}</b>（当前 ${c.items[ex].q}）。`,[["add","数量合并：+"+q],["new","仍然新增一行",1],["x","取消",1]],a=>{
+   if(a=="add"){mut(o=>{o.cats[ci].items[ex].q+=q});draft[ci]={n:"",q:d.q};renderEdit()}
+   else if(a=="new")addItem(ci,"new")});return}
+ if(!force&&!vocabFind(n)){const sg=fuzzy(n,2);if(sg.length){
+  ask(`“<b>${esc(n)}</b>” 和已有品名很像，是不是想写：`,[...sg.map(s=>["use:"+s,esc(s)]),["keep","就用 “"+esc(n)+"”",1],["x","取消",1]],a=>{
+   if(a.startsWith("use:")){d.n=a.slice(4);addItem(ci,"ok")}else if(a=="keep")addItem(ci,"ok")});return}}
+ mut(o=>{o.cats[ci].items.push({n,q,p:null})});addVocab(n);draft[ci]={n:"",q:d.q};save();renderEdit();
+}
+function quick(ci){const n=fixName(Q);dr(ci).n=n;dr(ci).q=3;Q="";$("q").value="";addItem(ci)}
+function sug(ci){const v=dr(ci).n,k=norm(v),box=$("sg"+ci);if(!box)return;
+ if(!k){box.innerHTML="";return}
+ const c=cur().cats[ci],have=new Set(c.items.map(i=>norm(i.n)));
+ SG[ci]=S.vocab.filter(x=>{const kx=norm(x);return kx.includes(k)&&kx!=k&&!have.has(kx)}).sort((a,b)=>(norm(a).startsWith(k)?0:1)-(norm(b).startsWith(k)?0:1)||a.length-b.length).slice(0,6);
+ box.innerHTML=SG[ci].map((x,i)=>`<button onmousedown="event.preventDefault()" onclick="pickSug(${ci},${i})">${esc(x)}</button>`).join("")}
+function pickSug(ci,i){dr(ci).n=SG[ci][i];$("an"+ci).value=SG[ci][i];sug(ci);addItem(ci)}
+
+/* ================= 批量导入 ================= */
+function parseText(txt,defCat){
+ const lines=String(txt).replace(/\r/g,"").split("\n"),cats=[];let cc=null;
+ const getCat=n=>{let c=cats.find(x=>norm(x.name)==norm(n));if(!c){c={name:n,items:[]};cats.push(c)}return c};
+ for(let li=0;li<lines.length;li++){const raw=lines[li];
+  let s=raw.replace(/[\u200b\u00a0]/g," ").replace(/[：]/g,":").replace(/[，、;；]/g,",").replace(/[×✕✖]/g,"x").trim();
+  s=s.replace(/^[\s\-*•·●▪\u2022\d]+[.)、]\s+(?=\D)/,"").replace(/^[-*•·●▪]\s*/,"");
+  if(!s)continue;
+  if(/^(saphirus.*|.*订货单|.*pedido.*|total.*|合计.*)$/i.test(s)&&!/\d\s*$/.test(s))continue;
+  let m=s.match(/^(.*?)[\s:=,\-.xX]*[\s(（]*(\d{1,4})\s*(?:件|个|pcs|un\.?|u\.?|unidades|uds?\.?)?[)）]?\s*$/i);
+  if(m&&m[1].trim()&&/\D/.test(m[1])){const n=m[1].trim().replace(/[\s:=,\-.xX]+$/,"");if(n){(cc||getCat(defCat||"GENERAL")).items.push({n:fixName(n),q:parseInt(m[2])});continue}}
+  m=s.match(/^(\d{1,4})\s*(?:x|件|个|pcs|un\.?)?\s+(.+?)$/i);
+  if(m&&/\D/.test(m[2])){(cc||getCat(defCat||"GENERAL")).items.push({n:fixName(m[2].trim()),q:parseInt(m[1])});continue}
+  const h=s.replace(/[:：]\s*$/,"").trim();
+  if(h.length<=40&&!/\d/.test(h)){
+   // 只有当后面紧跟带数量的行时才算种类标题；否则当成一个没写数量的品项，避免静默丢失
+   let nx="";for(let j=li+1;j<lines.length;j++){if(lines[j].trim()){nx=lines[j];break}}
+   const nxItem=/\d{1,4}\s*(件|个|pcs|un\.?|u\.?|unidades|uds?\.?)?[)）]?\s*$/i.test(nx)||/^\s*\d{1,4}\s*(x|件|个)?\s+\D/i.test(nx);
+   if(nxItem||/[:：]\s*$/.test(s)){cc=getCat(h.toUpperCase());continue}}
+  (cc||getCat(defCat||"GENERAL")).items.push({n:fixName(s),q:1,guess:1});
+ }
+ return cats.filter(c=>c.items.length)}
+function importModal(){
+ const o=cur();MI={step:0,cats:[],mode:"merge"};
+ modal(`<div class="mh">批量导入</div><div class="mt">粘贴文字清单。<b>单独一行、不带数字的名字</b>会被当作种类（如 AROMA），“品名 数量” 会被当作品项。支持 <code>Breeze 6</code>、<code>Breeze x6</code>、<code>6 Breeze</code>、<code>Breeze: 6</code>、<code>Breeze - 6</code>。</div><textarea id="it" placeholder="AROMA&#10;BREEZE  6&#10;VELOCITY  6&#10;&#10;TEXTIL&#10;ROCIO  6"></textarea><div class="mb2"><button class="g" onclick="closeModal()">取消</button><button onclick="importParse()">识别</button></div>`);
+ setTimeout(()=>$("it")&&$("it").focus(),50)}
+function importParse(){
+ const t=$("it").value;if(!t.trim()){toast("先粘贴内容");return}
+ const o=cur(),def=o.cats.length==1?o.cats[0].name:"GENERAL";
+ const cats=parseText(t,def);if(!cats.length){toast("没有识别到品项，请检查格式");return}
+ const flag=[];
+ cats.forEach(c=>{const ex=o.cats.find(x=>norm(x.name)==norm(c.name));c.target=ex?o.cats.indexOf(ex):-1;
+  c.items.forEach(it=>{const ei=ex?ex.items.findIndex(x=>norm(x.n)==norm(it.n)):-1;it.ex=ei;
+   const kn=vocabFind(it.n);it.sug=(!kn&&!ei>=0)?fuzzy(it.n,1)[0]||"":""})});
+ MI={step:1,cats,mode:"merge",text:t};importReview()}
+function importReview(){
+ const o=cur(),n=MI.cats.reduce((a,c)=>a+c.items.length,0),qs=MI.cats.reduce((a,c)=>a+c.items.reduce((s,i)=>s+i.q,0),0);
+ modal(`<div class="mh">确认导入：${n} 项 · ${qs} 件</div><div class="mt">可以直接改名称和数量、删除不要的行。黄色表示已有同名品项（${MI.mode=="merge"?"数量会累加":MI.mode=="replace"?"数量会被替换":"会新增一行"}）；“q=1” 表示这行没写数量，默认 1。</div>
+ <div class="opt">已有同名时：<select onchange="MI.mode=this.value;importReview()"><option value="merge" ${MI.mode=="merge"?"selected":""}>数量累加</option><option value="replace" ${MI.mode=="replace"?"selected":""}>替换数量</option><option value="new" ${MI.mode=="new"?"selected":""}>新增一行</option></select></div>`+
+ MI.cats.map((c,ci)=>`<div class="ig"><div class="igh"><span>${esc(c.name)}</span>→<select onchange="MI.cats[${ci}].target=parseInt(this.value);importReview()"><option value="-1" ${c.target<0?"selected":""}>新建种类“${esc(c.name)}”</option>${o.cats.map((x,i)=>`<option value="${i}" ${c.target==i?"selected":""}>并入 ${esc(x.name)}</option>`).join("")}</select></div>`+
+ c.items.map((it,ii)=>{const tgt=c.target>=0?o.cats[c.target]:null,e=tgt?tgt.items.findIndex(x=>norm(x.n)==norm(it.n)):-1,dupIn=c.items.some((x,j)=>j<ii&&norm(x.n)==norm(it.n));
+  return `<div class="ir ${e>=0||dupIn?"dup":""}"><input class="irn" value="${esc(it.n)}" onchange="MI.cats[${ci}].items[${ii}].n=fixName(this.value);importReview()"><input class="irq" type="number" value="${it.q}" onchange="MI.cats[${ci}].items[${ii}].q=Math.max(0,parseInt(this.value)||0);importReview()">${it.guess?'<span class="tag">q=1</span>':""}${e>=0?'<span class="tag">已有</span>':dupIn?'<span class="tag">重复</span>':""}${it.sug&&!e>=0?`<button style="width:auto;padding:0 8px;color:#3a2e2a;font-size:12px" onclick="MI.cats[${ci}].items[${ii}].n='${esc(it.sug).replace(/'/g,"&#39;")}';importReview()" title="用已有品名">→${esc(it.sug)}</button>`:""}<button onclick="MI.cats[${ci}].items.splice(${ii},1);importReview()">×</button></div>`}).join("")+`</div>`).join("")+
+ `<div class="mb2"><button class="g" onclick="importModal()">‹ 重新粘贴</button><button onclick="importApply()">导入 ${n} 项</button></div>`)}
+function importApply(){
+ const mode=MI.mode,cats=MI.cats;let add=0,mer=0,nc=0;
+ mut(o=>{cats.forEach(c=>{let t;if(c.target>=0&&o.cats[c.target])t=o.cats[c.target];else{t=o.cats.find(x=>norm(x.name)==norm(c.name));if(!t){t={name:c.name,sub:"",color:COLORS[o.cats.length%COLORS.length],items:[]};o.cats.push(t);nc++}}
+  c.items.forEach(it=>{if(!it.n)return;const e=t.items.find(x=>norm(x.n)==norm(it.n));
+   if(e&&mode=="merge"){e.q+=it.q;mer++}else if(e&&mode=="replace"){e.q=it.q;mer++}else{t.items.push({n:it.n,q:it.q,p:null});add++}})})});
+ cats.forEach(c=>c.items.forEach(i=>addVocab(i.n)));save();closeModal();
+ toast(`已导入：新增 ${add} 项${mer?"，合并 "+mer+" 项":""}${nc?"，新建 "+nc+" 个种类":""}`,undo)}
+
+
+/* ================= 发送表格 (Excel .xlsx，纯前端生成) ================= */
+const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC_T[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+function zipStore(files){ // 无压缩 zip，足够 xlsx 使用
+ const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+ const d=new Date(),dt=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate(),tm=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1);
+ files.forEach(f=>{
+  const nm=enc.encode(f.name),data=enc.encode(f.data),crc=crc32(data);
+  const lh=new DataView(new ArrayBuffer(30));lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(8,0,true);lh.setUint16(10,tm,true);lh.setUint16(12,dt,true);lh.setUint32(14,crc,true);lh.setUint32(18,data.length,true);lh.setUint32(22,data.length,true);lh.setUint16(26,nm.length,true);lh.setUint16(28,0,true);
+  parts.push(new Uint8Array(lh.buffer),nm,data);
+  const ch=new DataView(new ArrayBuffer(46));ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(10,0,true);ch.setUint16(12,tm,true);ch.setUint16(14,dt,true);ch.setUint32(16,crc,true);ch.setUint32(20,data.length,true);ch.setUint32(24,data.length,true);ch.setUint16(28,nm.length,true);ch.setUint32(42,off,true);
+  cd.push(new Uint8Array(ch.buffer),nm);off+=30+nm.length+data.length});
+ const cdLen=cd.reduce((a,b)=>a+b.length,0),eo=new DataView(new ArrayBuffer(22));
+ eo.setUint32(0,0x06054b50,true);eo.setUint16(8,files.length,true);eo.setUint16(10,files.length,true);eo.setUint32(12,cdLen,true);eo.setUint32(16,off,true);
+ return new Blob([...parts,...cd,new Uint8Array(eo.buffer)],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"})}
+const xe=s=>String(s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const tint=(hex,k)=>{const n=parseInt(hex.slice(1),16),m=v=>Math.round(v+(255-v)*k).toString(16).padStart(2,"0");return(m(n>>16&255)+m(n>>8&255)+m(n&255)).toUpperCase()};
+const XL={es:{cat:"Categoría",it:"Producto",q:"Cantidad",p:"Precio",a:"Importe",t:"TOTAL",sheet:"Pedido"},zh:{cat:"类别",it:"品名",q:"数量",p:"单价",a:"小计",t:"合计",sheet:"订货单"}};
+function buildXlsx(o){
+ const X=XL[o.lang||"es"],price=!!o.price,ncol=price?5:3,col="ABCDE";
+ const cats=o.cats.map(c=>({c,items:sorted(o,c).map(i=>c.items[i]).filter(i=>i.q>0)})).filter(x=>x.items.length);
+ // 样式表：每个种类一个浅色底
+ const fills=['<fill><patternFill patternType="none"/></fill>','<fill><patternFill patternType="gray125"/></fill>','<fill><patternFill patternType="solid"><fgColor rgb="FF3A2E2A"/><bgColor indexed="64"/></patternFill></fill>','<fill><patternFill patternType="solid"><fgColor rgb="FFF0C987"/><bgColor indexed="64"/></patternFill></fill>'];
+ const xfs=['<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>', // 0 普通
+  '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>', // 1 表头
+  '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>', // 2 品名
+  '<xf numFmtId="1" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center"/></xf>', // 3 数量
+  '<xf numFmtId="4" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>', // 4 金额
+  '<xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>', // 5 合计行文字
+  '<xf numFmtId="1" fontId="2" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center"/></xf>', // 6 合计数量
+  '<xf numFmtId="4" fontId="2" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>']; // 7 合计金额
+ const catStyle={};
+ const itStyle={},qtStyle={},amStyle={};
+ cats.forEach(({c},i)=>{fills.push(`<fill><patternFill patternType="solid"><fgColor rgb="FF${tint(c.color,.86)}"/><bgColor indexed="64"/></patternFill></fill>`);const fid=fills.length-1;
+  xfs.push(`<xf numFmtId="0" fontId="2" fillId="${fid}" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>`);catStyle[i]=xfs.length-1;
+  xfs.push(`<xf numFmtId="0" fontId="0" fillId="${fid}" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>`);itStyle[i]=xfs.length-1;
+  xfs.push(`<xf numFmtId="1" fontId="0" fillId="${fid}" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center"/></xf>`);qtStyle[i]=xfs.length-1;
+  xfs.push(`<xf numFmtId="4" fontId="0" fillId="${fid}" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1"/>`);amStyle[i]=xfs.length-1});
+ const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="${fills.length}">${fills.join("")}</fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFD9D2C5"/></left><right style="thin"><color rgb="FFD9D2C5"/></right><top style="thin"><color rgb="FFD9D2C5"/></top><bottom style="thin"><color rgb="FFD9D2C5"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${xfs.length}">${xfs.join("")}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+ // 数据行
+ const T=(r,c,v,st)=>`<c r="${col[c]}${r}" s="${st}" t="inlineStr"><is><t xml:space="preserve">${xe(v)}</t></is></c>`;
+ const N=(r,c,v,st)=>`<c r="${col[c]}${r}" s="${st}"><v>${v}</v></c>`;
+ const F=(r,c,f,v,st)=>`<c r="${col[c]}${r}" s="${st}"><f>${f}</f><v>${v}</v></c>`;
+ const E=(r,c,st)=>`<c r="${col[c]}${r}" s="${st}"/>`;
+ const hdr=[X.cat,X.it,X.q].concat(price?[X.p,X.a]:[]);
+ const rows=[`<row r="1" ht="24" customHeight="1">${hdr.map((h,i)=>T(1,i,h,1)).join("")}</row>`];
+ let r=1,totQ=0,totA=0;const merges=[];
+ cats.forEach(({c,items},ci)=>{const start=r+1;items.forEach((it,ii)=>{
+  r++;totQ+=it.q;let cells=(ii==0?T(r,0,c.name,catStyle[ci]):E(r,0,catStyle[ci]))+T(r,1,it.n,itStyle[ci])+N(r,2,it.q,qtStyle[ci]);
+  if(price){if(it.p){cells+=N(r,3,it.p,amStyle[ci])+F(r,4,`C${r}*D${r}`,Math.round(it.q*it.p*100)/100,amStyle[ci]);totA+=it.q*it.p}else cells+=E(r,3,amStyle[ci])+E(r,4,amStyle[ci])}
+  rows.push(`<row r="${r}">${cells}</row>`)});if(r>start)merges.push(`A${start}:A${r}`)});
+ const last=r,tr=r+1;
+ let tc=T(tr,0,X.t,5)+E(tr,1,5)+F(tr,2,`SUM(C2:C${last})`,totQ,6);
+ if(price)tc+=E(tr,3,5)+F(tr,4,`SUM(E2:E${last})`,Math.round(totA*100)/100,7);
+ rows.push(`<row r="${tr}" ht="22" customHeight="1">${tc}</row>`);
+ const widths=[Math.min(28,Math.max(12,...cats.map(x=>x.c.name.length*1.3+4))),Math.min(48,Math.max(16,...cats.flatMap(x=>x.items.map(i=>i.n.length*1.25+4)))),12].concat(price?[12,14]:[]);
+ const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0" tabSelected="1"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="16"/><cols>${widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${Math.round(w*10)/10}" customWidth="1"/>`).join("")}</cols><sheetData>${rows.join("")}</sheetData>${merges.length?`<mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${m}"/>`).join("")}</mergeCells>`:""}<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/></worksheet>`;
+ const sn=(((o.sup||"").trim()||X.sheet).replace(/[\[\]:*?\/\\]/g," ").trim()||X.sheet).slice(0,31);
+ const head='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+ return zipStore([
+  {name:"[Content_Types].xml",data:head+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'},
+  {name:"_rels/.rels",data:head+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+  {name:"xl/workbook.xml",data:head+`<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets><sheet name="${xe(sn)}" sheetId="1" r:id="rId1"/></sheets></workbook>`},
+  {name:"xl/_rels/workbook.xml.rels",data:head+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
+  {name:"xl/styles.xml",data:styles},
+  {name:"xl/worksheets/sheet1.xml",data:sheet}])}
+function sheetName(o){return "pedido_"+((o.sup||"orden").replace(/[^\w\u4e00-\u9fa5-]+/g,"_"))+"_"+(o.dt||"").replace(/\//g,"-")+".xlsx"}
+const isMobile=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform));
+function sheetData(o){
+ const cats=o.cats.map(c=>({c,items:sorted(o,c).map(i=>c.items[i]).filter(i=>i.q>0)})).filter(x=>x.items.length);
+ let q=0,a=0,n=0;cats.forEach(x=>x.items.forEach(it=>{q+=it.q;n++;if(it.p)a+=it.q*it.p}));
+ return {cats,q,a,n}}
+function sendSheet(){
+ const o=cur();if(!o)return;
+ if(!sheetData(o).n){toast("没有数量大于 0 的品项");return}
+ sheetPreview()}
+function sheetPreview(){
+ const o=cur(),X=XL[o.lang||"es"],d=sheetData(o),price=!!o.price;
+ if(!d.n){closeModal();toast("没有数量大于 0 的品项");return}
+ const head=[X.cat,X.it,X.q].concat(price?[X.p,X.a]:[]);
+ let body="";
+ d.cats.forEach(({c,items})=>items.forEach((it,ii)=>{
+  body+=`<tr>${ii==0?`<td class="c" rowspan="${items.length}" style="background:#${tint(c.color,.86)}">${esc(c.name)}</td>`:""}<td class="n" style="background:#${tint(c.color,.86)}">${esc(it.n)}</td><td class="q" style="background:#${tint(c.color,.86)}">${it.q}</td>`+(price?`<td class="r" style="background:#${tint(c.color,.86)}">${it.p?fmt(it.p):""}</td><td class="r" style="background:#${tint(c.color,.86)}">${it.p?fmt(it.q*it.p):""}</td>`:"")+`</tr>`}));
+ body+=`<tr class="tot"><td>${X.t}</td><td></td><td class="q">${d.q}</td>`+(price?`<td></td><td class="r">${d.a?fmt(d.a):""}</td>`:"")+`</tr>`;
+ modal(`<div class="mh">表格预览</div>
+ <div class="mt">共 ${d.n} 行 · 合计 ${d.q} 件${price&&d.a?" · "+esc(o.cur)+fmt(d.a):""}。数量为 0 的品项已隐藏；下面就是 Excel 里的内容。</div>
+ <div class="opt">语言：<select onchange="mut(x=>{x.lang=this.value},'',true);sheetPreview()"><option value="es" ${o.lang!="zh"?"selected":""}>Español</option><option value="zh" ${o.lang=="zh"?"selected":""}>中文</option></select><span style="color:#999;font-size:12px">（只改表头和合计文字）</span></div>
+ <div class="xp"><table><thead><tr>${head.map((h,i)=>`<th class="${i==1||i==2?'q':''}">${esc(h)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>
+ <div class="xm">文件名：${esc(sheetName(o))}</div>
+ <div class="mb2"><button class="g" onclick="closeModal()">取消</button><button onclick="confirmSheet()">${isMobile()?"发送 Excel":"下载 Excel"}</button></div>`)}
+function confirmSheet(){
+ const o=cur();let blob,name=sheetName(o);
+ try{blob=buildXlsx(o)}catch(e){console.error(e);toast("⚠ 生成表格失败");return}
+ if(NATIVE){closeModal();dlBlob(blob,name);toast("请在弹出的面板里选择发送方式");return}
+ const f=new File([blob],name,{type:blob.type});
+ if(isMobile()&&navigator.canShare&&navigator.canShare({files:[f]})){
+  navigator.share({files:[f],title:name}).then(()=>{closeModal();toast("表格已发送")}).catch(e=>{if(e&&e.name!="AbortError"){closeModal();dlBlob(blob,name);toast("已下载表格："+name)}});
+ }else{closeModal();dlBlob(blob,name);toast("已生成表格："+name)}}
+
+/* ================= 海报 ================= */
+function rr(x,c,X,y,w,h,r){x.beginPath();x.roundRect(X,y,w,h,r);x.fillStyle=c;x.fill()}
+function fit(x,t,font,maxw,min){let s=parseInt(font.match(/(\d+)px/)[1]);min=min||16;while(s>min){x.font=font.replace(/\d+px/,s+"px");if(x.measureText(t).width<=maxw)return t;s-=2}x.font=font.replace(/\d+px/,min+"px");while(t.length>1&&x.measureText(t).width>maxw)t=t.slice(0,-1);return t}
+function hexA(h,a){return h+a}
+function poster(){
+ const o=cur();
+ if(!o.cats.some(c=>c.items.some(i=>i.q>0))){toast("没有数量大于 0 的品项");return}
+ $("thm").innerHTML=THEMES.map((t,i)=>`<button class="th ${o.theme==i?'on':''}" style="background:${t[2]}" onclick="setTheme(${i})"></button>`).join("");
+ $("pv").style.display="block";$("pv").scrollTop=0;drawPoster();
+}
+function setTheme(i){mut(o=>{o.theme=i},"",true);$("thm").querySelectorAll(".th").forEach((b,k)=>b.classList.toggle("on",k==i));drawPoster()}
+function setLang(l){mut(o=>{o.lang=l},"",true);drawPoster()}
+function drawPoster(){
+ const o=cur(),L=LANG[o.lang||"es"],T=THEMES[o.theme||0],[ ,BG,DK,GD]=T;
+ $("lgEs").classList.toggle("on",(o.lang||"es")=="es");$("lgZh").classList.toggle("on",o.lang=="zh");
+ const cats=o.cats.map(c=>({...c,items:sorted(o,c).map(i=>c.items[i]).filter(i=>i.q>0)})).filter(c=>c.items.length);
+ const W=1080,P=50,IW=W-2*P,CP=32,COLW=(IW-2*CP-44)/2,RH=58,SF='-apple-system,"PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif';
+ const showAmt=o.price&&amtO(o)>0,sup=(o.sup||"").trim().toUpperCase();
+ let H=P+270+44+30+90+(showAmt?20+70:0)+P;cats.forEach(c=>H+=12+86+Math.ceil(c.items.length/2)*RH+24+28);
+ const cv=document.createElement("canvas");cv.width=W;cv.height=H;const x=cv.getContext("2d");
+ x.fillStyle=BG;x.fillRect(0,0,W,H);
+ let y=P;rr(x,DK,P,y,IW,270,28);
+ x.textAlign="center";x.fillStyle=BG+"b3";x.font="22px "+SF;x.letterSpacing="8px";const p1=L.p1(sup);if(p1)x.fillText(p1,W/2+4,y+68);
+ x.fillStyle=BG;x.letterSpacing="6px";x.fillText(fit(x,sup||L.big,'bold 88px '+SF,IW-60,36),W/2+3,y+160);
+ x.fillStyle=GD;x.font="26px "+SF;x.letterSpacing="4px";const p2=L.p2(sup);if(p2)x.fillText(p2,W/2+2,y+225);x.letterSpacing="0px";
+ y+=270+44;x.font="24px "+SF;x.fillStyle="#7a6a60";x.textAlign="left";
+ x.fillText(L.date+": "+(o.dt||"____/____/______"),P+8,y);y+=30;
+ cats.forEach(c=>{
+  const rows=Math.ceil(c.items.length/2),h=12+86+rows*RH+24;
+  x.save();x.beginPath();x.roundRect(P,y,IW,h,24);x.clip();x.fillStyle="#fff";x.fillRect(P,y,IW,h);x.fillStyle=c.color;x.fillRect(P,y,IW,12);x.restore();
+  x.fillStyle=c.color;x.font="bold 44px "+SF;x.letterSpacing="3px";x.textAlign="left";const nm=fit(x,c.name||" ","bold 44px "+SF,IW-2*CP-40,24);x.fillText(nm,P+CP,y+12+58);
+  const nw=x.measureText(nm).width;x.letterSpacing="0px";
+  if(c.sub){x.fillStyle="#888";x.font="italic 22px "+SF;const sw=IW-2*CP-nw-30;if(sw>80)x.fillText(fit(x,c.sub,"italic 22px "+SF,sw,14),P+CP+nw+18,y+12+58)}
+  c.items.forEach((it,i)=>{
+   const col=i%2,r=Math.floor(i/2),cx=P+CP+col*(COLW+44),cy=y+12+86+r*RH;
+   x.strokeStyle="#ddd";x.setLineDash([2,6]);x.lineWidth=2;x.lineCap="round";x.beginPath();x.moveTo(cx,cy+RH-4);x.lineTo(cx+COLW,cy+RH-4);x.stroke();x.setLineDash([]);
+   x.font="bold 26px "+SF;const q=String(it.q),pw=Math.max(54,x.measureText(q).width+30);
+   x.fillStyle=DK;x.textAlign="left";const t=fit(x,it.n,"28px "+SF,COLW-pw-16,18);x.fillText(t,cx,cy+RH/2+6);
+   rr(x,c.color,cx+COLW-pw,cy+(RH-4)/2-20,pw,40,20);x.fillStyle="#fff";x.font="bold 26px "+SF;x.textAlign="center";x.fillText(q,cx+COLW-pw/2,cy+(RH-4)/2+9);
+  });
+  x.textAlign="left";y+=h+28;
+ });
+ rr(x,GD,P,y,IW,90,24);x.fillStyle=DK;x.font="bold 38px "+SF;x.textAlign="center";x.fillText(L.total(sumO(o)),W/2,y+58);y+=90;
+ if(showAmt){y+=20;x.font="30px "+SF;x.fillStyle=DK;x.fillText(L.amount+": "+o.cur+fmt(amtO(o)),W/2,y+46)}
+ PCV=cv;const url=cv.toDataURL("image/png");$("pimg").src=url;$("dl").href=url;
+ $("dl").download="pedido_"+((o.sup||"orden").replace(/[^\w\u4e00-\u9fa5-]+/g,"_"))+"_"+(o.dt||"").replace(/\//g,"-")+".png";
+}
+
+/* ---------- PDF（纯前端，不依赖外部库：把 JPEG 直接封装成单页 PDF） ---------- */
+function exportPdf(){
+ if(!PCV)return;
+ const jpg=atob(PCV.toDataURL("image/jpeg",0.92).split(",")[1]),w=PCV.width,h=PCV.height,pw=595,ph=Math.round(595*h/w);
+ const bin=s=>{const a=new Uint8Array(s.length);for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i)&255;return a};
+ const parts=[],offs=[];let len=0;
+ const add=s=>{const b=typeof s=="string"?bin(s):s;parts.push(b);len+=b.length};
+ const obj=(n,s)=>{offs[n]=len;add(n+" 0 obj\n"+s+"\nendobj\n")};
+ add("%PDF-1.4\n");
+ obj(1,"<< /Type /Catalog /Pages 2 0 R >>");obj(2,"<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+ obj(3,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
+ offs[4]=len;add(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`);add(bin(jpg));add("\nendstream\nendobj\n");
+ const cs=`q ${pw} 0 0 ${ph} 0 0 cm /Im0 Do Q`;obj(5,`<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`);
+ const xr=len;add("xref\n0 6\n0000000000 65535 f \n"+[1,2,3,4,5].map(i=>String(offs[i]).padStart(10,"0")+" 00000 n \n").join(""));
+ add(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`);
+ const o=cur();dlBlob(new Blob(parts,{type:"application/pdf"}),"pedido_"+((o.sup||"orden").replace(/[^\w\u4e00-\u9fa5-]+/g,"_"))+".pdf");toast("PDF 已生成");
+}
+if(NATIVE)$("dl").addEventListener("click",e=>{e.preventDefault();nativeSave($("dl").download||"pedido.png",($("dl").href||"").split(",")[1]||"")});
+setInterval(()=>{if(!MOPEN&&cur())syncUndo()},2000);
+boot();
+</script></body></html>

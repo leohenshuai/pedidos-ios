@@ -1,0 +1,36 @@
+name: Build unsigned IPA
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate app icon
+        run: |
+          python3 -m pip install --quiet pillow
+          python3 make_icon.py
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build (no code signing)
+        run: |
+          xcodebuild -project Pedidos.xcodeproj -scheme Pedidos -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            clean build | tail -40
+      - name: Package IPA
+        run: |
+          APP=$(find build/Build/Products -name "Pedidos.app" -maxdepth 3 | head -1)
+          echo "APP=$APP"
+          rm -rf Payload && mkdir Payload && cp -R "$APP" Payload/
+          zip -qry Pedidos.ipa Payload
+          ls -la Pedidos.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pedidos-ipa
+          path: Pedidos.ipa
