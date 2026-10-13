@@ -201,6 +201,7 @@ const LANG={
  es:{p1:s=>s?"PEDIDO A":"PEDIDO",big:"ORDEN",p2:s=>"ORDEN DE COMPRA",date:"Fecha",total:n=>"TOTAL GENERAL: "+n+" unidades",head:s=>s?"PEDIDO A "+s:"PEDIDO",amount:"Importe estimado"},
  zh:{p1:s=>s?"订货给":"",big:"订货单",p2:s=>s?"订 货 单":"",date:"日期",total:n=>"合计："+n+" 件",head:s=>s?"订货单 · "+s:"订货单",amount:"预计金额"}};
 const NATIVE=!!window.__NATIVE__;
+const APP_VERSION="1.1 · 2026-10-13";
 let S=null,Q="",QC=-1,PQ="",HQ="",HF="all",HR=[],draft={},SG={},SERVER=false,REV=0,tt=null,MI=null,MT=null,DCB=null,PCV=null,pushT=null,pending=false,pushing=false,dirty=false;
 const $=id=>document.getElementById(id);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
@@ -326,7 +327,7 @@ function renderHome(){
  $("hCnt").textContent=os.length+" 个订单";
  const cn={all:os.length};Object.keys(STAT).forEach(k=>cn[k]=os.filter(o=>o.status==k).length);
  $("hf").innerHTML=[["all","全部"],...Object.entries(STAT).map(([k,v])=>[k,v[0]])].map(([k,t])=>`<button class="${HF==k?'on':''} ${k=='all'?'all':''}" style="--c:${k=='all'?'#f0c987':STAT[k][1]}" onclick="HF='${k}';renderHome()">${t} ${cn[k]}</button>`).join("");
- $("stat").innerHTML=(SERVER?(NATIVE?"数据保存在：手机“文件”App → 我的 iPhone → 订货单 文件夹里的 pedidos_data.json":"数据保存在：启动器所在文件夹的 pedidos_data.json（同时缓存于浏览器）"):"数据保存在：当前浏览器（清除浏览器数据会丢失，建议定期导出备份）")+"<br>品名库："+S.vocab.length+" 个，输入时会自动提示";
+ $("stat").innerHTML=(SERVER?(NATIVE?"数据保存在：手机“文件”App → 我的 iPhone → 订货单 文件夹里的 pedidos_data.json":"数据保存在：启动器所在文件夹的 pedidos_data.json（同时缓存于浏览器）"):"数据保存在：当前浏览器（清除浏览器数据会丢失，建议定期导出备份）")+"<br>品名库："+S.vocab.length+" 个，输入时会自动提示"+"<br>版本 "+APP_VERSION;
  const nq=norm(HQ);
  if(nq){
   HR=[];os.forEach(o=>o.cats.forEach(c=>c.items.forEach(it=>{if(norm(it.n).includes(nq))HR.push({o,c,it})})));
