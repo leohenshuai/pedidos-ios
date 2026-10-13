@@ -40,9 +40,8 @@ jobs:
           } > build.log 2>&1
           test -d Pedidos.xcodeproj
       - name: Build (no code signing)
-        if: steps.guard.outputs.skip != 'true'
         id: build
-        if: steps.prep.outcome == 'success'
+        if: steps.guard.outputs.skip != 'true' && steps.prep.outcome == 'success'
         continue-on-error: true
         run: |
           set +e
@@ -55,9 +54,8 @@ jobs:
           grep -E "error:|BUILD (SUCCEEDED|FAILED)|exit:" xcb.log | tail -40 >> build.log
           grep -q "BUILD SUCCEEDED" xcb.log
       - name: Package IPA
-        if: steps.guard.outputs.skip != 'true'
         id: pack
-        if: steps.build.outcome == 'success'
+        if: steps.guard.outputs.skip != 'true' && steps.build.outcome == 'success'
         run: |
           APP=$(find build/Build/Products -name "Pedidos.app" -maxdepth 3 | head -1)
           echo "APP=$APP" >> build.log
@@ -65,14 +63,12 @@ jobs:
           zip -qry Pedidos.ipa Payload
           ls -la Pedidos.ipa >> build.log
       - uses: actions/upload-artifact@v4
-        if: steps.guard.outputs.skip != 'true'
-        if: steps.pack.outcome == 'success'
+        if: steps.guard.outputs.skip != 'true' && steps.pack.outcome == 'success'
         with:
           name: Pedidos-ipa
           path: Pedidos.ipa
       - name: Publish to Release
-        if: steps.guard.outputs.skip != 'true'
-        if: steps.pack.outcome == 'success'
+        if: steps.guard.outputs.skip != 'true' && steps.pack.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
