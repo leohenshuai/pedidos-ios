@@ -10,36 +10,51 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
-      - name: Install XcodeGen
-        run: brew install xcodegen
-      - name: Generate app icon
+      - name: Prepare
+        id: prep
+        continue-on-error: true
         run: |
-          python3 -m pip install --quiet pillow
-          python3 make_icon.py
-      - name: Generate Xcode project
-        run: xcodegen generate
+          set +e
+          {
+            echo "### xcodebuild -version"; xcodebuild -version
+            echo "### brew install xcodegen"; brew install xcodegen 2>&1 | tail -15
+            echo "### which xcodegen"; which xcodegen
+            echo "### pillow"; python3 -m pip install --quiet pillow 2>&1 | tail -5
+            echo "### make_icon"; python3 make_icon.py 2>&1 | tail -5
+            echo "### xcodegen"; xcodegen generate 2>&1 | tail -20
+            echo "### ls"; ls
+          } > build.log 2>&1
+          test -d Pedidos.xcodeproj
       - name: Build (no code signing)
+        id: build
+        if: steps.prep.outcome == 'success'
+        continue-on-error: true
         run: |
+          set +e
           xcodebuild -project Pedidos.xcodeproj -scheme Pedidos -configuration Release \
             -sdk iphoneos -destination 'generic/platform=iOS' \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            clean build > build.log 2>&1 || echo "BUILD_FAILED" >> build.log
-          tail -60 build.log
-          grep -q BUILD_FAILED build.log && exit 1 || true
+            clean build > xcb.log 2>&1
+          echo "xcodebuild exit: $?" >> xcb.log
+          grep -E "error:|BUILD (SUCCEEDED|FAILED)|exit:" xcb.log | tail -40 >> build.log
+          grep -q "BUILD SUCCEEDED" xcb.log
       - name: Package IPA
+        id: pack
+        if: steps.build.outcome == 'success'
         run: |
           APP=$(find build/Build/Products -name "Pedidos.app" -maxdepth 3 | head -1)
-          echo "APP=$APP"
+          echo "APP=$APP" >> build.log
           rm -rf Payload && mkdir Payload && cp -R "$APP" Payload/
           zip -qry Pedidos.ipa Payload
-          ls -la Pedidos.ipa
+          ls -la Pedidos.ipa >> build.log
       - uses: actions/upload-artifact@v4
+        if: steps.pack.outcome == 'success'
         with:
           name: Pedidos-ipa
           path: Pedidos.ipa
       - name: Publish to Release
-        if: github.ref == 'refs/heads/main'
+        if: steps.pack.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -49,7 +64,7 @@ jobs:
         if: always()
         run: |
           mkdir -p /tmp/st && cd /tmp/st && rm -rf .git
-          { echo "job status: ${{ job.status }}"; echo "----- tail of build.log -----"; tail -120 "$GITHUB_WORKSPACE/build.log" 2>/dev/null || echo "no build.log"; } > STATUS.txt
+          { echo "prep=${{ steps.prep.outcome }} build=${{ steps.build.outcome }} pack=${{ steps.pack.outcome }}"; echo "----- build.log -----"; tail -150 "$GITHUB_WORKSPACE/build.log" 2>/dev/null || echo "no build.log"; } > STATUS.txt
           git init -q && git config user.name ci && git config user.email ci@example.com
-          git checkout -q -b status && git add STATUS.txt && git commit -q -m "build ${{ github.run_number }}: ${{ job.status }}"
+          git checkout -q -b status && git add STATUS.txt && git commit -q -m "build ${{ github.run_number }}"
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" status:status
