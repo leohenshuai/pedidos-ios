@@ -6,17 +6,19 @@
 :root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif;background:#fbf4ea;color:#3a2e2a;max-width:760px;margin:0 auto;padding-bottom:calc(110px + var(--sab));min-height:100vh}
-button,select{font-family:inherit;cursor:pointer}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+button,select,.oc,.hr,.co{font-family:inherit;cursor:pointer;touch-action:manipulation}
+button{-webkit-user-select:none;user-select:none}
 button:disabled{opacity:.35}
 .top{position:sticky;top:0;z-index:5;background:#3a2e2a;color:#fbf4ea;padding:calc(10px + var(--sat)) 12px 10px}
 .r1{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .top h1{font-size:17px;letter-spacing:1px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .top b{color:#f0c987;font-size:15px;white-space:nowrap}
-.back{border:0;background:#ffffff26;color:#fff;border-radius:10px;padding:6px 12px;font-size:15px;flex:none}
+.back{border:0;background:#ffffff26;color:#fff;border-radius:10px;padding:9px 14px;font-size:15px;flex:none;min-height:38px}
 .sq,#q{width:100%;margin-top:8px;padding:10px 12px;border:0;border-radius:12px;font-size:16px;background:#fff;color:#3a2e2a;font-family:inherit}
 .qc{display:flex;gap:6px;overflow-x:auto;padding-top:8px;-webkit-overflow-scrolling:touch}
 .qc:empty{display:none}
-.qc button{flex:none;border:0;border-radius:16px;padding:6px 12px;font-size:13px;background:#ffffff26;color:#fff;white-space:nowrap}
+.qc button{flex:none;border:0;border-radius:18px;padding:9px 14px;font-size:14px;background:#ffffff26;color:#fff;white-space:nowrap}
 .qc button.on{background:var(--c,#f0c987);color:#fff;font-weight:700;box-shadow:0 0 0 2px #fff6}
 .qc button.all.on{background:#f0c987;color:#3a2e2a}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px}
@@ -38,45 +40,47 @@ button:disabled{opacity:.35}
 .foot button,.foot label{flex:1;text-align:center;border:1px solid #ddd;background:#fff;border-radius:10px;padding:9px 4px;font-size:13px;color:#3a2e2a}
 .meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 12px 0}
 .meta label{font-size:11px;color:#999;display:block;margin:0 0 2px 4px}
-.meta input{width:100%;padding:9px 10px;border:1px solid #e3d8c8;border-radius:10px;font-size:14px;background:#fff;font-family:inherit}
+.meta input{width:100%;padding:10px 10px;border:1px solid #e3d8c8;border-radius:10px;font-size:16px;background:#fff;font-family:inherit}
 .meta2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 12px 0}
 .seg{grid-column:1/3;display:flex;background:#fff;border:1px solid #e3d8c8;border-radius:10px;overflow:hidden}
-.seg button{flex:1;border:0;background:none;padding:8px 0;font-size:13px;color:#7a6a60}
+.seg button{flex:1;border:0;background:none;padding:12px 0;font-size:14px;color:#7a6a60}
 .seg button.on{background:var(--c);color:#fff;font-weight:700}
-.meta2 select{width:100%;padding:9px 8px;border:1px solid #e3d8c8;border-radius:10px;font-size:14px;background:#fff;color:#3a2e2a}
+.meta2 select{width:100%;padding:10px 8px;border:1px solid #e3d8c8;border-radius:10px;font-size:16px;background:#fff;color:#3a2e2a}
 .ptog{display:flex;gap:6px}
-.ptog button{flex:1;border:1px solid #e3d8c8;background:#fff;border-radius:10px;font-size:14px;padding:8px;color:#7a6a60}
+.ptog button{flex:1;border:1px solid #e3d8c8;background:#fff;border-radius:10px;font-size:14px;padding:10px 8px;color:#7a6a60}
 .ptog button.on{background:#3a2e2a;color:#fff;border-color:#3a2e2a}
-.ptog input{width:46px;border:1px solid #e3d8c8;border-radius:10px;text-align:center;font-size:14px;font-family:inherit}
+.ptog input{width:46px;border:1px solid #e3d8c8;border-radius:10px;text-align:center;font-size:16px;font-family:inherit}
 .st{display:inline-block;border-radius:10px;padding:3px 9px;font-size:12px;color:#fff}
 section{margin:12px;background:#fff;border-radius:16px;overflow:hidden;border-top:8px solid var(--c);box-shadow:0 2px 10px #0001}
 .sh{display:flex;align-items:center;gap:6px;padding:8px 10px 0}
-.sh input.cn{font-size:19px;font-weight:700;color:var(--c);border:0;background:none;flex:1;letter-spacing:1px;min-width:0;font-family:inherit}
+.sh input.cn{font-size:19px;font-weight:700;color:var(--c);border:0;background:none;flex:1;letter-spacing:1px;min-width:0;font-family:inherit;padding:8px 0}
 .sh .cnt{font-size:12px;color:#888;white-space:nowrap}
 .dot{width:24px;height:24px;border-radius:50%;border:0;background:var(--c);flex:none}
-.x{border:0;background:#f1eee9;border-radius:8px;color:#a33;font-size:13px;padding:6px 8px;flex:none}
+.x{border:0;background:#f1eee9;border-radius:9px;color:#a33;font-size:14px;padding:10px 12px;flex:none;min-height:38px}
 .x.arm{background:#d9534f;color:#fff}
-input.cs{display:block;width:100%;font-size:13px;color:#999;border:0;background:none;padding:2px 10px 0;font-family:inherit}
+input.cs{display:block;width:100%;font-size:16px;color:#999;border:0;background:none;padding:6px 10px 2px;font-family:inherit}
 .items{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 10px}
-.ic{background:#faf7f1;border:1px solid #eee;border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.ic{position:relative;background:#faf7f1;border:1px solid #eee;border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.ic .dl{position:absolute;top:0;right:0;width:34px;height:34px;border:0;background:none;color:#c9a9a6;font-size:17px;padding:0;z-index:1}
+.ic textarea.nm{padding-right:26px}
 .ic.zero{opacity:.45}
 .ic.dup{border-color:#e9a23b;background:#fff8e8}
 .dupb{font-size:11px;color:#c07d10;margin-top:-2px}
-textarea.nm{width:100%;height:38px;resize:none;border:0;border-bottom:1px dashed #d8cfc0;background:none;font-size:15px;line-height:1.25;padding:0 0 2px;color:#3a2e2a;font-family:inherit;overflow:hidden;border-radius:0}
+textarea.nm{width:100%;height:40px;resize:none;border:0;border-bottom:1px dashed #d8cfc0;background:none;font-size:16px;line-height:1.25;padding:0 0 2px;color:#3a2e2a;font-family:inherit;overflow:hidden;border-radius:0}
 textarea.nm:focus{outline:none;border-bottom:2px solid var(--c);background:#fffbe9}
 .ctr{display:flex;align-items:center;gap:4px}
-.ctr button{width:32px;height:32px;border:0;border-radius:9px;background:var(--c);color:#fff;font-size:19px;flex:none;padding:0}
+.ctr button{width:40px;height:40px;border:0;border-radius:10px;background:var(--c);color:#fff;font-size:21px;flex:none;padding:0}
 .ctr button.m{background:#e9e5de;color:#3a2e2a}
-.ctr button.d{background:#f1eee9;color:#a33;font-size:15px;width:28px}
-.ctr input{flex:1;min-width:0;width:100%;height:32px;text-align:center;font-size:17px;font-weight:700;border:1px solid #e5e0d7;border-radius:8px;background:#fff;font-family:inherit}
+.ctr button.d{background:#f1eee9;color:#a33;font-size:16px;width:36px}
+.ctr input{flex:1;min-width:0;width:100%;height:40px;text-align:center;font-size:18px;-moz-appearance:textfield;font-weight:700;border:1px solid #e5e0d7;border-radius:8px;background:#fff;font-family:inherit}
 .pr{display:flex;align-items:center;gap:4px;font-size:13px;color:#888}
-.pr input{flex:1;min-width:0;height:28px;border:1px solid #e5e0d7;border-radius:8px;text-align:right;padding:0 6px;font-size:14px;background:#fff;font-family:inherit}
+.pr input{flex:1;min-width:0;height:32px;border:1px solid #e5e0d7;border-radius:8px;text-align:right;padding:0 6px;font-size:16px;background:#fff;font-family:inherit}
 .pr em{font-style:normal;color:#3a2e2a;font-weight:600;min-width:44px;text-align:right;font-size:13px}
-.hint{grid-column:1/3;text-align:center;color:#bbb;font-size:13px;padding:8px}
+.hint{grid-column:1/3;text-align:center;color:#aaa;font-size:14px;padding:14px 8px;line-height:1.6}.hint small{font-size:12px;color:#bbb}
 .add{display:flex;gap:6px;padding:10px;background:#faf6ef;border-top:1px solid #eee}
-.add input{min-width:0;padding:8px 10px;border:1px solid #e3d8c8;border-radius:10px;font-size:15px;background:#fff;font-family:inherit}
+.add input{min-width:0;padding:10px 10px;border:1px solid #e3d8c8;border-radius:10px;font-size:16px;background:#fff;font-family:inherit}
 .add input.an{flex:1}.add input.aq{width:54px;text-align:center}
-.add button{border:0;border-radius:10px;background:var(--c);color:#fff;padding:0 14px;font-size:14px}
+.add button{border:0;border-radius:10px;background:var(--c);color:#fff;padding:0 16px;font-size:15px;min-height:44px}
 .sug{display:flex;gap:6px;flex-wrap:wrap;padding:0 10px 10px;background:#faf6ef}
 .sug:empty{display:none}
 .sug button{border:1px solid #e3d8c8;border-radius:14px;background:#fff;padding:5px 10px;font-size:13px;color:#3a2e2a}
@@ -84,9 +88,9 @@ textarea.nm:focus{outline:none;border-bottom:2px solid var(--c);background:#fffb
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .chips button{border:0;border-radius:16px;padding:7px 12px;color:#fff;font-size:14px}
 .row2{display:flex;gap:6px;margin:12px}
-.row2 input{flex:1;min-width:0;padding:10px;border:1px dashed #b9a88f;border-radius:12px;font-size:15px;background:#fff;font-family:inherit}
-.row2 button{border:0;border-radius:12px;background:#3a2e2a;color:#fff;padding:0 14px;font-size:14px}
-.row2 button.g{background:#fff;color:#3a2e2a;border:1px solid #ddd;flex:1;padding:10px}
+.row2 input{flex:1;min-width:0;padding:12px 10px;border:1px dashed #b9a88f;border-radius:12px;font-size:16px;background:#fff;font-family:inherit}
+.row2 button{border:0;border-radius:12px;background:#3a2e2a;color:#fff;padding:0 16px;font-size:15px;min-height:44px}
+.row2 button.g{background:#fff;color:#3a2e2a;border:1px solid #ddd;flex:1;padding:12px}
 .row2 button.arm{background:#d9534f;color:#fff;border-color:#d9534f}
 .bar{position:fixed;left:0;right:0;bottom:0;max-width:760px;margin:0 auto;display:flex;gap:6px;padding:10px 12px calc(18px + var(--sab));background:#fbf4eaee;backdrop-filter:blur(6px);z-index:6}
 .bar button{flex:1;padding:13px 2px;border:0;border-radius:12px;font-size:14px;background:#3a2e2a;color:#fff;white-space:nowrap}
@@ -107,11 +111,11 @@ textarea.nm:focus{outline:none;border-bottom:2px solid var(--c);background:#fffb
 #pv p{color:#fff9;font-size:12px;text-align:center;margin:8px 0 30px}
 #md{position:fixed;inset:0;z-index:40;background:#0007;display:none;align-items:flex-end;justify-content:center}
 #md.c{align-items:center;padding:20px}
-#mb{background:#fff;width:100%;max-width:760px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:14px 14px calc(14px + var(--sab))}
+#mb{background:#fff;width:100%;max-width:760px;max-height:90vh;max-height:90dvh;overflow:auto;-webkit-overflow-scrolling:touch;border-radius:18px 18px 0 0;padding:14px 14px calc(14px + var(--sab))}
 #md.c #mb{border-radius:18px;max-width:420px}
 .mh{font-size:18px;font-weight:700;margin-bottom:6px}
 .mt{font-size:13px;color:#888;line-height:1.5;margin-bottom:8px}
-#mb textarea{width:100%;min-height:200px;border:1px solid #e3d8c8;border-radius:12px;padding:10px;font-size:15px;font-family:inherit;line-height:1.4;background:#fffdf8;color:#3a2e2a}
+#mb textarea{width:100%;min-height:200px;border:1px solid #e3d8c8;border-radius:12px;padding:10px;font-size:16px;font-family:inherit;line-height:1.4;background:#fffdf8;color:#3a2e2a}
 .mb2{display:flex;gap:8px;margin-top:10px}
 .mb2 button,.ab button{flex:1;border:0;border-radius:12px;padding:12px 6px;font-size:15px;background:#3a2e2a;color:#fff}
 .mb2 button.g,.ab button.g{background:#f1eee9;color:#3a2e2a}
@@ -120,19 +124,26 @@ textarea.nm:focus{outline:none;border-bottom:2px solid var(--c);background:#fffb
 .ig{border:1px solid #eee;border-radius:12px;margin:8px 0;overflow:hidden}
 .igh{display:flex;gap:6px;align-items:center;background:#faf6ef;padding:8px;font-size:14px}
 .igh span{font-weight:700;max-width:34%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.igh select,.igh input{min-width:0;flex:1;padding:6px;border:1px solid #e3d8c8;border-radius:8px;font-size:14px;background:#fff;font-family:inherit}
+.igh select,.igh input{min-width:0;flex:1;padding:8px 6px;border:1px solid #e3d8c8;border-radius:8px;font-size:16px;background:#fff;font-family:inherit}
 .ir{display:flex;gap:6px;align-items:center;padding:6px 8px;border-top:1px solid #f1eee9}
 .ir.dup{background:#fff8e8}
-.ir input.irn{flex:1;min-width:0;border:0;border-bottom:1px dashed #d8cfc0;padding:6px 2px;font-size:15px;background:none;font-family:inherit}
-.ir input.irq{width:52px;text-align:center;border:1px solid #e5e0d7;border-radius:8px;padding:6px 0;font-size:15px;font-family:inherit}
+.ir input.irn{flex:1;min-width:0;border:0;border-bottom:1px dashed #d8cfc0;padding:8px 2px;font-size:16px;background:none;font-family:inherit}
+.ir input.irq{width:56px;text-align:center;border:1px solid #e5e0d7;border-radius:8px;padding:8px 0;font-size:16px;font-family:inherit}
 .ir button{border:0;background:#f1eee9;color:#a33;border-radius:8px;width:30px;height:30px}
 .tag{font-size:11px;color:#c07d10;white-space:nowrap}
 .opt{display:flex;gap:8px;align-items:center;font-size:14px;margin:8px 0;flex-wrap:wrap}
-.opt select{padding:7px;border:1px solid #e3d8c8;border-radius:8px;font-size:14px;background:#fff}
+.opt select{padding:9px;border:1px solid #e3d8c8;border-radius:8px;font-size:16px;background:#fff}
 .vr{display:flex;align-items:center;justify-content:space-between;padding:8px 2px;border-bottom:1px solid #f1eee9;font-size:15px}
 .vr small{color:#999;margin-left:8px}
 .vr button{border:0;background:#f1eee9;color:#a33;border-radius:8px;padding:5px 10px}
-.xp{max-height:52vh;overflow:auto;border:1px solid #e3d8c8;border-radius:10px;margin-top:6px}
+.cg{border:1px solid #eee;border-radius:12px;margin:8px 0;overflow:hidden}
+.cgh{display:flex;align-items:center;gap:8px;background:#faf6ef;padding:9px 10px;font-size:14px;position:sticky;top:0}
+.cgh b{flex:1}.cgh button{border:0;background:#fff;border:1px solid #e3d8c8;border-radius:8px;padding:5px 9px;font-size:12px;color:#3a2e2a}
+.co{display:flex;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid #f1eee9;font-size:15px}
+.co input{width:24px;height:24px;flex:none}.co span{flex:1;min-width:0}.co small{color:#999;font-size:12px}
+.co.have{opacity:.5}.co .tg{font-size:11px;color:#3aa655;white-space:nowrap}
+.cl{max-height:44vh;max-height:44dvh;overflow:auto;-webkit-overflow-scrolling:touch;border-radius:10px}
+.xp{max-height:48vh;max-height:48dvh;overflow:auto;-webkit-overflow-scrolling:touch;border:1px solid #e3d8c8;border-radius:10px;margin-top:6px}
 .xp table{border-collapse:collapse;width:100%;font-size:14px}
 .xp th{position:sticky;top:0;background:#3a2e2a;color:#fff;padding:8px 6px;font-weight:600;z-index:1}
 .xp td{border:1px solid #d9d2c5;padding:6px 8px}
@@ -158,7 +169,7 @@ textarea.nm:focus{outline:none;border-bottom:2px solid var(--c);background:#fffb
 <div id="vEdit" style="display:none">
  <div class="top">
   <div class="r1"><button class="back" onclick="goHome()">‹ 列表</button><h1 id="eTitle"></h1><b id="eTotal"></b></div>
-  <input id="q" type="search" placeholder="🔍 搜索品名（忽略重音/大小写）" oninput="Q=this.value;renderEdit()">
+  <input id="q" type="search" placeholder="🔍 搜索品名来订货（忽略重音/大小写）" oninput="onSearch(this.value)">
   <div id="qc" class="qc"></div>
  </div>
  <div class="meta">
@@ -177,7 +188,7 @@ textarea.nm:focus{outline:none;border-bottom:2px solid var(--c);background:#fffb
   <button class="g sm" onclick="goHome()" title="订单列表">‹</button>
   <button class="g sm" id="bUndo" onclick="undo()" title="撤销">↶</button>
   <button class="g sm" id="bRedo" onclick="redo()" title="重做">↷</button>
-  <button class="g" onclick="importModal()">批量导入</button>
+  <button class="g" onclick="moreMenu()">更多 ⋯</button>
   <button class="g" onclick="sendSheet()">发送表格</button>
   <button onclick="poster()">生成海报</button>
  </div>
@@ -193,6 +204,8 @@ textarea.nm:focus{outline:none;border-bottom:2px solid var(--c);background:#fffb
  <img id="pimg"><p>也可以长按图片 → 存储到照片 / 分享</p>
 </div></div>
 <script>
+// 官方商品库 (saphirus.com.ar, 2026-10-13)  [名称, 参考价(ARS), 是否60ml]
+const OFFICIAL={"src":"saphirus.com.ar","date":"2026-10-13","cats":{"AROMA":[["Angel",6900,0],["Antitabaco",6900,0],["Apple",6900,0],["Atlantis",6900,0],["Bamboo",6900,0],["Bebé",6900,0],["Bergamota y Naranja",6900,0],["Blossom Rouge",6900,0],["Bouquet Floral",6900,0],["Breeze",6900,0],["Bubblegum",6900,0],["Café au Chocolat",6900,0],["Cappuccino",6900,0],["Capri Summer",6900,0],["Celestial Wings",6900,0],["Ciruela",6900,0],["Citronella",6900,0],["Citrus",6900,0],["Clean Cotton",6900,0],["Coco Maracuyá",6900,0],["Coco Vai",6900,0],["Cony",6900,0],["Cristal Eden",6900,0],["Cristóbal",6900,0],["Damasco",6900,0],["Daniel",6900,0],["Duvet",6900,0],["Etiqueta",6900,0],["Fantasía",6900,0],["Flores Blancas",6900,0],["Frutilla",6900,0],["Golden Lady",6900,0],["Golden Lord",6900,0],["Gossip King",6900,0],["Green",6900,0],["Guaraná",6900,0],["Hawai",6900,0],["Indiana",6900,0],["Jazmín",6900,0],["Lavanda",6900,0],["Lavanda y Te Verde",6900,0],["Life In Petals",6900,0],["Limón",6900,0],["Limón Dulce y Vainilla",6900,0],["Linah",6900,0],["Lola",6900,0],["London",6900,0],["Magnolia y Fresias",6900,0],["Mandarina",6900,0],["Mango",6900,0],["Manzana Canela",6900,0],["Maracuyá",6900,0],["Marino",6900,0],["Melón",6900,0],["Mery",6900,0],["Miel y Limón",6900,0],["Mito",6900,0],["Mix Tropical",6900,0],["Naranja Pimienta",6900,0],["Naranja y Chocolate",6900,0],["New York",6900,0],["Orange",6900,0],["Oriente",6900,0],["Palace",6900,0],["Palo Santo",6900,0],["Papaya",6900,0],["Patio",6900,0],["Paula",6900,0],["Peonias y Cedro",6900,0],["Pera y Durazno",6900,0],["Peras y Flores",6900,0],["Pitanga",6900,0],["Pomelo Rosado",6900,0],["Rocío",6900,0],["Rosas",6900,0],["Sandía Pepino",6900,0],["Soft Love",6900,0],["Sunset Fire",6900,0],["Tilo",6900,0],["Tokyo",6900,0],["Tropical",6900,0],["Uva",6900,0],["Vainilla",6900,0],["Vainilla Tonka",6900,0],["Velocity",6900,0],["Verbena",6900,0],["Violetas",6900,0],["Wanted",6900,0]],"TEXTIL":[["Antitabaco",4800,0],["Apple",4800,0],["Atlantis",4800,0],["Atlantis Blue",4800,0],["Bamboo",4800,0],["Bebé",4800,0],["Bergamota & Cedro",4800,0],["Blossom Rouge",4800,0],["Breeze",4800,0],["Bubblegum",4800,0],["Capri Summer",4800,0],["Celebrity Shoe",4800,0],["Celestial wings",4800,0],["Cereza Malbec",4800,0],["Citrus",4800,0],["Coco Vai",4800,0],["Cony",4800,0],["Cristal Eden",4800,0],["Cristóbal",4800,0],["Daniel",4800,0],["Dark Night",4800,0],["Deep Desert",4800,0],["Due Fusion",4800,0],["Duvet",4800,0],["Erba",4800,0],["Etiqueta",4800,0],["Flores Blancas",4800,0],["Flores Silvestres",4800,0],["Fresias y Bergamota",4800,0],["Frutilla",4800,0],["Frutos Patagónicos",4800,0],["Glitter Bot",4800,0],["Golden Lady",4800,0],["Golden Lord",4800,0],["Gossip King",4800,0],["Gossip Princess",4800,0],["Green",4800,0],["Green Eden",4800,0],["Guaraná",4800,0],["Hawai",4800,0],["Heaven And Hell",4800,0],["Indiana",4800,0],["Jade Horse",4800,0],["Jazmín",4800,0],["Last Shot",4800,0],["Lavanda",4800,0],["Life in Petals",4800,0],["Lilas",4800,0],["Limón",4800,0],["Limón Dulce y Vainilla",4800,0],["Linah",4800,0],["Lola",4800,0],["Lucy",4800,0],["Magnolia y Fresias",4800,0],["Man",4800,0],["Maracuyá",4800,0],["Marino",4800,0],["Medalla",4800,0],["Mery",4800,0],["Naranja Pimienta",4800,0],["New York",4800,0],["Night Empire",4800,0],["Nocturnal Shadow",4800,0],["Obelisco",4800,0],["Oriente",4800,0],["Palace",4800,0],["Papaya",4800,0],["Patio",4800,0],["Paula",4800,0],["Peonias y Cedro",4800,0],["Pistacho Caramel",4800,0],["Pitanga",4800,0],["Pomelo Rosado",4800,0],["Pétalos de Orquídeas",4800,0],["Red Vanilla",4800,0],["Rocío",4800,0],["Rosas",4800,0],["Sailor Man",4800,0],["Saphiruneta",4800,0],["Shadow Storm",4800,0],["Silver Bot",4800,0],["Snake & Roses",4800,0],["Soft Love",4800,0],["Suit Yourself",4800,0],["Sunset Fire",4800,0],["Sándalo y Violetas",4800,0],["Teakwood",4800,0],["Tokyo",4800,0],["Tribuna",4800,0],["Tropical",4800,0],["Uva",4800,0],["Vainilla",4800,0],["Velocity",4800,0],["Verbena",4800,0],["Violetas",4800,0]],"DIFUSORES":[["Adventure",6700,0],["Amanecer Citríco",3700,1],["Apple",6700,0],["Bamboo",6700,0],["Bebé",6700,0],["Bergamota & Cedro",6700,0],["Blossom Rouge",6700,0],["Bomba tropical",3700,1],["Brisa Floral",3700,1],["Bubblegum",6700,0],["Buttermilk",3700,1],["Café au Chocolat",6700,0],["Cappuccino",6700,0],["Citronella",6700,0],["Citrus",6700,0],["Clean Cotton",6700,0],["Coco Maracuyá",6700,0],["Coco Vai",6700,0],["Cony",6700,0],["Cookies & Cream",6700,0],["Corazón De Moras",3700,1],["Cristal Eden",6700,0],["Cristóbal",6700,0],["Damasco",6700,0],["Flores Blancas",6700,0],["Fresias & Bergamota",6700,0],["Frutas Exóticas",3700,1],["Frutos Patagónicos",6700,0],["Green",6700,0],["Guaraná",6700,0],["Hawai",6700,0],["Honey Elixir",3700,1],["Indiana",6700,0],["Jardín Marino",3700,1],["Jazmín",6700,0],["Lavanda",6700,0],["Lavanda Vainilla",6700,0],["Lavanda y Te Verde",6700,0],["Life In Petals",6700,0],["Lima Limón",6700,0],["Limón",6700,0],["Limón Dulce y Vainilla",6700,0],["Linah",6700,0],["Lola",6700,0],["London",6700,0],["Magnolia y Fresias",6700,0],["Mango",6700,0],["Manzana Canela",6700,0],["Maracuyá",6700,0],["Marino",6700,0],["Melocotón Blanco",6700,0],["Melón",6700,0],["Mery",6700,0],["Miel y Limón",6700,0],["Naranja & Chocolate",6700,0],["Naranja Pimienta",6700,0],["Orange",6700,0],["Oriente",6700,0],["Palo Santo",6700,0],["Papaya",6700,0],["Patio",6700,0],["Paula",6700,0],["Pera y Durazno",6700,0],["Peras y Flores",6700,0],["Pomelo Rosado",6700,0],["Pétalos de Orquídeas",6700,0],["Rocío",6700,0],["Sandía Pepino",6700,0],["Shadow Storm",6700,0],["Soft Love",6700,0],["Spicy Lemon",3700,1],["Strawberry And Roses",3700,1],["Sweet Bubble",3700,1],["Tokyo",6700,0],["Tropical",6700,0],["Uva",6700,0],["Vainilla",6700,0],["Vainilla Caramel",3700,1],["Vainilla Tonka",6700,0],["Verbena",6700,0],["Violetas",6700,0],["Wanted",6700,0]]}};
 const COLORS=["#e8788a","#4aa3a0","#e9a23b","#7a6bc4","#5b9bd5","#8bb34a","#c9645b","#b0824f"];
 const KEY="pedidos_v2",KEY1="pedidos_v1",OLD="saphirus_pedido_editor_v1";
 const STAT={draft:["草稿","#999"],sent:["已发送","#e9a23b"],recv:["已收货","#3aa655"]};
@@ -201,7 +214,7 @@ const LANG={
  es:{p1:s=>s?"PEDIDO A":"PEDIDO",big:"ORDEN",p2:s=>"ORDEN DE COMPRA",date:"Fecha",total:n=>"TOTAL GENERAL: "+n+" unidades",head:s=>s?"PEDIDO A "+s:"PEDIDO",amount:"Importe estimado"},
  zh:{p1:s=>s?"订货给":"",big:"订货单",p2:s=>s?"订 货 单":"",date:"日期",total:n=>"合计："+n+" 件",head:s=>s?"订货单 · "+s:"订货单",amount:"预计金额"}};
 const NATIVE=!!window.__NATIVE__;
-const APP_VERSION="1.1 · 2026-10-13";
+const APP_VERSION="1.2 · 2026-10-13";
 let S=null,Q="",QC=-1,PQ="",HQ="",HF="all",HR=[],draft={},SG={},SERVER=false,REV=0,tt=null,MI=null,MT=null,DCB=null,PCV=null,pushT=null,pending=false,pushing=false,dirty=false;
 const $=id=>document.getElementById(id);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
@@ -290,7 +303,7 @@ function route(keep){
  $("vHome").style.display=o?"none":"block";$("vEdit").style.display=o?"block":"none";
  if(o){renderEdit()}else{renderHome();if(!keep)scrollTo(0,0)}
 }
-addEventListener("hashchange",()=>{Q=PQ;PQ="";QC=-1;$("q").value=Q;route()});
+addEventListener("hashchange",()=>{if(typeof JUST0!="undefined")JUST0.clear();Q=PQ;PQ="";QC=-1;$("q").value=Q;route()});
 function open_(id){location.hash="o="+id;scrollTo(0,0)}
 function goHome(){location.hash=""}
 
@@ -380,19 +393,20 @@ function renderEdit(){
  const o=cur();if(!o){goHome();return}
  if(QC>=o.cats.length)QC=-1;
  $("qc").innerHTML=o.cats.length>1?`<button class="all ${QC<0?'on':''}" onclick="QC=-1;renderEdit()">全部</button>`+o.cats.map((c,i)=>`<button class="${QC==i?'on':''}" style="--c:${c.color}" onclick="setQC(${i})">${esc(c.name||"未命名")}</button>`).join(""):"";
- $("q").placeholder=QC>=0?"🔍 只在 "+(o.cats[QC].name||"该类")+" 内搜索":"🔍 搜索品名（忽略重音/大小写）";
+ $("q").placeholder=QC>=0?"🔍 只在 "+(o.cats[QC].name||"该类")+" 内搜索订货":"🔍 搜索品名来订货（忽略重音/大小写）";
  const nq=norm(Q);let h="",anyMatch=false,exact=false;
  o.cats.forEach((c,ci)=>{
   if(QC>=0&&ci!=QC)return;
   c.items.forEach(it=>{if(nq&&norm(it.n)==nq)exact=true});
   const dm=dupMap(c);
-  const idx=sorted(o,c).filter(i=>!nq||norm(c.items[i].n).includes(nq));
+  const idx=sorted(o,c).filter(i=>nq?norm(c.items[i].n).includes(nq):(c.items[i].q>0||JUST0.has(o.id+":"+ci+":"+i)));
   if(nq&&!idx.length)return;anyMatch=true;
+  const hidden=c.items.filter(x=>x.q==0).length;
   const sum=c.items.reduce((a,b)=>a+b.q,0),am=amtC(c);
   const cards=idx.map(i=>{const it=c.items[i],isDup=dm[norm(it.n)]>1;
-   return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><textarea class="nm" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button><button class="d" onclick="delItem(${ci},${i})">×</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="hint">这个种类还没有品项，在下面添加</div>`);
+   return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><button class="dl" title="删除" onclick="delItem(${ci},${i})">×</button><textarea class="nm" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="hint">${c.items.length?"还没有订货的品项":"这个种类还没有品项"}<br><small>在上方搜索框输入品名来订货${hidden?"（已收录 "+hidden+" 项）":""}</small></div>`);
   const d=draft[ci]||{n:"",q:3};
-  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper')" onchange="cat(${ci},'name',this.value)"><span class="cnt">${sum}件${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="arm(this,()=>delCat(${ci}),'删?')">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" onchange="cat(${ci},'sub',this.value)"><div class="items">${cards}</div>
+  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper')" onchange="cat(${ci},'name',this.value)"><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${sum}件${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="arm(this,()=>delCat(${ci}),'删?')">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" onchange="cat(${ci},'sub',this.value)"><div class="items">${cards}</div>
   <div class="add"><input class="an" id="an${ci}" placeholder="添加品名" autocomplete="off" value="${esc(d.n)}" oninput="dr(${ci}).n=liveCase(this,'first');sug(${ci})" onkeydown="if(event.key=='Enter')addItem(${ci})"><input class="aq" type="number" inputmode="numeric" value="${d.q}" oninput="dr(${ci}).q=this.value"><button onclick="addItem(${ci})">添加</button></div><div class="sug" id="sg${ci}"></div></section>`;
  });
  if(nq&&!exact&&o.cats.length)h+=`<div class="card">${QC>=0?"在 "+esc(o.cats[QC].name)+" 内":""}没有名为 “<b>${esc(Q.trim())}</b>” 的品项${anyMatch?"（上面是相近的）":""}。添加到：<div class="chips">${o.cats.map((c,ci)=>({c,ci})).filter(x=>QC<0||x.ci==QC).map(({c,ci})=>`<button style="background:${c.color}" onclick="quick(${ci})">${esc(c.name||"未命名")}</button>`).join("")}</div></div>`;
@@ -403,10 +417,12 @@ function renderEdit(){
  $("eSt").innerHTML=Object.entries(STAT).map(([k,v])=>`<button class="${o.status==k?'on':''}" style="--c:${v[1]}" onclick="setSt('${k}')">${v[0]}</button>`).join("");
  syncUndo();
 }
-function setQC(i){QC=(QC==i)?-1:i;renderEdit()}
+function onSearch(v){if(!v.trim())JUST0.clear();Q=v;renderEdit()}
+function setQC(i){JUST0.clear();QC=(QC==i)?-1:i;renderEdit()}
 const dr=ci=>draft[ci]||(draft[ci]={n:"",q:3});
-function adj(ci,i,d){mut(o=>{const it=o.cats[ci].items[i];it.q=Math.max(0,it.q+d)},"q:"+ci+":"+i)}
-function setq(ci,i,v){mut(o=>{o.cats[ci].items[i].q=Math.max(0,parseInt(v)||0)})}
+const JUST0=new Set();
+function adj(ci,i,d){const o0=cur();const it0=o0.cats[ci].items[i];if(it0.q>0&&it0.q+d<=0)JUST0.add(o0.id+":"+ci+":"+i);mut(o=>{const it=o.cats[ci].items[i];it.q=Math.max(0,it.q+d)},"q:"+ci+":"+i)}
+function setq(ci,i,v){const o0=cur();const it0=o0.cats[ci].items[i];const nv=Math.max(0,parseInt(v)||0);if(it0.q>0&&nv==0)JUST0.add(o0.id+":"+ci+":"+i);mut(o=>{o.cats[ci].items[i].q=nv})}
 function setp(ci,i,v){mut(o=>{o.cats[ci].items[i].p=v===""?null:Math.max(0,parseFloat(v)||0)})}
 function rename(ci,i,v){const nv=fixName(v);if(!nv)return renderEdit();mut(o=>{o.cats[ci].items[i].n=nv});addVocab(nv);save();
  const c=cur().cats[ci];if(c.items.filter(x=>norm(x.n)==norm(nv)).length>1)toast("⚠ 本类别里已有同名品项，请确认是否重复")}
@@ -589,6 +605,51 @@ function confirmSheet(){
  if(isMobile()&&navigator.canShare&&navigator.canShare({files:[f]})){
   navigator.share({files:[f],title:name}).then(()=>{closeModal();toast("表格已发送")}).catch(e=>{if(e&&e.name!="AbortError"){closeModal();dlBlob(blob,name);toast("已下载表格："+name)}});
  }else{closeModal();dlBlob(blob,name);toast("已生成表格："+name)}}
+
+/* ================= 官方目录导入 ================= */
+let CQ="",CSEL={},CML=true;
+const OFF_TARGET={AROMA:["aroma","aerosol","aromatizante"],TEXTIL:["textil","textile","tela"],DIFUSORES:["difusor","difusores","dif"]};
+function offTargetIdx(o,key){const ks=OFF_TARGET[key];const i=o.cats.findIndex(c=>ks.some(k=>norm(c.name).includes(k)||norm(c.sub||"").includes(k)));return i}
+function catModal(){CQ="";CSEL={};CML=true;catRender(true)}
+function catKey(k,i){return k+"|"+i}
+function catRender(first){
+ const o=cur(),nq=norm(CQ);
+ let h="",total=0,newN=0;
+ Object.entries(OFFICIAL.cats).forEach(([key,list])=>{
+  const ti=offTargetIdx(o,key),tgt=ti>=0?o.cats[ti]:null,have=new Set(tgt?tgt.items.map(i=>norm(i.n)):[]);
+  const rows=list.map((it,i)=>({it,i})).filter(({it})=>(CML||!it[2])&&(!nq||norm(it[0]).includes(nq)));
+  const sel=rows.filter(({i})=>CSEL[catKey(key,i)]).length,addable=rows.filter(({it})=>!have.has(norm(it[0])));
+  total+=sel;newN+=rows.filter(({it,i})=>CSEL[catKey(key,i)]&&!have.has(norm(it[0]))).length;
+  h+=`<div class="cg"><div class="cgh"><b>${key} <small style="font-weight:400;color:#999">${rows.length} 项 · 已选 ${sel}${tgt?"":" · 将新建种类"}</small></b><button onclick="catAll('${key}',true)">全选未有</button><button onclick="catAll('${key}',false)">清除</button></div>`+
+  rows.map(({it,i})=>{const ex=have.has(norm(it[0]));return `<label class="co ${ex?"have":""}"><input type="checkbox" ${CSEL[catKey(key,i)]&&!ex?"checked":""} ${ex?"disabled":""} onchange="CSEL['${catKey(key,i)}']=this.checked;catRender()"><span>${esc(it[0])}${it[2]?' <small>60ml</small>':''}</span>${ex?'<span class="tg">已有</span>':`<small>$${it[1]}</small>`}</label>`}).join("")+`</div>`;
+ });
+ if(first){
+  modal(`<div class="mh">官方目录导入</div><div class="mt">来自 saphirus.com.ar（${esc(OFFICIAL.date)}），共 ${Object.values(OFFICIAL.cats).reduce((a,b)=>a+b.length,0)} 个商品。勾选后导入，<b>数量默认 0</b>，订货时再改；数量为 0 的不会出现在海报和表格里。已在订单里的会标“已有”并跳过。</div>
+  <input class="sq" id="cq" style="border:1px solid #e3d8c8;margin:0 0 6px" placeholder="🔍 搜索官方品名" oninput="CQ=this.value;catRender()">
+  <label class="opt" style="margin:4px 0"><input type="checkbox" checked onchange="CML=this.checked;catRender()"> 包含 60ml 小规格（DIFUSORES）</label>
+  <div class="cl" id="cl"></div>
+  <div class="mb2"><button class="g" onclick="closeModal()">取消</button><button id="cgo" onclick="catApply()">导入</button></div>`);
+ }
+ const st=$("cl").scrollTop;$("cl").innerHTML=h;$("cl").scrollTop=st;$("cgo").textContent="导入 "+newN+" 项";$("cgo").disabled=!newN;
+}
+function catAll(key,on){const o=cur(),nq=norm(CQ),ti=offTargetIdx(o,key),have=new Set(ti>=0?o.cats[ti].items.map(i=>norm(i.n)):[]);
+ OFFICIAL.cats[key].forEach((it,i)=>{if((CML||!it[2])&&(!nq||norm(it[0]).includes(nq))&&!have.has(norm(it[0])))CSEL[catKey(key,i)]=on});catRender()}
+function catApply(){
+ let add=0,newCats=0;
+ mut(o=>{Object.entries(OFFICIAL.cats).forEach(([key,list])=>{
+  const picked=list.filter((it,i)=>CSEL[catKey(key,i)]);if(!picked.length)return;
+  let ti=offTargetIdx(o,key),tgt=ti>=0?o.cats[ti]:null;
+  if(!tgt){tgt={name:key,sub:{AROMA:"Aromatizante",TEXTIL:"Perfume para telas",DIFUSORES:"Difusores"}[key]||"",color:COLORS[o.cats.length%COLORS.length],items:[]};o.cats.push(tgt);newCats++}
+  const have=new Set(tgt.items.map(i=>norm(i.n)));
+  picked.forEach(it=>{if(have.has(norm(it[0])))return;tgt.items.push({n:it[0],q:0,p:o.price&&it[1]?it[1]:null});have.add(norm(it[0]));addVocab(it[0]);add++})})});
+ save();closeModal();toast("已导入 "+add+" 项"+(newCats?"，新建 "+newCats+" 个种类":"")+"（数量均为 0）",undo)}
+
+/* ================= 更多菜单 ================= */
+function moreMenu(){
+ modal(`<div class="mh">更多</div><div class="ab" style="margin-top:6px">
+  <button onclick="closeModal();importModal()">📋 批量导入（粘贴文字清单）</button>
+  <button onclick="closeModal();catModal()">🏷 官方目录导入（Saphirus ${Object.values(OFFICIAL.cats).reduce((a,b)=>a+b.length,0)} 个商品）</button>
+  <button class="g" onclick="closeModal()">关闭</button></div>`)}
 
 /* ================= 海报 ================= */
 function rr(x,c,X,y,w,h,r){x.beginPath();x.roundRect(X,y,w,h,r);x.fillStyle=c;x.fill()}
