@@ -1,16 +1,17 @@
-from PIL import Image, ImageDraw
-S = 1024
-im = Image.new("RGB", (S, S), "#3a2e2a")
-d = ImageDraw.Draw(im)
-d.rounded_rectangle((232, 170, 792, 854), 48, fill="#fbf4ea")
-d.rounded_rectangle((232, 170, 792, 300), 48, fill="#e8788a")
-d.rectangle((232, 250, 792, 300), fill="#e8788a")
-cols = ["#e8788a", "#4aa3a0", "#e9a23b", "#7a6bc4"]
-y = 360
-for i, c in enumerate(cols):
-    d.rounded_rectangle((292, y, 332, y + 40), 12, fill=c)
-    d.rounded_rectangle((362, y + 6, 362 + [300, 240, 280, 200][i], y + 34), 14, fill="#cfc3b2")
-    d.rounded_rectangle((700, y + 4, 752, y + 36), 16, fill=c)
-    y += 110
-im.save("Pedidos/Assets.xcassets/AppIcon.appiconset/icon-1024.png")
-print("icon ok")
+#!/usr/bin/env python3
+"""合并 icon_parts/*.b64 并还原成 App 图标 PNG（iOS 要求 1024x1024 无透明通道）。
+分片不齐或 JPEG 损坏时直接失败，避免生成残缺图标。"""
+import base64, glob, io, sys
+from PIL import Image, ImageFile
+parts = sorted(glob.glob("icon_parts/part_*.b64"))
+if len(parts) < 8:
+    sys.exit("parts incomplete: %d/8" % len(parts))
+raw = base64.b64decode("".join("".join(open(p).read().split()) for p in parts))
+if not raw.startswith(b"\xff\xd8") or not raw.rstrip(b"\x00").endswith(b"\xff\xd9"):
+    sys.exit("icon source truncated")
+im = Image.open(io.BytesIO(raw)); im.load()   # 强制完整解码
+im = im.convert("RGB")
+if im.size != (1024, 1024):
+    im = im.resize((1024, 1024), Image.LANCZOS)
+im.save("Pedidos/Assets.xcassets/AppIcon.appiconset/icon-1024.png", "PNG")
+print("icon ok", im.size, im.mode)
