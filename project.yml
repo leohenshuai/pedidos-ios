@@ -9,12 +9,8 @@ settings:
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
-    DEVELOPMENT_TEAM: ""
-    CODE_SIGN_STYLE: Manual
-    CODE_SIGN_IDENTITY: ""
     CODE_SIGNING_REQUIRED: "NO"
     CODE_SIGNING_ALLOWED: "NO"
-    ENABLE_BITCODE: "NO"
 targets:
   Pedidos:
     type: application
@@ -49,4 +45,3 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.pedidos.app
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         TARGETED_DEVICE_FAMILY: "1,2"
-        GENERATE_INFOPLIST_FILE: "NO"

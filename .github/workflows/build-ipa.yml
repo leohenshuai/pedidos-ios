@@ -19,10 +19,12 @@ jobs:
             echo "### xcodebuild -version"; xcodebuild -version
             echo "### brew install xcodegen"; brew install xcodegen 2>&1 | tail -15
             echo "### which xcodegen"; which xcodegen
-            echo "### pillow"; python3 -m pip install --quiet pillow 2>&1 | tail -5
+            echo "### pillow"; python3 -m pip install --quiet --break-system-packages pillow 2>&1 | tail -5
             echo "### make_icon"; python3 make_icon.py 2>&1 | tail -5
             echo "### xcodegen"; xcodegen generate 2>&1 | tail -20
             echo "### ls"; ls
+            echo "### xcodebuild -list"; xcodebuild -list -project Pedidos.xcodeproj 2>&1 | tail -25
+            echo "### pbxproj head"; head -c 600 Pedidos.xcodeproj/project.pbxproj
           } > build.log 2>&1
           test -d Pedidos.xcodeproj
       - name: Build (no code signing)
