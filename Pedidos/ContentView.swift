@@ -93,7 +93,9 @@ final class SchemeHandler: NSObject, WKURLSchemeHandler {
             return
         }
         let name = (path == "/" || path.isEmpty) ? "pedidos.html" : String(path.dropFirst())
-        if let f = Bundle.main.url(forResource: "Web/" + name, withExtension: nil), let d = try? Data(contentsOf: f) {
+        let found = Bundle.main.url(forResource: "Web/" + name, withExtension: nil)
+            ?? Bundle.main.url(forResource: name, withExtension: nil)
+        if let f = found, let d = try? Data(contentsOf: f) {
             send(200, d, name.hasSuffix(".html") ? "text/html; charset=utf-8" : "application/octet-stream")
         } else {
             send(404, Data("not found".utf8), "text/plain")
