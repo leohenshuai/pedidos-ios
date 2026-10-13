@@ -10,12 +10,15 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
-      - name: Guard (skip until all icon parts are pushed)
+      - name: Guard (only the final trigger commit builds)
         id: guard
         run: |
+          msg=$(git log -1 --pretty=%s)
           n=$(ls icon_parts/part_*.b64 2>/dev/null | wc -l | tr -d ' ')
-          echo "parts=$n" >> "$GITHUB_OUTPUT"
-          if [ "$n" -lt 8 ]; then echo "skip=true" >> "$GITHUB_OUTPUT"; echo "skip: only $n/8 icon parts" > build.log; fi
+          echo "parts=$n msg=$msg" >> "$GITHUB_OUTPUT"
+          if [ "$msg" != "Trigger final build" ] || [ "$n" -lt 8 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"; echo "skip: msg=$msg parts=$n/8" > build.log
+          fi
       - name: Prepare
         if: steps.guard.outputs.skip != 'true'
         id: prep
@@ -80,7 +83,10 @@ jobs:
         run: |
           mkdir -p /tmp/st && cd /tmp/st && rm -rf .git
           { echo "prep=${{ steps.prep.outcome }} build=${{ steps.build.outcome }} pack=${{ steps.pack.outcome }}"; echo "----- build.log -----"; tail -150 "$GITHUB_WORKSPACE/build.log" 2>/dev/null || echo "no build.log"; } > STATUS.txt
-          [ -f "$GITHUB_WORKSPACE/Pedidos.ipa" ] && base64 -i "$GITHUB_WORKSPACE/Pedidos.ipa" | fold -w 76 > ipa.b64 || true
+          if [ -f "$GITHUB_WORKSPACE/Pedidos.ipa" ]; then
+            base64 < "$GITHUB_WORKSPACE/Pedidos.ipa" | fold -w 76 > ipa.b64
+            echo "ipa bytes: $(wc -c < "$GITHUB_WORKSPACE/Pedidos.ipa" | tr -d ' ') md5: $(md5 -q "$GITHUB_WORKSPACE/Pedidos.ipa")" >> STATUS.txt
+          fi
           git init -q && git config user.name ci && git config user.email ci@example.com
-          git checkout -q -b status && git add STATUS.txt; [ -f ipa.b64 ] && git add ipa.b64 || true && git commit -q -m "build ${{ github.run_number }}"
+          git checkout -q -b status && git add STATUS.txt; [ -f ipa.b64 ] && git add ipa.b64; git commit -q -m "build ${{ github.run_number }}"
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" status:status
