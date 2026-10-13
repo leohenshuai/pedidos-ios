@@ -47,15 +47,9 @@ jobs:
           gh release create "$TAG" Pedidos.ipa --title "Pedidos IPA $TAG" --notes "Unsigned IPA. Re-sign with TrollStore / AltStore / Sideloadly before installing." --repo "${{ github.repository }}"
       - name: Save log
         if: always()
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          git config user.name ci && git config user.email ci@example.com
-          git fetch origin status || true
-          git checkout --orphan status-tmp
-          git rm -rf . >/dev/null 2>&1 || true
-          cp ../build.log . 2>/dev/null || cp "$GITHUB_WORKSPACE/build.log" . 2>/dev/null || echo "no log" > build.log
-          echo "job status: ${{ job.status }}" > STATUS.txt
-          git add build.log STATUS.txt
-          git commit -m "build ${{ github.run_number }}: ${{ job.status }}" || true
-          git push -f origin status-tmp:status
+          mkdir -p /tmp/st && cd /tmp/st && rm -rf .git
+          { echo "job status: ${{ job.status }}"; echo "----- tail of build.log -----"; tail -120 "$GITHUB_WORKSPACE/build.log" 2>/dev/null || echo "no build.log"; } > STATUS.txt
+          git init -q && git config user.name ci && git config user.email ci@example.com
+          git checkout -q -b status && git add STATUS.txt && git commit -q -m "build ${{ github.run_number }}: ${{ job.status }}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" status:status
