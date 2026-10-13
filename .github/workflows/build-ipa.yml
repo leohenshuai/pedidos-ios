@@ -22,6 +22,8 @@ jobs:
             echo "### pillow"; python3 -m pip install --quiet --break-system-packages pillow 2>&1 | tail -5
             echo "### make_icon"; python3 make_icon.py 2>&1 | tail -5
             echo "### xcodegen"; xcodegen generate 2>&1 | tail -20
+            sed -i '' "s/objectVersion = 77;/objectVersion = 56;/" Pedidos.xcodeproj/project.pbxproj
+            grep -m1 objectVersion Pedidos.xcodeproj/project.pbxproj
             echo "### ls"; ls
             echo "### xcodebuild -list"; xcodebuild -list -project Pedidos.xcodeproj 2>&1 | tail -25
             echo "### pbxproj head"; head -c 600 Pedidos.xcodeproj/project.pbxproj
