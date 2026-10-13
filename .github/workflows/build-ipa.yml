@@ -86,7 +86,8 @@ jobs:
           if [ -f "$GITHUB_WORKSPACE/Pedidos.ipa" ]; then
             base64 < "$GITHUB_WORKSPACE/Pedidos.ipa" | fold -w 76 > ipa.b64
             echo "ipa bytes: $(wc -c < "$GITHUB_WORKSPACE/Pedidos.ipa" | tr -d ' ') md5: $(md5 -q "$GITHUB_WORKSPACE/Pedidos.ipa")" >> STATUS.txt
+            rm -f ipapart_*; split -b 600000 ipa.b64 ipapart_; rm ipa.b64
           fi
           git init -q && git config user.name ci && git config user.email ci@example.com
-          git checkout -q -b status && git add STATUS.txt; [ -f ipa.b64 ] && git add ipa.b64; git commit -q -m "build ${{ github.run_number }}"
+          git checkout -q -b status && git add STATUS.txt; git add ipapart_* 2>/dev/null; git commit -q -m "build ${{ github.run_number }}"
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" status:status
