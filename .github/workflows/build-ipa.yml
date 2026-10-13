@@ -24,7 +24,9 @@ jobs:
             -sdk iphoneos -destination 'generic/platform=iOS' \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            clean build | tail -40
+            clean build > build.log 2>&1 || echo "BUILD_FAILED" >> build.log
+          tail -60 build.log
+          grep -q BUILD_FAILED build.log && exit 1 || true
       - name: Package IPA
         run: |
           APP=$(find build/Build/Products -name "Pedidos.app" -maxdepth 3 | head -1)
@@ -43,3 +45,17 @@ jobs:
         run: |
           TAG="build-${{ github.run_number }}"
           gh release create "$TAG" Pedidos.ipa --title "Pedidos IPA $TAG" --notes "Unsigned IPA. Re-sign with TrollStore / AltStore / Sideloadly before installing." --repo "${{ github.repository }}"
+      - name: Save log
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name ci && git config user.email ci@example.com
+          git fetch origin status || true
+          git checkout --orphan status-tmp
+          git rm -rf . >/dev/null 2>&1 || true
+          cp ../build.log . 2>/dev/null || cp "$GITHUB_WORKSPACE/build.log" . 2>/dev/null || echo "no log" > build.log
+          echo "job status: ${{ job.status }}" > STATUS.txt
+          git add build.log STATUS.txt
+          git commit -m "build ${{ github.run_number }}: ${{ job.status }}" || true
+          git push -f origin status-tmp:status
