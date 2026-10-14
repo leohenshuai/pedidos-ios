@@ -5,39 +5,52 @@
 <style>
 :root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
-body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif;background:#fbf4ea;color:#3a2e2a;max-width:760px;margin:0 auto;padding-bottom:calc(110px + var(--sab));min-height:100vh}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif;background:#fbf4ea;color:#3a2e2a;max-width:760px;margin:0 auto;min-height:100vh}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 button,select,.oc,.hr,.co{font-family:inherit;cursor:pointer;touch-action:manipulation}
 button{-webkit-user-select:none;user-select:none}
 button:disabled{opacity:.35}
-.top{position:sticky;top:0;z-index:5;background:#3a2e2a;color:#fbf4ea;padding:calc(10px + var(--sat)) 12px 10px}
+.top{position:sticky;top:0;z-index:5;background:#3a2e2a;color:#fbf4ea;padding:calc(8px + var(--sat)) 12px 8px}
 .r1{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.top h1{font-size:17px;letter-spacing:1px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top h1{font-size:15px;letter-spacing:.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .top b{color:#f0c987;font-size:15px;white-space:nowrap}
 .back{border:0;background:#ffffff26;color:#fff;border-radius:10px;padding:9px 14px;font-size:15px;flex:none;min-height:38px}
-.sq,#q{width:100%;margin-top:8px;padding:10px 12px;border:0;border-radius:12px;font-size:16px;background:#fff;color:#3a2e2a;font-family:inherit}
-.qc{display:flex;gap:6px;overflow-x:auto;padding-top:8px;-webkit-overflow-scrolling:touch}
+.sq,#q{width:100%;margin-top:6px;padding:8px 12px;border:0;border-radius:11px;font-size:16px;background:#fff;color:#3a2e2a;font-family:inherit}
+.qc{display:flex;gap:5px;overflow-x:auto;padding-top:6px;-webkit-overflow-scrolling:touch}
 .qc:empty{display:none}
-.qc button{flex:none;border:0;border-radius:18px;padding:9px 14px;font-size:14px;background:#ffffff26;color:#fff;white-space:nowrap}
+.qc button{flex:none;border:0;border-radius:14px;padding:6px 10px;font-size:12.5px;background:#ffffff26;color:#fff;white-space:nowrap}
 .qc button.on{background:var(--c,#f0c987);color:#fff;font-weight:700;box-shadow:0 0 0 2px #fff6}
 .qc button.all.on{background:#f0c987;color:#3a2e2a}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px}
-.oc{background:#fff;border-radius:14px;border-top:7px solid var(--c);padding:12px;box-shadow:0 2px 10px #0001;display:flex;flex-direction:column;gap:4px;min-height:140px;cursor:pointer}
-.oct{font-size:18px;font-weight:700;line-height:1.2;word-break:break-word}
-.ocm{font-size:12px;color:#888;min-height:15px}
-.ocs{font-size:13px;color:#555;margin-top:auto}.ocs b{font-size:22px;color:var(--c)}
-.oca{display:flex;gap:5px;margin-top:6px}
-.oca button{flex:1;border:0;border-radius:8px;background:#f1eee9;padding:7px 0;font-size:13px;color:#3a2e2a}
+/* ---- 主页 #vHome ---- */
+.vwrap{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+#hCnt{background:#ffffff1f;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:600;white-space:nowrap;flex:none}
+#hf{overflow-x:visible;gap:4px}
+#hf button{flex:1 1 0;min-width:0;min-height:34px;padding:6px 2px;text-align:center;font-size:13px}
+#hf .nb{display:inline-block;min-width:14px;margin-left:3px;padding:1px 5px;border-radius:8px;background:#ffffff33;font-size:11px;font-weight:400;line-height:1.3;text-align:center}
+#vHome .st{display:inline-flex;align-items:center;font-size:11px;padding:3px 8px;border-radius:9px;line-height:1.3;font-weight:600}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px}
+.oc{background-color:#fff;background-image:linear-gradient(90deg,var(--c) 0%,var(--c) 45%,rgba(255,255,255,0) 115%);background-repeat:no-repeat;background-position:top;background-size:100% 4px;border-radius:16px;padding:14px 12px 12px;box-shadow:0 1px 2px #3a2e2a0a,0 6px 16px #3a2e2a12;display:flex;flex-direction:column;gap:6px;min-height:150px;cursor:pointer;transition:transform .15s}
+.oc:active{transform:scale(.98)}
+.oct{font-size:15px;font-weight:700;line-height:1.2;word-break:break-word}
+.ocm{display:flex;align-items:center;flex-wrap:wrap;gap:5px;font-size:11px;color:#888;min-height:28px;padding:3px 0}
+.ocs{font-size:12px;color:#555;margin-top:auto}.ocs b{font-size:22px;font-weight:800;color:var(--c);line-height:1.05;margin-right:3px}
+.oca{display:flex;gap:6px;margin-top:8px}
+.oca button{flex:1;border:0;border-radius:9px;background:#f4f0e9;padding:0 4px;min-height:32px;font-size:12px;color:#3a2e2a;transition:background .15s}
 .oca button.arm{background:#d9534f!important;color:#fff!important}
-.newo{border:2px dashed #b9a88f;border-radius:14px;background:none;color:#8a7a68;font-size:16px;min-height:140px}
-.empty{margin:30px 20px;text-align:center;color:#999;line-height:1.7;grid-column:1/3}
+.oca button.del{color:#c0392b;font-weight:600}
+.newo{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:2px dashed #d8cbb4;border-radius:14px;background:#fffdf7;color:#a08e7c;min-height:120px}
+.newo .np{font-size:28px;line-height:1;font-weight:300;color:#c7b49c}
+.newo .nl{font-size:13px}
+.empty{margin:0;padding:36px 16px;text-align:center;color:#aaa;line-height:1.7;grid-column:1/3}
 .hl{margin:12px}.hs{font-size:13px;color:#888;margin:4px 4px 8px}
 .hr{display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:10px 12px;margin-bottom:8px;border-left:6px solid var(--c);box-shadow:0 1px 6px #0001;cursor:pointer}
 .hr div{flex:1;min-width:0}.hr b{font-size:16px}.hr small{display:block;font-size:12px;color:#999;margin-top:2px}
 .pill{background:var(--c);color:#fff;border-radius:16px;padding:2px 12px;font-weight:700;font-size:16px}
-.foot{margin:6px 14px;font-size:12px;color:#999;line-height:1.7}
-.foot .bk{display:flex;gap:8px;margin-bottom:8px}
-.foot button,.foot label{flex:1;text-align:center;border:1px solid #ddd;background:#fff;border-radius:10px;padding:9px 4px;font-size:13px;color:#3a2e2a}
+.foot{margin:auto 14px 0;margin-top:auto;padding-top:10px;padding-bottom:calc(16px + var(--sab));font-size:12px;color:#999;line-height:1.7}
+.foot .bk{display:flex;gap:8px;margin-bottom:10px}
+.foot button,.foot label{flex:1;display:flex;align-items:center;justify-content:center;min-height:36px;text-align:center;border:1px solid #e7ddca;background:#fff;border-radius:9px;padding:6px 4px;font-size:12px;color:#4a3d35}
+
+#vEdit{padding-bottom:calc(110px + var(--sab))}
 .meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 12px 0}
 .meta label{font-size:11px;color:#999;display:block;margin:0 0 2px 4px}
 .meta input{width:100%;padding:10px 10px;border:1px solid #e3d8c8;border-radius:10px;font-size:16px;background:#fff;font-family:inherit}
@@ -155,16 +168,15 @@ textarea.nm:focus{outline:none;border-bottom:2px solid var(--c);background:#fffb
 #toast u{color:#f0c987;margin-left:12px;cursor:pointer}
 </style></head><body>
 
-<div id="vHome">
+<div id="vHome"><div class="vwrap">
  <div class="top"><div class="r1"><h1>📦 订货单管理器</h1><b id="hCnt"></b></div>
-  <input id="hq" class="sq" type="search" placeholder="🔍 搜索所有订单里的品项（如 Lola）" oninput="HQ=this.value;renderHome()">
+  <input id="hq" class="sq" type="search" placeholder="搜索所有订单里的品项，如 Lola" oninput="HQ=this.value;renderHome()">
   <div id="hf" class="qc"></div></div>
  <div id="olist"></div>
  <div class="foot">
   <div class="bk"><button onclick="exportAll()">导出全部备份</button><label>导入备份<input type="file" accept=".json,application/json" style="display:none" onchange="importAll(this)"></label><button onclick="vocabModal()">品名库</button></div>
-  <div id="stat"></div>
  </div>
-</div>
+</div></div>
 
 <div id="vEdit" style="display:none">
  <div class="top">
@@ -339,8 +351,7 @@ function renderHome(){
  const os=[...S.orders].sort((a,b)=>b.upd-a.upd);
  $("hCnt").textContent=os.length+" 个订单";
  const cn={all:os.length};Object.keys(STAT).forEach(k=>cn[k]=os.filter(o=>o.status==k).length);
- $("hf").innerHTML=[["all","全部"],...Object.entries(STAT).map(([k,v])=>[k,v[0]])].map(([k,t])=>`<button class="${HF==k?'on':''} ${k=='all'?'all':''}" style="--c:${k=='all'?'#f0c987':STAT[k][1]}" onclick="HF='${k}';renderHome()">${t} ${cn[k]}</button>`).join("");
- $("stat").innerHTML=(SERVER?(NATIVE?"数据保存在：手机“文件”App → 我的 iPhone → 订货单 文件夹里的 pedidos_data.json":"数据保存在：启动器所在文件夹的 pedidos_data.json（同时缓存于浏览器）"):"数据保存在：当前浏览器（清除浏览器数据会丢失，建议定期导出备份）")+"<br>品名库："+S.vocab.length+" 个，输入时会自动提示"+"<br>版本 "+APP_VERSION;
+ $("hf").innerHTML=[["all","全部"],...Object.entries(STAT).map(([k,v])=>[k,v[0]])].map(([k,t])=>`<button class="${HF==k?'on':''} ${k=='all'?'all':''}" style="--c:${k=='all'?'#f0c987':STAT[k][1]}" onclick="HF='${k}';renderHome()">${t}<span class="nb">${cn[k]}</span></button>`).join("");
  const nq=norm(HQ);
  if(nq){
   HR=[];os.forEach(o=>o.cats.forEach(c=>c.items.forEach(it=>{if(norm(it.n).includes(nq))HR.push({o,c,it})})));
@@ -352,8 +363,8 @@ function renderHome(){
  }
  const list=os.filter(o=>HF=="all"||o.status==HF);
  $("olist").innerHTML=`<div class="g2">`+list.map(o=>{const c=(o.cats[0]||{}).color||COLORS[0],st=STAT[o.status];
-  return `<div class="oc" style="--c:${c}" onclick="open_('${o.id}')"><div class="oct">${esc(o.sup||"未命名订单")}</div><div class="ocm"><span class="st" style="background:${st[1]}" onclick="event.stopPropagation();cycleSt('${o.id}')">${st[0]}</span> ${esc(o.dt)}</div><div class="ocs"><b>${sumO(o)}</b> 件 · ${o.cats.length} 类 ${cnt(o)} 项${o.price&&amtO(o)?"<br>"+esc(o.cur)+fmt(amtO(o)):""}</div><div class="oca"><button onclick="event.stopPropagation();dup('${o.id}')">复制</button><button onclick="event.stopPropagation();arm(this,()=>delOrder('${o.id}'),'确认删除?')">删除</button></div></div>`}).join("")
-  +`<button class="newo" onclick="newOrder()">＋ 新建订单</button>`+(list.length?"":`<div class="empty">这个状态下没有订单</div>`)+`</div>`;
+  return `<div class="oc" style="--c:${c}" onclick="open_('${o.id}')"><div class="oct">${esc(o.sup||"未命名订单")}</div><div class="ocm"><span class="st" style="background:${st[1]}" onclick="event.stopPropagation();cycleSt('${o.id}')">${st[0]}</span> ${esc(o.dt)}</div><div class="ocs"><b>${sumO(o)}</b> 件 · ${o.cats.length} 类 ${cnt(o)} 项${o.price&&amtO(o)?"<br>"+esc(o.cur)+fmt(amtO(o)):""}</div><div class="oca"><button onclick="event.stopPropagation();dup('${o.id}')">复制</button><button class="del" onclick="event.stopPropagation();arm(this,()=>delOrder('${o.id}'),'确认删除?')">删除</button></div></div>`}).join("")
+  +`<button class="newo" onclick="newOrder()"><span class="np">＋</span><span class="nl">新建订单</span></button>`+(list.length?"":`<div class="empty">这个状态下没有订单</div>`)+`</div>`;
 }
 function openHit(i){const h=HR[i];if(!h)return;PQ=h.it.n;open_(h.o.id)}
 function cycleSt(id){const o=S.orders.find(x=>x.id==id);if(!o)return;const k=Object.keys(STAT);o.status=k[(k.indexOf(o.status)+1)%k.length];o.upd=Date.now();save();renderHome()}
