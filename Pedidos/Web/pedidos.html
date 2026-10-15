@@ -266,6 +266,34 @@ section .sh{padding-top:12px}
 .setb{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:14px 0;border-bottom:.5px solid #eee;font-size:16px;text-align:left;color:#4a3b30}
 .setb:last-child{border:0}.setb span:first-child{font-size:22px}
 .tp.vin{animation:vin .42s cubic-bezier(.22,1,.36,1) backwards}
+.srow-b{border:0;border-radius:999px;padding:9px 16px;background:#c8873d;color:#fff;font-size:15px;font-weight:600}
+.cand{margin:8px 12px 4px;padding:8px 10px;background:rgba(255,255,255,.7);border:.5px solid rgba(255,255,255,.9);border-radius:20px;box-shadow:0 4px 14px rgba(80,50,20,.07)}
+.cand .ct{font-size:12px;color:#8a7a68;margin:0 2px 6px}.cw{display:flex;flex-wrap:wrap;gap:6px}
+.cb,.cnew{border:0;border-radius:999px;padding:7px 12px;background:#f6ecdd;font-size:15px;color:#4a3b30;display:inline-flex;flex-direction:column;align-items:flex-start;line-height:1.15;border-left:4px solid var(--c,#c8873d)}
+.cb small{font-size:10.5px;color:#9a8a78}.cb mark{background:#ffe08a;border-radius:3px;color:inherit}
+.cnew{background:#c8873d;color:#fff;width:100%;flex-direction:row;font-weight:600;margin-bottom:6px;border-left:0}
+.cand.row .cw{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
+.cand.row .cw::-webkit-scrollbar{display:none}
+.cand.row .cb{flex:0 0 auto;white-space:nowrap}
+.cand.row{padding:6px 10px}
+#cbox .cand{margin:6px 0 2px;box-shadow:none}
+#cbox .cand:not(.row) .cw{max-height:34vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.msum{display:flex;align-items:center;gap:8px;width:calc(100% - 24px);margin:8px 12px 2px;padding:9px 14px;border:0;border-radius:999px;background:rgba(255,255,255,.7);font-size:14px;color:#6b5a4a;text-align:left;box-shadow:0 2px 8px rgba(80,50,20,.06)}
+.msum .st{padding:2px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600}
+.msum .ar{margin-left:auto;transition:transform .25s}.msum.open .ar{transform:rotate(180deg)}
+#mbox{display:none}#mbox.open{display:block}
+.top .tm{margin:0 0 6px;padding:0}.top .tm input{width:100%}
+.tin{flex:1;min-width:0;border:0!important;background:transparent!important;font-size:20px;font-weight:700;color:#3a2e2a;padding:6px 4px!important;font-family:inherit;text-overflow:ellipsis;border-radius:10px!important}
+.tin:focus{background:rgba(255,255,255,.7)!important;outline:none}
+.tin::placeholder{color:#b5a898;font-weight:500;font-size:17px}
+.dtr{display:flex;align-items:center;gap:10px}.dtr label{font-size:13px;color:#8a7a68;margin:0 0 0 6px;white-space:nowrap}
+.dtr input{flex:1;padding:10px 12px;border:0;border-radius:14px;background:var(--fill);font-size:16px;font-family:inherit}
+.r2{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 6px}
+.dti{width:92px;flex:0 0 auto;text-align:center;border:0!important;background:rgba(255,255,255,.7)!important;border-radius:999px!important;padding:5px 12px!important;font-size:13px;color:#6b5a4a;font-family:inherit}
+#vEdit .r1{gap:4px}#vEdit .r1 #eTotal{font-size:14px;white-space:nowrap;flex:0 0 auto}#vEdit .r1 .tin{font-size:18px}#vEdit .r1 .back{flex:0 0 auto;padding-left:12px;padding-right:12px}
+#vEdit .r1 .tin{background:rgba(255,255,255,.7)!important;border-radius:999px!important;padding:6px 14px!important;font-size:16px}
+#vEdit .r1 .tin:focus{background:#fff!important;box-shadow:0 0 0 2px rgba(200,135,61,.35)}
+#vEdit .r1 .dti:focus{background:#fff!important;outline:none;box-shadow:0 0 0 2px rgba(200,135,61,.35)}
 </style></head><body>
 
 <div id="vHome"><div class="vwrap">
@@ -276,33 +304,29 @@ section .sh{padding-top:12px}
   <div id="olist"></div>
  </div>
  <div id="tab_s" class="tp" style="display:none">
-  <div class="top"><div class="r1"><h1>🏷 商品源</h1><b id="sCnt"></b></div>
-   <input id="sq2" class="sq" type="search" placeholder="搜索当前商品源的品名" oninput="srcPageList()"></div>
+  <div class="top"><div class="r1"><h1>📖 品名库</h1><b id="sCnt"></b></div>
+   <input id="sq2" class="sq" type="search" placeholder="搜索品名" oninput="vocPageList()"></div>
   <div class="pg">
-   <div class="pt">商品源（点选切换当前源）</div><div id="sl2" class="card"></div>
-   <details class="card"><summary>＋ 添加商品源</summary><input class="sq" id="pn" placeholder="名称，如 其他供应商"><input class="sq" id="pu" placeholder="https://…/xxx.json"><button class="pb" onclick="srcAdd()">添加并获取</button></details>
-   <div class="pt" id="sbt"></div><div id="sbl" class="card"></div>
+   <div class="card"><div style="display:flex;gap:8px;align-items:center;padding:6px 0"><input class="sq" id="vnew" style="margin:0;flex:1;border:1px solid #e3d8c8" placeholder="手动添加品名" onkeydown="if(event.key=='Enter')vocPageAdd()"><button class="srow-b" onclick="vocPageAdd()">添加</button></div></div>
+   <div id="vf" class="qc" style="margin:8px 0"></div><div class="pt">所有订单里用过的品名会自动记下，用于输入提示和拼写纠正；删除只影响提示，不改已有订单。</div>
+   <div id="vpl" class="card"></div>
   </div>
-  <div class="pact"><button class="pb" onclick="homeCat()">🏷 选择商品导入订单</button></div>
  </div>
  <div id="tab_t" class="tp" style="display:none">
   <div class="top"><div class="r1"><h1>⚙️ 设置</h1></div></div>
   <div class="pg" id="setp"></div>
  </div>
  <div class="foot">
-  <div class="bk"><i class="lens" id="lens"></i><button data-t="o" onclick="setTab('o')"><span class="ti">📋</span>订单</button><button data-t="s" onclick="setTab('s')"><span class="ti">🏷</span>商品源</button><button data-t="t" onclick="setTab('t')"><span class="ti">⚙️</span>设置</button></div>
+  <div class="bk"><i class="lens" id="lens"></i><button data-t="o" onclick="setTab('o')"><span class="ti">📋</span>订单</button><button data-t="s" onclick="setTab('s')"><span class="ti">📖</span>品名库</button><button data-t="t" onclick="setTab('t')"><span class="ti">⚙️</span>设置</button></div>
  </div>
 </div></div>
 
 <div id="vEdit" style="display:none">
  <div class="top">
-  <div class="r1"><button class="back" onclick="goHome()">‹ 列表</button><h1 id="eTitle"></h1><b id="eTotal"></b></div>
-  <input id="q" type="search" placeholder="🔍 搜索品名来订货（忽略重音/大小写）" oninput="onSearch(this.value)">
+  <div class="r1"><button class="back" onclick="goHome()">‹ 列表</button><input id="eSup" class="tin" oninput="setf('sup',this.value)" placeholder="供应商 / 标题（点此输入）" autocapitalize="words"><input id="eDt" class="dti" oninput="setf('dt',this.value)" placeholder="dd/mm/aaaa" inputmode="numeric" aria-label="日期"><b id="eTotal"></b></div>
+  <input id="q" type="search" placeholder="搜索品名来订货" oninput="onSearch(this.value)" onfocus="SF=true;refreshCand()" onblur="setTimeout(()=>{SF=false;refreshCand()},250)">
   <div id="qc" class="qc"></div>
- </div>
- <div class="meta">
-  <div><label>供应商 / 标题</label><input id="eSup" oninput="setf('sup',this.value)" placeholder="例如 SAPHIRUS"></div>
-  <div><label>日期</label><input id="eDt" oninput="setf('dt',this.value)" placeholder="dd/mm/aaaa"></div>
+  <div id="cbox" onmousedown="event.preventDefault()"></div>
  </div>
  <div class="meta2">
   <div class="seg" id="eSt"></div>
@@ -386,6 +410,8 @@ function fix(s){
   o.price=!!o.price;o.cur=o.cur||"$";o.lang=o.lang=="zh"?"zh":"es";o.theme=(o.theme>=0&&o.theme<THEMES.length)?(o.theme|0):0;
   o.cats=(o.cats||[]).map((c,i)=>({name:c.name||"",sub:c.sub||"",color:c.color||COLORS[i%8],items:(c.items||[]).map(it=>Array.isArray(it)?{n:String(it[0]),q:parseInt(it[1])||0,p:null}:{n:String(it.n||""),q:Math.max(0,parseInt(it.q)||0),p:(it.p==null||it.p==="")?null:Math.max(0,parseFloat(it.p)||0)})}))});
  if(!s.vocab){const m=new Map();s.orders.forEach(o=>o.cats.forEach(c=>c.items.forEach(i=>{const k=norm(i.n);if(k&&!m.has(k))m.set(k,i.n)})));s.vocab=[...m.values()]}
+
+ if(!s.uses||typeof s.uses!="object"||Array.isArray(s.uses)){const u={};s.orders.forEach(o=>o.cats.forEach(cc=>cc.items.forEach(i=>{const k=norm(i.n).replace(/\s*&\s*/g," y ").replace(/\s+/g," ").trim();if(!k)return;const e=u[k]||(u[k]=[0,0]);e[0]++;e[1]=Math.max(e[1],o.upd||0)})));s.uses=u}
  return s}
 function loadLocal(){
  for(const k of [KEY,KEY1]){try{const s=fix(JSON.parse(localStorage.getItem(k)));if(s)return s}catch(e){}}
@@ -398,6 +424,7 @@ function merge(j){
  S.del=Object.assign({},j.del,S.del);
  const map=new Map();[...j.orders,...S.orders].forEach(o=>{const e=map.get(o.id);if(!e||(o.upd||0)>=(e.upd||0))map.set(o.id,o)});
  S.orders=[...map.values()].filter(o=>!(S.del[o.id]&&S.del[o.id]>=(o.upd||0)));
+ S.uses=S.uses||{};Object.entries(j.uses||{}).forEach(([k,v])=>{const e=S.uses[k];if(!e||(v[1]||0)>(e[1]||0))S.uses[k]=v});
  const have=new Set(S.vocab.map(norm));(j.vocab||[]).forEach(v=>{if(!have.has(norm(v))){S.vocab.push(v);have.add(norm(v))}});
 }
 function push(){
@@ -433,7 +460,7 @@ function route(keep){
  {const nv=o?"e":"h";if(route._v&&route._v!==nv){const el=$(o?"vEdit":"vHome");el.classList.remove("vin");void el.offsetWidth;el.classList.add("vin");if(typeof LENS_REL=="function")LENS_REL()}route._v=nv}
  if(o){renderEdit()}else{renderHome();if(typeof TABPOS=="function")TABPOS();if(!keep)scrollTo(0,0)}
 }
-addEventListener("hashchange",()=>{CATO=null;if(typeof JUST0!="undefined")JUST0.clear();Q=PQ;PQ="";QC=-1;$("q").value=Q;route()});
+addEventListener("hashchange",()=>{CATO=null;if(typeof JUST0!="undefined")JUST0.clear();Q=PQ;JUMP=!!PQ;PQ="";QC=-1;$("q").value=Q;route()});
 function open_(id){location.hash="o="+id;scrollTo(0,0)}
 function goHome(){location.hash=""}
 
@@ -515,14 +542,16 @@ function sorted(o,c){const idx=c.items.map((_,i)=>i);
  return idx}
 function dupMap(c){const m={};c.items.forEach(it=>{const k=norm(it.n);if(k)m[k]=(m[k]||0)+1});return m}
 function setIn(id,v){const e=$(id);if(document.activeElement!==e)e.value=v}
-function setf(k,v){mut(o=>{o[k]=v},"f:"+k,true);const o=cur();if(o)$("eTitle").textContent=o.sup||"未命名订单"}
+function setf(k,v){mut(o=>{o[k]=v},"f:"+k,true)}
 function setSt(k){mut(o=>{o.status=k})}
 function togglePrice(){mut(o=>{o.price=!o.price})}
 function renderEdit(){
  const o=cur();if(!o){goHome();return}
- if(QC>=o.cats.length)QC=-1;
- $("qc").innerHTML=o.cats.length>1?`<button class="all ${QC<0?'on':''}" onclick="QC=-1;renderEdit()">全部</button>`+o.cats.map((c,i)=>`<button class="${QC==i?'on':''}" style="--c:${c.color}" onclick="setQC(${i})">${esc(c.name||"未命名")}</button>`).join(""):"";
- $("q").placeholder=QC>=0?"🔍 只在 "+(o.cats[QC].name||"该类")+" 内搜索订货":"🔍 搜索品名来订货（忽略重音/大小写）";
+ if(o.cats.length&&(QC<0||QC>=o.cats.length))QC=Math.min(QCMAP[o.id]||0,o.cats.length-1);
+ if(JUMP){JUMP=false;const k=norm(Q);if(k){const j=o.cats.findIndex(c=>c.items.some(i=>norm(i.n)==k));if(j>=0)QC=j}}
+ if(o.cats.length)QCMAP[o.id]=QC;
+ $("qc").innerHTML=o.cats.length>1?o.cats.map((c,i)=>`<button class="${QC==i?'on':''}" style="--c:${c.color}" onclick="setQC(${i})">${esc(c.name||"未命名")}</button>`).join(""):"";
+ $("q").placeholder=o.cats.length?"搜索品名来订货"+(o.cats.length>1?"（加入 "+(o.cats[QC].name||"该类")+"）":""):"请先在下方新增一个种类";
  const nq=norm(Q);let h="",anyMatch=false,exact=false;
  o.cats.forEach((c,ci)=>{
   if(QC>=0&&ci!=QC)return;
@@ -535,19 +564,56 @@ function renderEdit(){
   const cards=idx.map(i=>{const it=c.items[i],isDup=dm[norm(it.n)]>1;
    return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><button class="dl" title="删除" onclick="delItem(${ci},${i})">×</button><textarea class="nm" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="hint">${c.items.length?"还没有订货的品项":"这个种类还没有品项"}<br><small>在上方搜索框输入品名来订货${hidden?"（已收录 "+hidden+" 项）":""}</small></div>`);
   const d=draft[ci]||{n:"",q:3};
-  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper')" onchange="cat(${ci},'name',this.value)"><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${sum}件${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="arm(this,()=>delCat(${ci}),'删?')">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" onchange="cat(${ci},'sub',this.value)"><div class="items">${cards}</div>
+  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)"><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${sum}件${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="arm(this,()=>delCat(${ci}),'删?')">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div>
   <div class="add"><input class="an" id="an${ci}" placeholder="添加品名" autocomplete="off" value="${esc(d.n)}" oninput="dr(${ci}).n=liveCase(this,'first');sug(${ci})" onkeydown="if(event.key=='Enter')addItem(${ci})"><input class="aq" type="number" inputmode="numeric" value="${d.q}" oninput="dr(${ci}).q=this.value"><button onclick="addItem(${ci})">添加</button></div><div class="sug" id="sg${ci}"></div></section>`;
  });
- if(nq&&!exact&&o.cats.length)h+=`<div class="card">${QC>=0?"在 "+esc(o.cats[QC].name)+" 内":""}没有名为 “<b>${esc(Q.trim())}</b>” 的品项${anyMatch?"（上面是相近的）":""}。添加到：<div class="chips">${o.cats.map((c,ci)=>({c,ci})).filter(x=>QC<0||x.ci==QC).map(({c,ci})=>`<button style="background:${c.color}" onclick="quick(${ci})">${esc(c.name||"未命名")}</button>`).join("")}</div></div>`;
+ $("cbox").innerHTML=(o.cats.length&&(nq||SF))?candPanel(o,QC,nq,exact):"";if(!o.cats.length)h=`<div class="card"><div class="hint">这个订单还没有种类，请先在下方新增一个种类。</div></div>`+h;
  $("list").innerHTML=h;
- $("eTitle").textContent=o.sup||"未命名订单";$("eTotal").textContent="共 "+sumO(o)+" 件"+(o.price&&amtO(o)?" · "+o.cur+fmt(amtO(o)):"");
+ $("eTotal").textContent="共 "+sumO(o)+" 件"+(o.price&&amtO(o)?" · "+o.cur+fmt(amtO(o)):"");
  setIn("eSup",o.sup);setIn("eDt",o.dt);setIn("eCur",o.cur);$("eSort").value=o.sort;
  $("ePr").className=o.price?"on":"";
  $("eSt").innerHTML=Object.entries(STAT).map(([k,v])=>`<button class="${o.status==k?'on':''}" style="--c:${v[1]}" onclick="setSt('${k}')">${v[0]}</button>`).join("");
  syncUndo();
 }
+
+/* ================= 搜索订货：品名库 + 商品源 合并去重，常用优先，拼写容错 ================= */
+let QCMAP={},JUMP=false,CAND=[],SF=false;
+function refreshCand(){const o=cur();if(!o||!$("cbox"))return;const nq=norm(Q),c=o.cats[QC];let exact=false;if(c)c.items.forEach(it=>{if(nq&&norm(it.n)==nq)exact=true});
+ $("cbox").innerHTML=(o.cats.length&&c&&(nq||SF))?candPanel(o,QC,nq,exact):""}
+const skey=s=>norm(s).replace(/\s*&\s*/g," y ").replace(/\s+/g," ").trim();
+function bumpUse(n){const k=skey(n);if(!k)return;S.uses=S.uses||{};const u=S.uses[k]||(S.uses[k]=[0,0]);u[0]++;u[1]=Date.now()}
+function useScore(n){const u=(S.uses||{})[skey(n)];if(!u)return 0;const d=(Date.now()-u[1])/864e5;return u[0]+Math.max(0,3-d/10)}
+function catKeyFor(c){const nn=norm(c.name||""),ns=norm(c.sub||"");for(const k in OFF_TARGET){if(OFF_TARGET[k].some(x=>nn.includes(x)||ns.includes(x)))return k}return (c.name||"").toUpperCase()}
+function matchScore(name,q){const n=skey(name);if(!q)return 1;if(n==q)return 100;if(n.startsWith(q))return 85;const ws=n.split(" ");if(ws.some(w=>w.startsWith(q)))return 75;if(n.includes(q))return 65;
+ const ts=q.split(" ").filter(t=>t&&t!="y");if(ts.length>1&&ts.every(t=>n.split(" ").some(w=>w.startsWith(t))))return 60;if(ts.length>1&&ts.every(t=>n.includes(t)))return 55;
+ if(q.length>=4){const m=q.length>=7?2:1;if(lev(q,n)<=m||ws.some(w=>lev(q,w)<=m))return 25}
+ return 0}
+function candidates(o,ci,nq){
+ const q=skey(nq),c=o.cats[ci],key=catKeyFor(c),have=new Map();c.items.forEach(i=>have.set(skey(i.n),i));
+ const M=new Map();
+ const add=(n,src,price,hasCat)=>{const k=skey(n);if(!k)return;let e=M.get(k);if(!e){e={n,src:0,price:null,hasCat:false};M.set(k,e)}
+  if(src==1){e.src|=1;e.n=n}else{e.src|=2;if(!e.src||(e.src&1)==0)e.n=e.n||n}
+  if(price!=null&&hasCat){e.price=price;e.hasCat=true}else if(src==2&&hasCat===false&&!e.hasCat){}};
+ S.vocab.forEach(v=>add(v,1));
+ SRCS.list.forEach(s=>{const d=srcData(s.id);if(!d)return;Object.entries(d.cats).forEach(([k,l])=>l.forEach(it=>add(it[0],2,it[1]||null,k==key)))});
+ const out=[];M.forEach((e,k)=>{const ex=have.get(k);if(ex&&ex.q>0)return;const sc=matchScore(e.n,q);if(!sc)return;
+  out.push(Object.assign(e,{ex:!!ex,score:sc+(q?0:0)+Math.min(useScore(e.n),20)*(q?.6:3)+(e.hasCat?6:0)}))});
+ out.sort((a,b)=>b.score-a.score||a.n.localeCompare(b.n));
+ return out.slice(0,q?18:12)}
+function hl(n,nq){const q=norm(nq);if(!q)return esc(n);const i=norm(n).indexOf(q);if(i<0||norm(n).length!=n.length)return esc(n);return esc(n.slice(0,i))+"<mark>"+esc(n.slice(i,i+q.length))+"</mark>"+esc(n.slice(i+q.length))}
+function candPanel(o,ci,nq,exact){
+ CAND=candidates(o,ci,Q);const c=o.cats[ci];
+ let h="";
+ if(nq&&!exact&&!CAND.some(x=>skey(x.n)==skey(Q)))h+=`<button class="cnew" onclick="quick(${ci})">＋ 新增 “${esc(Q.trim())}” 到 ${esc(c.name||"未命名")}</button>`;
+ h+=CAND.map((x,i)=>`<button class="cb" style="--c:${c.color}" onclick="candAdd(${i})"><b>${hl(x.n,Q)}</b><small>${x.ex?"本单·数量0":(x.src&2?"商品源":"品名库")}${x.price&&o.price?" · "+esc(o.cur)+fmt(x.price):""}</small></button>`).join("");
+ if(!h)return nq?`<div class="cand"><div class="ct">没有匹配的品名</div></div>`:"";
+ return `<div class="cand ${nq?"":"row"}"><div class="ct">${nq?"点一下加入 "+esc(c.name||"")+"（数量 1）":"常用 · 点一下加入 "+esc(c.name||"")+" →"}</div><div class="cw">${h}</div></div>`}
+function candAdd(i){const x=CAND[i],o=cur();if(!x||!o)return;const ci=QC,k=skey(x.n);
+ mut(o=>{const c=o.cats[ci],ex=c.items.find(it=>skey(it.n)==k);
+  if(ex){ex.q=Math.max(1,ex.q+1)}else c.items.push({n:x.n,q:1,p:o.price&&x.price&&x.hasCat?x.price:null})});
+ addVocab(x.n);bumpUse(x.n);save();Q="";$("q").value="";JUST0.clear();renderEdit();toast("已加入："+x.n)}
 function onSearch(v){if(!v.trim())JUST0.clear();Q=v;renderEdit()}
-function setQC(i){JUST0.clear();QC=(QC==i)?-1:i;renderEdit()}
+function setQC(i){JUST0.clear();QC=i;renderEdit()}
 const dr=ci=>draft[ci]||(draft[ci]={n:"",q:3});
 const JUST0=new Set();
 function adj(ci,i,d){const o0=cur();const it0=o0.cats[ci].items[i];if(it0.q>0&&it0.q+d<=0)JUST0.add(o0.id+":"+ci+":"+i);mut(o=>{const it=o.cats[ci].items[i];it.q=Math.max(0,it.q+d)},"q:"+ci+":"+i)}
@@ -556,6 +622,7 @@ function setp(ci,i,v){mut(o=>{o.cats[ci].items[i].p=v===""?null:Math.max(0,parse
 function rename(ci,i,v){const nv=fixName(v);if(!nv)return renderEdit();mut(o=>{o.cats[ci].items[i].n=nv});addVocab(nv);save();
  const c=cur().cats[ci];if(c.items.filter(x=>norm(x.n)==norm(nv)).length>1)toast("⚠ 本类别里已有同名品项，请确认是否重复")}
 function delItem(ci,i){const n=cur().cats[ci].items[i].n;mut(o=>{o.cats[ci].items.splice(i,1)});toast("已删除："+n,undo)}
+function catLive(ci,k,v){mut(o=>{o.cats[ci][k]=k=="name"?v.trim().toUpperCase():v.trim()},"cl:"+ci+k,true)}
 function cat(ci,k,v){mut(o=>{o.cats[ci][k]=k=="name"?v.trim().toUpperCase():v.trim()})}
 function recolor(ci){mut(o=>{const c=o.cats[ci];c.color=COLORS[(COLORS.indexOf(c.color)+1)%COLORS.length]})}
 function delCat(ci){const n=cur().cats[ci].name;QC=-1;mut(o=>{o.cats.splice(ci,1)});toast("已删除种类："+n,undo)}
@@ -574,9 +641,9 @@ function addItem(ci,force){
  if(!force&&!vocabFind(n)){const sg=fuzzy(n,2);if(sg.length){
   ask(`“<b>${esc(n)}</b>” 和已有品名很像，是不是想写：`,[...sg.map(s=>["use:"+s,esc(s)]),["keep","就用 “"+esc(n)+"”",1],["x","取消",1]],a=>{
    if(a.startsWith("use:")){d.n=a.slice(4);addItem(ci,"ok")}else if(a=="keep")addItem(ci,"ok")});return}}
- mut(o=>{o.cats[ci].items.push({n,q,p:null})});addVocab(n);draft[ci]={n:"",q:d.q};save();renderEdit();
+ mut(o=>{o.cats[ci].items.push({n,q,p:null})});addVocab(n);bumpUse(n);draft[ci]={n:"",q:d.q};save();renderEdit();
 }
-function quick(ci){const n=fixName(Q);dr(ci).n=n;dr(ci).q=3;Q="";$("q").value="";addItem(ci)}
+function quick(ci){const n=fixName(Q);dr(ci).n=n;dr(ci).q=1;Q="";$("q").value="";addItem(ci)}
 function sug(ci){const v=dr(ci).n,k=norm(v),box=$("sg"+ci);if(!box)return;
  if(!k){box.innerHTML="";return}
  const c=cur().cats[ci],have=new Set(c.items.map(i=>norm(i.n)));
@@ -784,7 +851,7 @@ function catRender(first){
  });
  if(first){
   modal(`<div class="mh">官方目录导入</div><div style="display:flex;gap:6px;margin:4px 0"><select id="csrc" style="flex:1;padding:6px;border:1px solid #e3d8c8;border-radius:8px;font-size:16px" onchange="srcPick(this.value)">${SRCS.list.map(s=>`<option value="${s.id}" ${s.id===SRCS.sel?"selected":""}>${esc(s.name)}</option>`).join("")}</select><button class="g" onclick="srcModal()">管理</button></div><div class="mt" id="cinfo"></div>
-  <input class="sq" id="cq" style="border:1px solid #e3d8c8;margin:0 0 6px" placeholder="🔍 搜索官方品名" oninput="CQ=this.value;catRender()">
+  <input class="sq" id="cq" style="border:1px solid #e3d8c8;margin:0 0 6px" placeholder="搜索官方品名" oninput="CQ=this.value;catRender()">
   <label class="opt" style="margin:4px 0"><input type="checkbox" checked onchange="CML=this.checked;catRender()"> 包含 60ml 小规格（DIFUSORES）</label>
   <div class="cl" id="cl"></div>
   <div class="mb2"><button class="g" onclick="closeModal()">取消</button><button id="cgo" onclick="catApply()">导入</button></div>`);
@@ -808,8 +875,6 @@ function catApply(){
 function moreMenu(){
  modal(`<div class="mh">更多</div><div class="ab" style="margin-top:6px">
   <button onclick="closeModal();importModal()">📋 批量导入（粘贴文字清单）</button>
-  <button onclick="closeModal();catModal()">🏷 商品源导入（可外挂多个来源）</button>
-  <button onclick="closeModal();srcModal()">🔌 商品源管理</button>
   <button class="g" onclick="closeModal()">关闭</button></div>`)}
 
 /* ================= 海报 ================= */
@@ -892,20 +957,27 @@ let LENS_REL=()=>{},TAB="o",TABPOS=()=>{},setTab=()=>{};
  TABPOS=()=>pos(false);
  setTab=function(k){if(k===TAB&&lx!==null)return;TAB=k;pos(true);["o","s","t"].forEach(t=>$("tab_"+t).style.display=t==k?"block":"none");
   const el=$("tab_"+k);el.classList.remove("vin");void el.offsetWidth;el.classList.add("vin");
-  if(k=="o")renderHome();if(k=="s")srcPage();if(k=="t")setPage();scrollTo(0,0)};
+  if(k=="o")renderHome();if(k=="s")vocPage();if(k=="t")setPage();scrollTo(0,0)};
  addEventListener("resize",()=>pos(false));setTimeout(()=>pos(false),50)})();
-function srcPage(){srcUse(SRCS.sel);srcList();const s=srcCur();srcFetch(s).then(d=>{if(SRCS.sel===s.id){OFFICIAL=d;srcList()}}).catch(()=>{})}
-function srcPageList(){if(!$("sbl"))return;const nq=norm($("sq2")?$("sq2").value:"");let n=0,h="";
- Object.entries(OFFICIAL.cats||{}).forEach(([k,l])=>{const r=l.filter(it=>!nq||norm(it[0]).includes(nq));if(!r.length)return;n+=r.length;
-  h+=`<div class="pt" style="margin:8px 0 2px">${esc(k)} · ${r.length}</div>`+r.slice(0,60).map(it=>`<div class="srow"><span style="flex:1">${esc(it[0])}</span><small style="color:#999">${it[1]?fmt(it[1]):""}${it[2]?" · 60ml":""}</small></div>`).join("")+(r.length>60?`<div class="hint" style="text-align:center;color:#aaa;padding:6px">还有 ${r.length-60} 项，搜索缩小范围</div>`:"")});
- $("sbt").textContent="当前源："+(OFFICIAL.src||srcCur().name)+"（"+(OFFICIAL.date||"未获取")+"）";
- $("sCnt").textContent=SRCS.list.length+" 个源";
- $("sbl").innerHTML=h||`<div class="hint" style="padding:16px;text-align:center;color:#bbb">${srcCount(OFFICIAL)?"没有匹配":"未获取，请点上方「更新」"}</div>`}
-function setPage(){const L=S.orders.filter(o=>!o.del).length;
- $("setp").innerHTML=`<div class="card">
+function vocPage(){vocPageList()}
+let VF="all";
+function vocSrcSet(){const s=new Set();SRCS.list.forEach(x=>{const d=srcData(x.id);if(d)Object.values(d.cats).forEach(l=>l.forEach(it=>s.add(skey(it[0]))))});return s}
+function vocFilter(f){VF=f;vocPageList()}
+function vocPageList(){if(!$("vpl"))return;const k=norm($("sq2")?$("sq2").value:"");const ss=vocSrcSet();
+ const tag=v=>ss.has(skey(v));let nS=0;S.vocab.forEach(v=>{if(tag(v))nS++});
+ $("vf").innerHTML=[["all","全部 "+S.vocab.length],["src","商品源有 "+nS],["man","仅手动 "+(S.vocab.length-nS)]].map(([f,t])=>`<button class="${VF==f?'on':''}" onclick="vocFilter('${f}')">${t}</button>`).join("");
+ const l=[...S.vocab].sort((a,b)=>norm(a).localeCompare(norm(b))).filter(v=>(!k||norm(v).includes(k))&&(VF=="all"||(VF=="src")==tag(v)));
+ $("sCnt").textContent=S.vocab.length+" 条";
+ $("vpl").innerHTML=l.slice(0,300).map(v=>`<div class="srow"><span style="flex:1">${esc(v)} <small style="color:${tag(v)?"#b07a3a":"#999"}">${tag(v)?"商品源":"手动"}</small></span><button style="color:#c0392b" onclick="vocPageDel(${S.vocab.indexOf(v)})">删除</button></div>`).join("")+(l.length>300?`<div class="hint" style="text-align:center;color:#aaa;padding:6px">还有 ${l.length-300} 条，搜索缩小范围</div>`:"")||`<div class="hint" style="padding:16px;text-align:center;color:#bbb">没有匹配</div>`}
+function vocPageAdd(){const e=$("vnew"),n=fixName(e.value);if(!n)return;if(vocabFind(n)){toast("已有这个品名");return}addVocab(n);save();e.value="";vocPageList();toast("已添加："+n)}
+function vocPageDel(i){const n=S.vocab[i];S.vocab.splice(i,1);save();vocPageList();toast("已删除："+n)}
+function setPage(){const L=S.orders.filter(o=>!o.del).length,sc=srcCur();
+ $("setp").innerHTML=`<div class="pt">商品源</div><div class="card">
+ <button class="setb" onclick="srcModal()"><span>🏷</span><span style="flex:1">商品源管理</span><small style="color:#999">${SRCS.list.length} 个源</small></button>
+ <button class="setb" onclick="homeCat()"><span>📥</span><span style="flex:1">从商品源导入到订单</span><small style="color:#999">${esc(sc.name)}</small></button></div>
+ <div class="pt">数据</div><div class="card">
  <button class="setb" onclick="exportAll()"><span>💾</span><span style="flex:1">导出全部备份</span><small style="color:#999">${L} 个订单</small></button>
- <label class="setb"><span>📂</span><span style="flex:1">导入备份</span><input type="file" accept=".json,application/json" style="display:none" onchange="importAll(this)"></label>
- <button class="setb" onclick="vocabModal()"><span>📖</span><span style="flex:1">品名库</span><small style="color:#999">${S.vocab.length} 条</small></button></div>
+ <label class="setb"><span>📂</span><span style="flex:1">导入备份</span><input type="file" accept=".json,application/json" style="display:none" onchange="importAll(this)"></label></div>
  <div class="card"><div class="setb"><span>ℹ️</span><span style="flex:1">版本</span><small style="color:#999">${esc(APP_VERSION)}</small></div></div>`}
 boot();
 </script></body></html>
