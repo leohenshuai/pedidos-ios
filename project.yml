@@ -27,6 +27,8 @@ targets:
       properties:
         CFBundleDisplayName: 订货单
         CFBundleName: Pedidos
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         UILaunchScreen: {}
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
