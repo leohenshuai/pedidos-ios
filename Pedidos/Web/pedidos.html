@@ -294,6 +294,14 @@ section .sh{padding-top:12px}
 #vEdit .r1 .tin{background:rgba(255,255,255,.7)!important;border-radius:999px!important;padding:6px 14px!important;font-size:16px}
 #vEdit .r1 .tin:focus{background:#fff!important;box-shadow:0 0 0 2px rgba(200,135,61,.35)}
 #vEdit .r1 .dti:focus{background:#fff!important;outline:none;box-shadow:0 0 0 2px rgba(200,135,61,.35)}
+.empty2{grid-column:1/3;text-align:center;padding:26px 16px 22px;color:#9a8a7a;line-height:1.6}
+.empty2 .ei{font-size:26px;opacity:.55;margin-bottom:4px}.empty2 b{display:block;font-size:16px;color:#6b5a4a}.empty2 small{font-size:13px}
+.row3{display:flex;justify-content:center;margin:10px 12px}
+.row3 .pill{border:1px dashed #b9a88f;background:rgba(255,255,255,.6);color:#8a6a45;border-radius:999px;padding:10px 20px;font-size:15px;min-height:42px}
+.ncw{display:flex;gap:6px;width:100%}.ncw[hidden]{display:none}.ncw input{flex:1;min-width:0;padding:11px 14px;border:0;background:rgba(255,255,255,.8);border-radius:999px;font-size:16px;font-family:inherit}
+.ncw .ok{border:0;border-radius:999px;background:var(--acc,#b85c38);color:#fff;padding:0 16px;font-size:15px;min-height:42px}.ncw .cx{border:0;background:none;color:#999;font-size:14px;padding:0 6px}
+.row3 .tiny{border:0;background:none;color:#a89888;font-size:13px;padding:8px 14px;border-radius:999px}.row3 .tiny.arm{background:#d9534f;color:#fff}
+#vEdit .bar{padding:8px 10px;gap:8px}#vEdit .bar .sm2{flex:none;width:44px;height:44px;padding:0;font-size:18px}#vEdit .bar .fl{flex:1}
 </style></head><body>
 
 <div id="vHome"><div class="vwrap">
@@ -334,15 +342,14 @@ section .sh{padding-top:12px}
   <div class="ptog"><button id="ePr" onclick="togglePrice()">💲 单价</button><input id="eCur" maxlength="4" oninput="setf('cur',this.value||'$');renderEdit()" title="货币符号"></div>
  </div>
  <div id="list"></div>
- <div class="row2"><input id="ncn" placeholder="+ 新增种类（如 JABÓN LÍQUIDO）" autocapitalize="characters" oninput="liveCase(this,'upper')" onkeydown="if(event.key=='Enter')addCat()"><button onclick="addCat()">添加种类</button></div>
- <div class="row2"><button class="g" onclick="arm(this,clearQty,'确认清零?')">全部数量清零</button></div>
+ <div class="row3"><button id="ncb" class="pill" onclick="openNC()">＋ 新增种类</button><div id="ncw" class="ncw" hidden><input id="ncn" placeholder="种类名（如 JABÓN LÍQUIDO）" autocapitalize="characters" oninput="liveCase(this,'upper')" onkeydown="if(event.key=='Enter')addCat();if(event.key=='Escape')closeNC()"><button class="ok" onclick="addCat()">添加</button><button class="cx" onclick="closeNC()">取消</button></div></div>
+ <div class="row3"><button id="clrBtn" class="tiny" onclick="arm(this,clearQty,'再点一次确认清零')">全部数量清零</button></div>
  <div class="bar">
-  <button class="g sm" onclick="goHome()" title="订单列表">‹</button>
-  <button class="g sm" id="bUndo" onclick="undo()" title="撤销">↶</button>
-  <button class="g sm" id="bRedo" onclick="redo()" title="重做">↷</button>
-  <button class="g" onclick="moreMenu()">更多 ⋯</button>
-  <button class="g" onclick="sendSheet()">发送表格</button>
-  <button onclick="poster()">生成海报</button>
+  <button class="g sm2" id="bUndo" onclick="undo()" title="撤销">↶</button>
+  <button class="g sm2" id="bRedo" onclick="redo()" title="重做">↷</button>
+  <button class="g fl" onclick="sendSheet()">📤 发送表格</button>
+  <button class="g fl" onclick="poster()">🖼 生成海报</button>
+  <button class="g sm2" onclick="moreMenu()" title="更多">⋯</button>
  </div>
 </div>
 
@@ -562,13 +569,14 @@ function renderEdit(){
   const hidden=c.items.filter(x=>x.q==0).length;
   const sum=c.items.reduce((a,b)=>a+b.q,0),am=amtC(c);
   const cards=idx.map(i=>{const it=c.items[i],isDup=dm[norm(it.n)]>1;
-   return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><button class="dl" title="删除" onclick="delItem(${ci},${i})">×</button><textarea class="nm" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="hint">${c.items.length?"还没有订货的品项":"这个种类还没有品项"}<br><small>在上方搜索框输入品名来订货${hidden?"（已收录 "+hidden+" 项）":""}</small></div>`);
+   return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><button class="dl" title="删除" onclick="delItem(${ci},${i})">×</button><textarea class="nm" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="empty2"><div class="ei">🔍</div><b>${c.items.length?"还没有订货的品项":"这个种类还没有品项"}</b><small>点上方搜索框，输入品名开始订货${hidden?"（已收录 "+hidden+" 项）":""}<br>搜不到的新品名，可直接“＋ 新增”</small></div>`);
   const d=draft[ci]||{n:"",q:3};
-  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)"><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${sum}件${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="arm(this,()=>delCat(${ci}),'删?')">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div>
-  <div class="add"><input class="an" id="an${ci}" placeholder="添加品名" autocomplete="off" value="${esc(d.n)}" oninput="dr(${ci}).n=liveCase(this,'first');sug(${ci})" onkeydown="if(event.key=='Enter')addItem(${ci})"><input class="aq" type="number" inputmode="numeric" value="${d.q}" oninput="dr(${ci}).q=this.value"><button onclick="addItem(${ci})">添加</button></div><div class="sug" id="sg${ci}"></div></section>`;
+  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)"><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${sum}件${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="${c.items.length?`arm(this,()=>delCat(${ci}),'删?')`:`delCat(${ci})`}">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div>
+  </section>`;
  });
  $("cbox").innerHTML=(o.cats.length&&(nq||SF))?candPanel(o,QC,nq,exact):"";if(!o.cats.length)h=`<div class="card"><div class="hint">这个订单还没有种类，请先在下方新增一个种类。</div></div>`+h;
  $("list").innerHTML=h;
+ {const hq=o.cats.some(c=>c.items.some(i=>i.q>0));$("clrBtn").style.display=hq?"":"none"}
  $("eTotal").textContent="共 "+sumO(o)+" 件"+(o.price&&amtO(o)?" · "+o.cur+fmt(amtO(o)):"");
  setIn("eSup",o.sup);setIn("eDt",o.dt);setIn("eCur",o.cur);$("eSort").value=o.sort;
  $("ePr").className=o.price?"on":"";
@@ -626,7 +634,7 @@ function catLive(ci,k,v){mut(o=>{o.cats[ci][k]=k=="name"?v.trim().toUpperCase():
 function cat(ci,k,v){mut(o=>{o.cats[ci][k]=k=="name"?v.trim().toUpperCase():v.trim()})}
 function recolor(ci){mut(o=>{const c=o.cats[ci];c.color=COLORS[(COLORS.indexOf(c.color)+1)%COLORS.length]})}
 function delCat(ci){const n=cur().cats[ci].name;QC=-1;mut(o=>{o.cats.splice(ci,1)});toast("已删除种类："+n,undo)}
-function addCat(){const n=$("ncn").value.trim();if(!n)return;mut(o=>{o.cats.push({name:n.toUpperCase(),sub:"",color:COLORS[o.cats.length%COLORS.length],items:[]})});$("ncn").value="";scrollTo(0,document.body.scrollHeight)}
+function addCat(){const n=$("ncn").value.trim();if(!n)return;mut(o=>{o.cats.push({name:n.toUpperCase(),sub:"",color:COLORS[o.cats.length%COLORS.length],items:[]})});closeNC();scrollTo(0,document.body.scrollHeight)}
 function clearQty(){mut(o=>o.cats.forEach(c=>c.items.forEach(i=>i.q=0)));toast("所有数量已清零",undo)}
 
 /* 添加: 重名提醒 + 近似拼写提醒 */
@@ -877,6 +885,9 @@ function moreMenu(){
   <button onclick="closeModal();importModal()">📋 批量导入（粘贴文字清单）</button>
   <button class="g" onclick="closeModal()">关闭</button></div>`)}
 
+function openNC(){$("ncb").hidden=true;$("ncw").hidden=false;$("ncn").focus()}
+function closeNC(){$("ncw").hidden=true;$("ncb").hidden=false;$("ncn").value=""}
+
 /* ================= 海报 ================= */
 function rr(x,c,X,y,w,h,r){x.beginPath();x.roundRect(X,y,w,h,r);x.fillStyle=c;x.fill()}
 function fit(x,t,font,maxw,min){let s=parseInt(font.match(/(\d+)px/)[1]);min=min||16;while(s>min){x.font=font.replace(/\d+px/,s+"px");if(x.measureText(t).width<=maxw)return t;s-=2}x.font=font.replace(/\d+px/,min+"px");while(t.length>1&&x.measureText(t).width>maxw)t=t.slice(0,-1);return t}
@@ -970,7 +981,7 @@ function vocPageList(){if(!$("vpl"))return;const k=norm($("sq2")?$("sq2").value:
  $("sCnt").textContent=S.vocab.length+" 条";
  $("vpl").innerHTML=l.slice(0,300).map(v=>`<div class="srow"><span style="flex:1">${esc(v)} <small style="color:${tag(v)?"#b07a3a":"#999"}">${tag(v)?"商品源":"手动"}</small></span><button style="color:#c0392b" onclick="vocPageDel(${S.vocab.indexOf(v)})">删除</button></div>`).join("")+(l.length>300?`<div class="hint" style="text-align:center;color:#aaa;padding:6px">还有 ${l.length-300} 条，搜索缩小范围</div>`:"")||`<div class="hint" style="padding:16px;text-align:center;color:#bbb">没有匹配</div>`}
 function vocPageAdd(){const e=$("vnew"),n=fixName(e.value);if(!n)return;if(vocabFind(n)){toast("已有这个品名");return}addVocab(n);save();e.value="";vocPageList();toast("已添加："+n)}
-function vocPageDel(i){const n=S.vocab[i];S.vocab.splice(i,1);save();vocPageList();toast("已删除："+n)}
+function vocPageDel(i){const n=S.vocab[i];if(n==null)return;if(!confirm("从品名库删除「"+n+"」？\n（只影响输入提示，不改已有订单）"))return;S.vocab.splice(i,1);save();vocPageList();toast("已删除："+n)}
 function setPage(){const L=S.orders.filter(o=>!o.del).length,sc=srcCur();
  $("setp").innerHTML=`<div class="pt">商品源</div><div class="card">
  <button class="setb" onclick="srcModal()"><span>🏷</span><span style="flex:1">商品源管理</span><small style="color:#999">${SRCS.list.length} 个源</small></button>
@@ -979,5 +990,14 @@ function setPage(){const L=S.orders.filter(o=>!o.del).length,sc=srcCur();
  <button class="setb" onclick="exportAll()"><span>💾</span><span style="flex:1">导出全部备份</span><small style="color:#999">${L} 个订单</small></button>
  <label class="setb"><span>📂</span><span style="flex:1">导入备份</span><input type="file" accept=".json,application/json" style="display:none" onchange="importAll(this)"></label></div>
  <div class="card"><div class="setb"><span>ℹ️</span><span style="flex:1">版本</span><small style="color:#999">${esc(APP_VERSION)}</small></div></div>`}
+/* 左边缘右滑返回 */
+(function(){let sx=0,sy=0,on=false,t0=0;
+addEventListener("touchstart",e=>{const p=e.touches[0];on=e.touches.length==1&&p.clientX<26;sx=p.clientX;sy=p.clientY;t0=Date.now()},{passive:true});
+addEventListener("touchend",e=>{if(!on)return;on=false;const p=e.changedTouches[0],dx=p.clientX-sx,dy=Math.abs(p.clientY-sy);
+ if(dx<70||dy>dx*0.7||Date.now()-t0>900)return;
+ if(typeof MOPEN!="undefined"&&MOPEN){closeModal();return}
+ if(/^#o=/.test(location.hash)){if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();goHome();return}
+ if(typeof TAB!="undefined"&&TAB!=="o"&&typeof setTab=="function")setTab("o")},{passive:true});
+})();
 boot();
 </script></body></html>
