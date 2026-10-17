@@ -60,6 +60,8 @@ jobs:
           APP=$(find build/Build/Products -name "Pedidos.app" -maxdepth 3 | head -1)
           echo "APP=$APP" >> build.log
           rm -rf Payload && mkdir Payload && cp -R "$APP" Payload/
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" Payload/Pedidos.app/Info.plist
+          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Payload/Pedidos.app/Info.plist >> build.log
           zip -qry Pedidos.ipa Payload
           ls -la Pedidos.ipa >> build.log
       - uses: actions/upload-artifact@v4

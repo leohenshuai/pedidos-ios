@@ -177,7 +177,7 @@ struct WebContainer: UIViewRepresentable {
         cfg.setURLSchemeHandler(SchemeHandler(), forURLScheme: "app")
         let uc = WKUserContentController()
         uc.add(context.coordinator, name: "native")
-        uc.addUserScript(WKUserScript(source: "window.__NATIVE__=true;", injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        uc.addUserScript(WKUserScript(source: "window.__NATIVE__=true;window.__BUILD__=\"" + (Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "") + "\";", injectionTime: .atDocumentStart, forMainFrameOnly: true))
         cfg.userContentController = uc
         let wv = WKWebView(frame: .zero, configuration: cfg)
         wv.uiDelegate = context.coordinator
@@ -194,6 +194,70 @@ struct WebContainer: UIViewRepresentable {
 
     final class Coordinator: NSObject, WKScriptMessageHandler, WKUIDelegate {
         weak var web: WKWebView?
+
+        override init() {
+            super.init()
+            NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+                self?.checkUpdate(manual: false)
+            }
+        }
+
+        // ---------- 版本检查（GitHub 最新 Release，标签 build-N，N 即 IPA 的 CFBundleVersion） ----------
+        var lastCheck = Date.distantPast
+        func jsToast(_ msg: String) {
+            guard let d = try? JSONSerialization.data(withJSONObject: [msg], options: []),
+                  let arr = String(data: d, encoding: .utf8) else { return }
+            web?.evaluateJavaScript("try{toast(\(arr)[0])}catch(e){}", completionHandler: nil)
+        }
+        func topVC() -> UIViewController? {
+            guard let root = UIApplication.shared.connectedScenes.compactMap({ ($0 as? UIWindowScene)?.keyWindow }).first?.rootViewController else { return nil }
+            var top = root; while let p = top.presentedViewController { top = p }
+            return top
+        }
+        func checkUpdate(manual: Bool) {
+            if !manual && Date().timeIntervalSince(lastCheck) < 600 { return }
+            lastCheck = Date()
+            guard let url = URL(string: "https://api.github.com/repos/leohenshuai/pedidos-ios/releases/latest") else { return }
+            var req = URLRequest(url: url, timeoutInterval: 15)
+            req.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+            URLSession.shared.dataTask(with: req) { [weak self] data, _, _ in
+                guard let self = self else { return }
+                guard let data = data,
+                      let j = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let tag = j["tag_name"] as? String,
+                      let latest = Int(tag.filter { $0.isNumber }) else {
+                    if manual { DispatchQueue.main.async { self.jsToast("⚠ 检查失败，请确认网络") } }
+                    return
+                }
+                let cur = Int(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0") ?? 0
+                let skipped = UserDefaults.standard.integer(forKey: "skipVersion")
+                if latest <= cur {
+                    if manual { DispatchQueue.main.async { self.jsToast("✓ 已是最新版本（build \(cur)）") } }
+                    return
+                }
+                if !manual && latest == skipped { return }
+                var link = j["html_url"] as? String ?? ""
+                if let assets = j["assets"] as? [[String: Any]],
+                   let a = assets.first(where: { ($0["name"] as? String ?? "").hasSuffix(".ipa") }),
+                   let u = a["browser_download_url"] as? String { link = u }
+                var notes = (j["body"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                if notes.hasPrefix("Unsigned IPA") { notes = "" }
+                DispatchQueue.main.async { self.promptUpdate(latest, cur, link, notes) }
+            }.resume()
+        }
+        func promptUpdate(_ latest: Int, _ cur: Int, _ link: String, _ notes: String) {
+            guard let top = topVC(), !(top is UIAlertController) else { return }
+            let msg = "当前 build \(cur)，最新 build \(latest)。\n下载后需用 TrollStore / AltStore / Sideloadly 重新签名安装；覆盖安装不会丢数据（请用同一证书）。" + (notes.isEmpty ? "" : "\n\n" + notes)
+            let a = UIAlertController(title: "发现新版本", message: msg, preferredStyle: .alert)
+            a.addAction(UIAlertAction(title: "下载", style: .default) { _ in
+                if let u = URL(string: link) { UIApplication.shared.open(u) }
+            })
+            a.addAction(UIAlertAction(title: "跳过此版本", style: .destructive) { _ in
+                UserDefaults.standard.set(latest, forKey: "skipVersion")
+            })
+            a.addAction(UIAlertAction(title: "稍后", style: .cancel))
+            top.present(a, animated: true)
+        }
 
         let light = UIImpactFeedbackGenerator(style: .light)
         let medium = UIImpactFeedbackGenerator(style: .medium)
@@ -228,6 +292,7 @@ struct WebContainer: UIViewRepresentable {
 
         func userContentController(_ uc: WKUserContentController, didReceive m: WKScriptMessage) {
             guard let d = m.body as? [String: Any], let type = d["type"] as? String else { return }
+            if type == "checkUpdate" { checkUpdate(manual: true); return }
             if type == "fx" {
                 fx(d["kind"] as? String ?? "tick", haptic: d["haptic"] as? Bool ?? true, sound: d["sound"] as? Bool ?? true)
                 return

@@ -465,7 +465,7 @@ const LANG={
  es:{p1:s=>s?"PEDIDO A":"PEDIDO",big:"ORDEN",p2:s=>"ORDEN DE COMPRA",date:"Fecha",total:n=>"TOTAL GENERAL: "+n+" unidades",head:s=>s?"PEDIDO A "+s:"PEDIDO",amount:"Importe estimado"},
  zh:{p1:s=>s?"订货给":"",big:"订货单",p2:s=>s?"订 货 单":"",date:"日期",total:n=>"合计："+n+" 件",head:s=>s?"订货单 · "+s:"订货单",amount:"预计金额"}};
 const NATIVE=!!window.__NATIVE__;
-const APP_VERSION="1.5 · 2026-10-15";
+const APP_VERSION="1.6 · 2026-10-17";
 let S=null,Q="",QC=-1,PQ="",HQ="",HF="all",HR=[],draft={},SG={},SERVER=false,REV=0,tt=null,MI=null,MT=null,DCB=null,PCV=null,pushT=null,pending=false,pushing=false,dirty=false;
 const $=id=>document.getElementById(id);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
@@ -1101,7 +1101,8 @@ function setPage(){const L=S.orders.filter(o=>!o.del).length,sc=srcCur();
  <button class="setb" onclick="exportAll()"><span>💾</span><span style="flex:1">导出全部备份</span><small style="color:#999">${L} 个订单</small></button>
  <button class="setb" onclick="bkModal()"><span>🛟</span><span style="flex:1">恢复点（自动备份）</span><small style="color:#999">点开查看</small></button>
  <label class="setb"><span>📂</span><span style="flex:1">导入备份</span><input type="file" accept=".json,application/json" style="display:none" onchange="importAll(this)"></label></div>
- <div class="card"><div class="setb"><span>ℹ️</span><span style="flex:1">版本</span><small style="color:#999">${esc(APP_VERSION)}</small></div></div>`}/* ---------- 数据安全: 快照 / 恢复点 / 导出提醒 ---------- */
+ <div class="card">${NATIVE?`<button class="setb" onclick="checkUpd()"><span>🔄</span><span style="flex:1">检查更新</span><small style="color:#999">${esc(window.__BUILD__?"build "+window.__BUILD__:"")}</small></button>`:""}<div class="setb"><span>ℹ️</span><span style="flex:1">版本</span><small style="color:#999">${esc(APP_VERSION)}</small></div></div>`}
+function checkUpd(){try{window.webkit.messageHandlers.native.postMessage({type:"checkUpdate"});toast("正在检查更新…")}catch(e){toast("⚠ 仅 App 内可用")}}/* ---------- 数据安全: 快照 / 恢复点 / 导出提醒 ---------- */
 function bkSnap(label){if(!SERVER)return Promise.resolve();return fetch("api/snapshot?label="+encodeURIComponent(label),{method:"POST"}).catch(()=>{})}
 const BKL={"pre-delete":"删除订单前","pre-import":"导入备份前","pre-clear":"清零前","pre-restore":"恢复前","manual":"手动"};
 function bkTime(n){const m=n.match(/^pedidos_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/);return m?`${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}`:n}
