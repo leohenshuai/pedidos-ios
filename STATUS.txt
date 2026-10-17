@@ -1,0 +1,74 @@
+prep=success build=success pack=success
+----- build.log -----
+### xcodebuild -version
+Xcode 15.4
+Build version 15F31d
+### brew install xcodegen
+[32m==>[0m [1mDownloading bottle manifests[0m
+✔︎ Bottle Manifest xcodegen (2.46.0)
+[34m==>[0m [1mWould install 1 formula:[0m
+xcodegen
+[32m==>[0m [1mFetching downloads for: [32mxcodegen[39m[0m
+✔︎ Bottle xcodegen (2.46.0)
+[34m==>[0m [1mPouring xcodegen--2.46.0.arm64_sonoma.bottle.1.tar.gz[0m
+🍺  /opt/homebrew/Cellar/xcodegen/2.46.0: 38 files, 7.6MB
+### which xcodegen
+/opt/homebrew/bin/xcodegen
+### pillow
+### make_icon
+icon ok (1024, 1024) RGB
+### xcodegen
+⚙️  Generating plists...
+⚙️  Generating project...
+⚙️  Writing project...
+Created project at /Users/runner/work/pedidos-ios/pedidos-ios/Pedidos.xcodeproj
+	objectVersion = 56;
+### ls
+Pedidos
+Pedidos.xcodeproj
+README.md
+build.log
+build_stamp.txt
+icon_parts
+make_icon.py
+project.yml
+sources
+### xcodebuild -list
+Command line invocation:
+    /Applications/Xcode_15.4.app/Contents/Developer/usr/bin/xcodebuild -list -project Pedidos.xcodeproj
+
+User defaults from command line:
+    IDEPackageSupportUseBuiltinSCM = YES
+
+Information about project "Pedidos":
+    Targets:
+        Pedidos
+
+    Build Configurations:
+        Debug
+        Release
+
+    If no build configuration is specified and -scheme is not passed then "Debug" is used.
+
+    Schemes:
+        Pedidos
+
+### pbxproj head
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4549E0FCDBA41906CE89EB43 /* pedidos.html in Resources */ = {isa = PBXBuildFile; fileRef = 2EBA166F1F1AD0FCDDA65E65 /* pedidos.html */; };
+		635C295C6A1883D2DE4384D3 /* PedidosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 959FC2FBCEFF4A6284A2260C /* PedidosApp.swift */; };
+		87C9B4FF7D70E8174B1DEC64 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 77CA6FF6B8A6948215D9D05A /* Assets.xcassets */; };
+		A17050F5A17ED70AFB2266D9 /* ContentView.swif** BUILD SUCCEEDED **
+xcodebuild exit: 0
+APP=build/Build/Products/Release-iphoneos/Pedidos.app
+62
+-rw-r--r--  1 runner  staff  1786533 Oct 17 18:45 Pedidos.ipa
+ipa bytes: 1786533 md5: 6fb62351feef9f0ff9aa4cedacaf3c79
