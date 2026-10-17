@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="zh"><head><meta charset="utf-8">
+<meta name="color-scheme" content="light dark">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>订货单管理器</title>
 <style>
@@ -304,6 +305,94 @@ section .sh{padding-top:12px}
 #vEdit .bar{padding:8px 10px;gap:8px}#vEdit .bar .sm2{flex:none;width:44px;height:44px;padding:0;font-size:18px}#vEdit .bar .fl{flex:1}
 .bkh{margin:10px 12px 0;padding:10px 14px;border-radius:16px;background:rgba(192,86,47,.1);color:#8a4a2a;font-size:13px;display:flex;gap:8px;align-items:center}.bkh button{margin-left:auto;border:0;border-radius:999px;background:var(--acc,#c0562f);color:#fff;padding:7px 14px;font-size:13px;white-space:nowrap}
 .bkr{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #eee}.bkr:last-child{border:0}.bkr small{color:#999}.bkr button{margin-left:auto;border:0;background:#f6ecdd;border-radius:999px;padding:7px 14px;color:#8a6a45;font-size:14px}
+
+/* 状态分段控件：液态玻璃光圈（和底栏同款，切换时拉伸滑动） */
+.seg{position:relative}
+.seg button{position:relative;z-index:1;background:none!important;box-shadow:none!important;transition:color .25s,font-weight .25s}
+.seg button.on{color:var(--ink);font-weight:700}
+.seg .slens{position:absolute;top:3px;bottom:3px;left:0;width:0;border-radius:999px;pointer-events:none;opacity:0;z-index:0;
+ background:radial-gradient(120% 140% at 30% 20%,rgba(255,255,255,.98),rgba(255,255,255,.7) 55%,rgba(255,236,214,.75));
+ box-shadow:0 4px 14px rgba(80,50,20,.18),inset 0 1px 1px #fff,inset 0 -1px 2px rgba(160,110,60,.18);
+ border:.5px solid rgba(255,255,255,.95);transform:scale(1.02);
+ transition:left .42s cubic-bezier(.34,1.45,.5,1),width .42s cubic-bezier(.34,1.45,.5,1),opacity .2s}
+.seg .slens.stretch{transform:scale(1.04,1.1);transition:left .17s ease-out,width .17s ease-out,transform .17s ease-out,opacity .2s}
+@media (prefers-reduced-motion:reduce){.seg .slens{transition:none!important}}
+/* ================= 深色模式（覆盖层）：html[data-theme=dark] ================= */
+html[data-theme=dark]{color-scheme:dark;--glass:rgba(60,52,48,.62);--glass-b:rgba(255,255,255,.1);--glass-sh:0 8px 30px rgba(0,0,0,.5),0 1px 0 rgba(255,255,255,.07) inset;--ink:#f1e8de;--sub:#a8998c;--acc:#e0714a;--fill:rgba(255,255,255,.1)}
+html[data-theme=dark] body{background:radial-gradient(120% 60% at 15% 0%,#3a2a22 0%,transparent 60%),radial-gradient(90% 50% at 100% 20%,#33232b 0%,transparent 55%),#171310;color:var(--ink)}
+html[data-theme=dark] .top{background:rgba(30,24,21,.94);border-bottom-color:rgba(255,255,255,.08)}
+html[data-theme=dark] .top h1,html[data-theme=dark] .top b{color:var(--ink)}
+html[data-theme=dark] .top b#hCnt,html[data-theme=dark] #eTotal{color:#f0b27a}
+html[data-theme=dark] .back,html[data-theme=dark] .oc,html[data-theme=dark] section,html[data-theme=dark] .card,html[data-theme=dark] .hr{background:rgba(48,41,37,.78);border-color:rgba(255,255,255,.08);box-shadow:0 8px 26px rgba(0,0,0,.4),0 1px 0 rgba(255,255,255,.05) inset;color:var(--ink)}
+html[data-theme=dark] .back{background:rgba(70,60,55,.8)}
+html[data-theme=dark] .sq,html[data-theme=dark] #q{background:rgba(255,255,255,.1);color:var(--ink)}
+html[data-theme=dark] .sq::placeholder,html[data-theme=dark] #q::placeholder,html[data-theme=dark] .tin::placeholder{color:#8a7d74}
+html[data-theme=dark] .qc button{background:rgba(255,255,255,.1);color:var(--ink)}
+html[data-theme=dark] .qc button.on{color:#fff}
+html[data-theme=dark] .qc button.all.on{background:#f0c987;color:#2b2220}
+html[data-theme=dark] .ocm,html[data-theme=dark] .ocs,html[data-theme=dark] .hs,html[data-theme=dark] .sh .cnt,html[data-theme=dark] .pr,html[data-theme=dark] .mt,html[data-theme=dark] .xm,html[data-theme=dark] .pt,html[data-theme=dark] .cand .ct,html[data-theme=dark] .empty,html[data-theme=dark] .hint,html[data-theme=dark] .hint small,html[data-theme=dark] .empty2,html[data-theme=dark] .meta label,html[data-theme=dark] .dtr label{color:var(--sub)}
+html[data-theme=dark] .empty2 b{color:#d9cabb}
+html[data-theme=dark] .hr small,html[data-theme=dark] .vr small,html[data-theme=dark] .co small,html[data-theme=dark] .cb small,html[data-theme=dark] input.cs,html[data-theme=dark] .bkr small,html[data-theme=dark] .ncw .cx{color:#9a8c80}
+html[data-theme=dark] .oca button,html[data-theme=dark] .x,html[data-theme=dark] .ctr button.d,html[data-theme=dark] .ctr button.m,html[data-theme=dark] .ir button,html[data-theme=dark] .vr button,html[data-theme=dark] .srow button,html[data-theme=dark] .mb2 button.g,html[data-theme=dark] .ab button.g,html[data-theme=dark] .bkr button{background:rgba(255,255,255,.12);color:var(--ink)}
+html[data-theme=dark] .x,html[data-theme=dark] .ctr button.d,html[data-theme=dark] .ir button,html[data-theme=dark] .vr button,html[data-theme=dark] .oca button.del{color:#ff8a7a}
+html[data-theme=dark] .newo{background:rgba(255,255,255,.05);border-color:#5a4d44;color:#a8998c}
+html[data-theme=dark] .ic{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.08)}
+html[data-theme=dark] .ic.dup,html[data-theme=dark] .ir.dup{background:rgba(233,162,59,.16)}
+html[data-theme=dark] textarea.nm{color:var(--ink);border-bottom-color:#5a4d44}
+html[data-theme=dark] textarea.nm:focus{background:rgba(255,255,255,.08)}
+html[data-theme=dark] .ctr input,html[data-theme=dark] .pr input,html[data-theme=dark] .meta input,html[data-theme=dark] .meta2 select,html[data-theme=dark] .add input,html[data-theme=dark] .ptog input,html[data-theme=dark] .igh select,html[data-theme=dark] .igh input,html[data-theme=dark] .opt select,html[data-theme=dark] .row2 input,html[data-theme=dark] .card .sq,html[data-theme=dark] .dtr input{background:rgba(255,255,255,.1);color:var(--ink);border-color:rgba(255,255,255,.12)}
+html[data-theme=dark] .pr em,html[data-theme=dark] .tin,html[data-theme=dark] .setb,html[data-theme=dark] .card summary{color:var(--ink)}
+html[data-theme=dark] .add,html[data-theme=dark] .sug{background:rgba(255,255,255,.05);border-top-color:rgba(255,255,255,.07)}
+html[data-theme=dark] .sug button,html[data-theme=dark] .cgh button{background:rgba(255,255,255,.12);color:var(--ink);box-shadow:none;border-color:rgba(255,255,255,.1)}
+html[data-theme=dark] .seg{background:rgba(255,255,255,.1);border:0}
+html[data-theme=dark] .seg button{color:#b9aa9d}
+html[data-theme=dark] .seg button.on{color:#fff}
+html[data-theme=dark] .seg .slens,html[data-theme=dark] .foot .lens{background:radial-gradient(120% 140% at 30% 20%,rgba(255,255,255,.28),rgba(255,255,255,.12) 55%,rgba(255,190,140,.14));border-color:rgba(255,255,255,.22);box-shadow:0 4px 14px rgba(0,0,0,.45),inset 0 1px 1px rgba(255,255,255,.25),inset 0 -1px 2px rgba(0,0,0,.2)}
+html[data-theme=dark] .ptog button{background:rgba(255,255,255,.1);color:var(--ink);border-color:rgba(255,255,255,.12)}
+html[data-theme=dark] .ptog button.on{background:var(--acc);color:#fff}
+html[data-theme=dark] .ptog button,html[data-theme=dark] #ePr{color:var(--ink)}
+html[data-theme=dark] #ePr .ti,html[data-theme=dark] #ePr b{color:var(--ink)}
+html[data-theme=dark] .foot{background:rgba(36,30,27,.82);border-color:rgba(255,255,255,.1);color:#a8998c}
+html[data-theme=dark] .foot button,html[data-theme=dark] .foot label{color:#cdbfb2}
+html[data-theme=dark] .foot button.act,html[data-theme=dark] .foot label.act{color:#fff}
+html[data-theme=dark] .bar{background:rgba(36,30,27,.88);border-color:rgba(255,255,255,.1)}
+html[data-theme=dark] .bar button{background:var(--acc);color:#fff}
+html[data-theme=dark] .bar button.g{background:rgba(255,255,255,.13);color:var(--ink)}
+html[data-theme=dark] .bar button:disabled{background:rgba(255,255,255,.05);color:#6f645b}
+html[data-theme=dark] .row2 button.g{background:rgba(255,255,255,.1);color:var(--ink);border-color:rgba(255,255,255,.12)}
+html[data-theme=dark] .row3 .pill{background:rgba(255,255,255,.07);border-color:#6a5b50;color:#d9b98a}
+html[data-theme=dark] .ncw input{background:rgba(255,255,255,.12);color:var(--ink)}
+html[data-theme=dark] .row3 .tiny{color:#8a7d74}
+html[data-theme=dark] #vEdit .r1 .tin,html[data-theme=dark] .dti{background:rgba(255,255,255,.12)!important;color:var(--ink)}
+html[data-theme=dark] #vEdit .r1 .tin:focus,html[data-theme=dark] #vEdit .r1 .dti:focus{background:rgba(255,255,255,.2)!important}
+html[data-theme=dark] .cand{background:rgba(48,41,37,.9);border-color:rgba(255,255,255,.08)}
+html[data-theme=dark] .cb{background:rgba(255,255,255,.1);color:var(--ink)}
+html[data-theme=dark] .cb mark{background:#8a6a1e;color:#fff}
+html[data-theme=dark] .cnew{background:#b9772f;color:#fff}
+html[data-theme=dark] #md{background:rgba(0,0,0,.5)}
+html[data-theme=dark] #mb{background:#2a2420;color:var(--ink)}
+html[data-theme=dark] #mb textarea{background:rgba(255,255,255,.08);color:var(--ink);border-color:rgba(255,255,255,.12)}
+html[data-theme=dark] .mb2 button,html[data-theme=dark] .ab button{background:var(--acc);color:#fff}
+html[data-theme=dark] .ig,html[data-theme=dark] .cg,html[data-theme=dark] .xp{border-color:rgba(255,255,255,.1)}
+html[data-theme=dark] .igh,html[data-theme=dark] .cgh{background:rgba(255,255,255,.06)}
+html[data-theme=dark] .ir,html[data-theme=dark] .vr,html[data-theme=dark] .co,html[data-theme=dark] .srow,html[data-theme=dark] .bkr,html[data-theme=dark] .setb{border-color:rgba(255,255,255,.08)}
+html[data-theme=dark] .ir input.irn{color:var(--ink);border-bottom-color:#5a4d44}
+html[data-theme=dark] .ir input.irq{background:rgba(255,255,255,.1);color:var(--ink);border-color:rgba(255,255,255,.12)}
+html[data-theme=dark] .bkh{background:rgba(224,113,74,.16);color:#f0b090}
+html[data-theme=dark] #toast{background:rgba(70,60,55,.95)!important}
+html[data-theme=dark] .sh input.cn{filter:brightness(1.15)}
+html[data-theme=dark] .xp td{border-color:rgba(255,255,255,.12)}
+/* 海报与导出表格是发给别人的，预览保持浅色 */
+html[data-theme=dark] .xp table,html[data-theme=dark] .xp td,html[data-theme=dark] .xp td.n,html[data-theme=dark] .xp td.q,html[data-theme=dark] .xp td.c{color:#3a2e2a}
+html[data-theme=dark] .xp{background:#fff}
+html[data-theme=dark] .xp th{background:#3a2e2a;color:#fff}
+html[data-theme=dark] .xp tr.tot td{background:#f0c987;color:#3a2e2a}
+body.kb .bar,body.kb .foot{display:none}
+.seg3 button{border:0;border-radius:999px;padding:6px 10px;font-size:13px;background:var(--fill);color:var(--ink)}.seg3 button.on{background:var(--acc);color:#fff}
+.mb2 button{flex:1 1 40%}
+html[data-theme=dark] .srow button,html[data-theme=dark] .vr button,html[data-theme=dark] .srow button *{color:#ff8a7a!important}
+html[data-theme=dark] #vnew,html[data-theme=dark] .sq[style*="border"]{border:0!important;background:rgba(255,255,255,.1)!important;color:var(--ink)}
+html[data-theme=dark] .vr button{background:rgba(255,255,255,.1)}
 </style></head><body>
 
 <div id="vHome"><div class="vwrap">
@@ -335,14 +424,14 @@ section .sh{padding-top:12px}
 <div id="vEdit" style="display:none">
  <div class="top">
   <div class="r1"><button class="back" onclick="goHome()">‹ 列表</button><input id="eSup" class="tin" oninput="setf('sup',this.value)" placeholder="供应商 / 标题（点此输入）" autocapitalize="words"><input id="eDt" class="dti" oninput="setf('dt',this.value)" placeholder="dd/mm/aaaa" inputmode="numeric" aria-label="日期"><b id="eTotal"></b></div>
-  <input id="q" type="search" placeholder="搜索品名来订货" oninput="onSearch(this.value)" onfocus="SF=true;refreshCand()" onblur="setTimeout(()=>{SF=false;refreshCand()},250)">
+  <input id="q" type="search" placeholder="搜索品名来订货" oninput="onSearch(this.value)" onkeydown="qKey(event)" onfocus="SF=true;refreshCand()" onblur="setTimeout(()=>{SF=false;refreshCand()},250)">
   <div id="qc" class="qc"></div>
   <div id="cbox" onmousedown="event.preventDefault()"></div>
  </div>
  <div class="meta2">
   <div class="seg" id="eSt"></div>
   <select id="eSort" onchange="setf('sort',this.value);renderEdit()"><option value="manual">排序：手动</option><option value="az">排序：A → Z</option><option value="qty">排序：数量多→少</option></select>
-  <div class="ptog"><button id="ePr" onclick="togglePrice()">💲 单价</button><input id="eCur" maxlength="4" oninput="setf('cur',this.value||'$');renderEdit()" title="货币符号"></div>
+  <div class="ptog"><button id="ePr" onclick="togglePrice()">&#36; 单价</button><input id="eCur" maxlength="4" oninput="setf('cur',this.value||'$');renderEdit()" title="货币符号"></div>
  </div>
  <div id="list"></div>
  <div class="row3"><button id="ncb" class="pill" onclick="openNC()">＋ 新增种类</button><div id="ncw" class="ncw" hidden><input id="ncn" placeholder="种类名（如 JABÓN LÍQUIDO）" autocapitalize="characters" oninput="liveCase(this,'upper')" onkeydown="if(event.key=='Enter')addCat();if(event.key=='Escape')closeNC()"><button class="ok" onclick="addCat()">添加</button><button class="cx" onclick="closeNC()">取消</button></div></div>
@@ -476,7 +565,7 @@ function goHome(){location.hash=""}
 
 /* ---------- 提示 / 弹窗 ---------- */
 let MOPEN=false;
-function toast(msg,undoFn){const t=$("toast");t.innerHTML=esc(msg)+(undoFn?"<u>撤销</u>":"");t.style.display="block";if(undoFn)t.querySelector("u").onclick=()=>{undoFn();t.style.display="none"};clearTimeout(tt);tt=setTimeout(()=>t.style.display="none",undoFn?5000:2200)}
+function toast(msg,undoFn){if(typeof FX=="function"&&/^⚠/.test(msg))FX("warn");const t=$("toast");t.innerHTML=esc(msg)+(undoFn?"<u>撤销</u>":"");t.style.display="block";if(undoFn)t.querySelector("u").onclick=()=>{undoFn();t.style.display="none"};clearTimeout(tt);tt=setTimeout(()=>t.style.display="none",undoFn?5000:2200)}
 function arm(b,fn,label){if(b.classList.contains("arm")){fn();return}const t=b.textContent;b.textContent=label;b.classList.add("arm");setTimeout(()=>{b.textContent=t;b.classList.remove("arm")},2500)}
 function modal(html,center){$("mb").innerHTML=html;$("md").className=center?"c":"";$("md").style.display="flex";MOPEN=true}
 function closeModal(){$("md").style.display="none";MOPEN=false;if(typeof LENS_REL=="function")LENS_REL();MI=null;MT=null;DCB=null}
@@ -496,8 +585,8 @@ function mut(fn,tag,noRender){
  if(!noRender)renderEdit();else syncUndo();
 }
 function restore(o,s){const c=JSON.parse(s);Object.keys(o).forEach(k=>{if(k!="id")delete o[k]});Object.assign(o,c);o.upd=Date.now();save();renderEdit()}
-function undo(){const o=cur();if(!o)return;const h=hist(o);if(!h.u.length)return;h.r.push(snap(o));h.tag="";restore(o,h.u.pop())}
-function redo(){const o=cur();if(!o)return;const h=hist(o);if(!h.r.length)return;h.u.push(snap(o));h.tag="";restore(o,h.r.pop())}
+function undo(){const o=cur();if(!o)return;FX("tick");const h=hist(o);if(!h.u.length)return;h.r.push(snap(o));h.tag="";restore(o,h.u.pop())}
+function redo(){const o=cur();if(!o)return;FX("tick");const h=hist(o);if(!h.r.length)return;h.u.push(snap(o));h.tag="";restore(o,h.r.pop())}
 function syncUndo(){const o=cur();if(!o)return;const h=hist(o);$("bUndo").disabled=!h.u.length;$("bRedo").disabled=!h.r.length}
 addEventListener("keydown",e=>{if(!(e.ctrlKey||e.metaKey)||e.key.toLowerCase()!="z"||isTyping()||!cur())return;e.preventDefault();e.shiftKey?redo():undo()});
 
@@ -518,14 +607,14 @@ function renderHome(){if(typeof bkHint=="function")bkHint();
  }
  const list=os.filter(o=>HF=="all"||o.status==HF);
  $("olist").innerHTML=`<div class="g2">`+list.map(o=>{const c=(o.cats[0]||{}).color||COLORS[0],st=STAT[o.status];
-  return `<div class="oc" style="--c:${c}" onclick="open_('${o.id}')"><div class="oct">${esc(o.sup||"未命名订单")}</div><div class="ocm"><span class="st" style="background:${st[1]}" onclick="event.stopPropagation();cycleSt('${o.id}')">${st[0]}</span> ${esc(o.dt)}</div><div class="ocs"><b>${sumO(o)}</b> 件 · ${o.cats.length} 类 ${cnt(o)} 项${o.price&&amtO(o)?"<br>"+esc(o.cur)+fmt(amtO(o)):""}</div><div class="oca"><button onclick="event.stopPropagation();dup('${o.id}')">复制</button><button class="del" onclick="event.stopPropagation();arm(this,()=>delOrder('${o.id}'),'确认删除?')">删除</button></div></div>`}).join("")
+  return `<div class="oc" style="--c:${c}" onclick="open_('${o.id}')"><div class="oct">${esc(o.sup||"未命名订单")}</div><div class="ocm"><span class="st" style="background:${st[1]}" onclick="event.stopPropagation();cycleSt('${o.id}')">${st[0]}</span> ${esc(o.dt)}</div><div class="ocs"><b>${sumO(o)}</b> 件 · ${o.cats.length} 类 ${cnt(o)} 项${o.price&&amtO(o)?"<br>"+esc(o.cur)+fmt(amtO(o)):""}</div><div class="oca"><button onclick="event.stopPropagation();dup('${o.id}')">再订一单</button><button class="del" onclick="event.stopPropagation();arm(this,()=>delOrder('${o.id}'),'确认删除?')">删除</button></div></div>`}).join("")
   +`<button class="newo" onclick="newOrder()"><span class="np">＋</span><span class="nl">新建订单</span></button>`+(list.length?"":`<div class="empty">这个状态下没有订单</div>`)+`</div>`;
 }
 function openHit(i){const h=HR[i];if(!h)return;PQ=h.it.n;open_(h.o.id)}
 function cycleSt(id){const o=S.orders.find(x=>x.id==id);if(!o)return;const k=Object.keys(STAT);o.status=k[(k.indexOf(o.status)+1)%k.length];o.upd=Date.now();save();renderHome()}
-function newOrder(){const o=blank();S.orders.push(o);save();open_(o.id);setTimeout(()=>$("eSup").focus(),50)}
-function dup(id){const s=S.orders.find(o=>o.id==id);if(!s)return;const o=JSON.parse(JSON.stringify(s));o.id=uid();o.sup=(s.sup||"未命名订单")+" 副本";o.dt=today();o.status="draft";o.upd=Date.now();S.orders.push(o);save();renderHome();toast("已复制，数量保留，进入后可“全部数量清零”")}
-function delOrder(id){const i=S.orders.findIndex(o=>o.id==id);if(i<0)return;bkSnap("pre-delete");const o=S.orders[i];S.orders.splice(i,1);S.del[id]=Date.now();save();renderHome();
+function newOrder(){FX("add");const o=blank();S.orders.push(o);save();open_(o.id);setTimeout(()=>$("eSup").focus(),50)}
+function dup(id){FX("add");const s=S.orders.find(o=>o.id==id);if(!s)return;const o=JSON.parse(JSON.stringify(s));o.id=uid();o.sup=s.sup||"未命名订单";o.dt=today();o.status="draft";o.upd=Date.now();S.orders.push(o);save();open_(o.id);toast("已按上次预填，改数量即可")}
+function delOrder(id){FX("warn");const i=S.orders.findIndex(o=>o.id==id);if(i<0)return;bkSnap("pre-delete");const o=S.orders[i];S.orders.splice(i,1);S.del[id]=Date.now();save();renderHome();
  toast("已删除："+(o.sup||"未命名订单"),()=>{delete S.del[id];o.upd=Date.now();S.orders.splice(i,0,o);save();renderHome()})}
 function exportAll(){try{localStorage.setItem("pedidos_lastexp",String(Date.now()))}catch(e){}dlBlob(new Blob([JSON.stringify(S,null,1)],{type:"application/json"}),"pedidos_backup_"+today().replace(/\//g,"-")+".json")}
 function importAll(inp){const f=inp.files[0];if(!f)return;bkSnap("pre-import");f.text().then(t=>{const j=fix(JSON.parse(t));if(!j||!j.orders.length)throw 0;const have=new Set(S.orders.map(o=>o.id));let n=0;j.orders.forEach(o=>{if(have.has(o.id))o.id=uid();S.orders.push(o);n++});(j.vocab||[]).forEach(addVocab);save();renderHome();toast("已导入 "+n+" 个订单")}).catch(()=>toast("⚠ 备份文件无法识别")).finally(()=>inp.value="")}
@@ -572,7 +661,7 @@ function renderEdit(){
   const hidden=c.items.filter(x=>x.q==0).length;
   const sum=c.items.reduce((a,b)=>a+b.q,0),am=amtC(c);
   const cards=idx.map(i=>{const it=c.items[i],isDup=dm[norm(it.n)]>1;
-   return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><button class="dl" title="删除" onclick="delItem(${ci},${i})">×</button><textarea class="nm" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="empty2"><div class="ei">🔍</div><b>${c.items.length?"还没有订货的品项":"这个种类还没有品项"}</b><small>点上方搜索框，输入品名开始订货${hidden?"（已收录 "+hidden+" 项）":""}<br>搜不到的新品名，可直接“＋ 新增”</small></div>`);
+   return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><button class="dl" title="删除" onclick="delItem(${ci},${i})">×</button><textarea class="nm" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onfocus="this.select()" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="empty2"><div class="ei">🔍</div><b>${c.items.length?"还没有订货的品项":"这个种类还没有品项"}</b><small>点上方搜索框，输入品名开始订货${hidden?"（已收录 "+hidden+" 项）":""}<br>搜不到的新品名，可直接“＋ 新增”</small></div>`);
   const d=draft[ci]||{n:"",q:3};
   h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)"><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${sum}件${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="${c.items.length?`arm(this,()=>delCat(${ci}),'删?')`:`delCat(${ci})`}">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div>
   </section>`;
@@ -583,7 +672,7 @@ function renderEdit(){
  $("eTotal").textContent="共 "+sumO(o)+" 件"+(o.price&&amtO(o)?" · "+o.cur+fmt(amtO(o)):"");
  setIn("eSup",o.sup);setIn("eDt",o.dt);setIn("eCur",o.cur);$("eSort").value=o.sort;
  $("ePr").className=o.price?"on":"";
- $("eSt").innerHTML=Object.entries(STAT).map(([k,v])=>`<button class="${o.status==k?'on':''}" style="--c:${v[1]}" onclick="setSt('${k}')">${v[0]}</button>`).join("");
+ segRender("eSt",Object.entries(STAT).map(([k,v])=>`<button class="${o.status==k?'on':''}" style="--c:${v[1]}" onclick="setSt('${k}')">${v[0]}</button>`).join(""),o.id);
  syncUndo();
 }
 
@@ -622,23 +711,23 @@ function candPanel(o,ci,nq,exact){
 function candAdd(i){const x=CAND[i],o=cur();if(!x||!o)return;const ci=QC,k=skey(x.n);
  mut(o=>{const c=o.cats[ci],ex=c.items.find(it=>skey(it.n)==k);
   if(ex){ex.q=Math.max(1,ex.q+1)}else c.items.push({n:x.n,q:1,p:o.price&&x.price&&x.hasCat?x.price:null})});
- addVocab(x.n);bumpUse(x.n);save();Q="";$("q").value="";JUST0.clear();renderEdit();toast("已加入："+x.n)}
+ FX("add");addVocab(x.n);bumpUse(x.n);save();Q="";$("q").value="";JUST0.clear();renderEdit();toast("已加入："+x.n)}
 function onSearch(v){if(!v.trim())JUST0.clear();Q=v;renderEdit()}
 function setQC(i){JUST0.clear();QC=i;renderEdit()}
 const dr=ci=>draft[ci]||(draft[ci]={n:"",q:3});
 const JUST0=new Set();
-function adj(ci,i,d){const o0=cur();const it0=o0.cats[ci].items[i];if(it0.q>0&&it0.q+d<=0)JUST0.add(o0.id+":"+ci+":"+i);mut(o=>{const it=o.cats[ci].items[i];it.q=Math.max(0,it.q+d)},"q:"+ci+":"+i)}
-function setq(ci,i,v){const o0=cur();const it0=o0.cats[ci].items[i];const nv=Math.max(0,parseInt(v)||0);if(it0.q>0&&nv==0)JUST0.add(o0.id+":"+ci+":"+i);mut(o=>{o.cats[ci].items[i].q=nv})}
+function adj(ci,i,d){FX(d>0?"tick":"tick");const o0=cur();const it0=o0.cats[ci].items[i];if(it0.q>0&&it0.q+d<=0)JUST0.add(o0.id+":"+ci+":"+i);mut(o=>{const it=o.cats[ci].items[i];it.q=Math.max(0,it.q+d)},"q:"+ci+":"+i)}
+function setq(ci,i,v){FX("tick");const o0=cur();const it0=o0.cats[ci].items[i];const nv=Math.max(0,parseInt(v)||0);if(it0.q>0&&nv==0)JUST0.add(o0.id+":"+ci+":"+i);mut(o=>{o.cats[ci].items[i].q=nv})}
 function setp(ci,i,v){mut(o=>{o.cats[ci].items[i].p=v===""?null:Math.max(0,parseFloat(v)||0)})}
 function rename(ci,i,v){const nv=fixName(v);if(!nv)return renderEdit();mut(o=>{o.cats[ci].items[i].n=nv});addVocab(nv);save();
  const c=cur().cats[ci];if(c.items.filter(x=>norm(x.n)==norm(nv)).length>1)toast("⚠ 本类别里已有同名品项，请确认是否重复")}
-function delItem(ci,i){const n=cur().cats[ci].items[i].n;mut(o=>{o.cats[ci].items.splice(i,1)});toast("已删除："+n,undo)}
+function delItem(ci,i){FX("warn");const n=cur().cats[ci].items[i].n;mut(o=>{o.cats[ci].items.splice(i,1)});toast("已删除："+n,undo)}
 function catLive(ci,k,v){mut(o=>{o.cats[ci][k]=k=="name"?v.trim().toUpperCase():v.trim()},"cl:"+ci+k,true)}
 function cat(ci,k,v){mut(o=>{o.cats[ci][k]=k=="name"?v.trim().toUpperCase():v.trim()})}
 function recolor(ci){mut(o=>{const c=o.cats[ci];c.color=COLORS[(COLORS.indexOf(c.color)+1)%COLORS.length]})}
-function delCat(ci){const n=cur().cats[ci].name;QC=-1;mut(o=>{o.cats.splice(ci,1)});toast("已删除种类："+n,undo)}
-function addCat(){const n=$("ncn").value.trim();if(!n)return;mut(o=>{o.cats.push({name:n.toUpperCase(),sub:"",color:COLORS[o.cats.length%COLORS.length],items:[]})});closeNC();scrollTo(0,document.body.scrollHeight)}
-function clearQty(){bkSnap("pre-clear");mut(o=>o.cats.forEach(c=>c.items.forEach(i=>i.q=0)));toast("所有数量已清零",undo)}
+function delCat(ci){FX("warn");const n=cur().cats[ci].name;QC=-1;mut(o=>{o.cats.splice(ci,1)});toast("已删除种类："+n,undo)}
+function addCat(){const n=$("ncn").value.trim();if(!n)return;FX("add");mut(o=>{o.cats.push({name:n.toUpperCase(),sub:"",color:COLORS[o.cats.length%COLORS.length],items:[]})});closeNC();scrollTo(0,document.body.scrollHeight)}
+function clearQty(){FX("warn");bkSnap("pre-clear");mut(o=>o.cats.forEach(c=>c.items.forEach(i=>i.q=0)));toast("所有数量已清零",undo)}
 
 /* 添加: 重名提醒 + 近似拼写提醒 */
 function addItem(ci,force){
@@ -803,7 +892,7 @@ function sheetPreview(){
  <div class="opt">语言：<select onchange="mut(x=>{x.lang=this.value},'',true);sheetPreview()"><option value="es" ${o.lang!="zh"?"selected":""}>Español</option><option value="zh" ${o.lang=="zh"?"selected":""}>中文</option></select><span style="color:#999;font-size:12px">（只改表头和合计文字）</span></div>
  <div class="xp"><table><thead><tr>${head.map((h,i)=>`<th class="${i==1||i==2?'q':''}">${esc(h)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>
  <div class="xm">文件名：${esc(sheetName(o))}</div>
- <div class="mb2"><button class="g" onclick="closeModal()">取消</button><button onclick="confirmSheet()">${isMobile()?"发送 Excel":"下载 Excel"}</button></div>`)}
+ <div class="mb2" style="flex-wrap:wrap"><button class="g" onclick="copyOrderText()">复制文字</button><button class="g" onclick="shareText()">发送文字</button><button class="g" onclick="closeModal()">取消</button><button onclick="confirmSheet()">${isMobile()?"发送 Excel":"下载 Excel"}</button></div>`)}
 function confirmSheet(){
  const o=cur();let blob,name=sheetName(o);
  try{blob=buildXlsx(o)}catch(e){console.error(e);toast("⚠ 生成表格失败");return}
@@ -891,6 +980,21 @@ function moreMenu(){
 function openNC(){$("ncb").hidden=true;$("ncw").hidden=false;$("ncn").focus()}
 function closeNC(){$("ncw").hidden=true;$("ncb").hidden=false;$("ncn").value=""}
 
+/* 分段控件光圈：保留 lens 元素，只换按钮；同一订单内切换时拉伸滑动 */
+function segRender(id,btnsHtml,key){const seg=$(id);if(!seg)return;
+ let ln=seg.querySelector(".slens");if(!ln){ln=document.createElement("i");ln.className="slens"}
+ seg.innerHTML=btnsHtml;seg.insertBefore(ln,seg.firstChild);segPlace(seg,ln,key)}
+function segPlace(seg,ln,key,tries){const act=seg.querySelector("button.on");if(!act)return;
+ const b=seg.getBoundingClientRect(),r=act.getBoundingClientRect();
+ if(!r.width){if((tries||0)<8)requestAnimationFrame(()=>segPlace(seg,ln,key,(tries||0)+1));return}
+ const x=r.left-b.left-seg.clientLeft,w=r.width,same=seg.dataset.key===String(key)&&seg.dataset.lx!=null,lx=+seg.dataset.lx,lw=+seg.dataset.lw;
+ if(same&&Math.abs(x-lx)>4){
+  ln.style.transition="none";ln.style.left=lx+"px";ln.style.width=lw+"px";void ln.offsetWidth;ln.style.transition="";
+  const l0=Math.min(x,lx),w0=Math.max(x+w,lx+lw)-l0;ln.classList.add("stretch");ln.style.left=l0+"px";ln.style.width=w0+"px";
+  clearTimeout(seg._t);seg._t=setTimeout(()=>{ln.classList.remove("stretch");ln.style.left=x+"px";ln.style.width=w+"px"},150)}
+ else{ln.style.transition="none";ln.style.left=x+"px";ln.style.width=w+"px";void ln.offsetWidth;ln.style.transition=""}
+ ln.style.opacity=1;seg.dataset.key=key;seg.dataset.lx=x;seg.dataset.lw=w}
+
 /* ================= 海报 ================= */
 function rr(x,c,X,y,w,h,r){x.beginPath();x.roundRect(X,y,w,h,r);x.fillStyle=c;x.fill()}
 function fit(x,t,font,maxw,min){let s=parseInt(font.match(/(\d+)px/)[1]);min=min||16;while(s>min){x.font=font.replace(/\d+px/,s+"px");if(x.measureText(t).width<=maxw)return t;s-=2}x.font=font.replace(/\d+px/,min+"px");while(t.length>1&&x.measureText(t).width>maxw)t=t.slice(0,-1);return t}
@@ -969,7 +1073,7 @@ let LENS_REL=()=>{},TAB="o",TABPOS=()=>{},setTab=()=>{};
   else{ln.style.transition="none";ln.style.left=x+"px";ln.style.width=w+"px";void ln.offsetWidth;ln.style.transition=""}
   lx=x;lw=w;ln.classList.add("on");bk.querySelectorAll("button").forEach(e=>e.classList.toggle("act",e.dataset.t==TAB))}
  TABPOS=()=>pos(false);
- setTab=function(k){if(k===TAB&&lx!==null)return;TAB=k;pos(true);["o","s","t"].forEach(t=>$("tab_"+t).style.display=t==k?"block":"none");
+ setTab=function(k){if(k===TAB&&lx!==null)return;FX("sel");TAB=k;pos(true);["o","s","t"].forEach(t=>$("tab_"+t).style.display=t==k?"block":"none");
   const el=$("tab_"+k);el.classList.remove("vin");void el.offsetWidth;el.classList.add("vin");
   if(k=="o")renderHome();if(k=="s")vocPage();if(k=="t")setPage();scrollTo(0,0)};
  addEventListener("resize",()=>pos(false));setTimeout(()=>pos(false),50)})();
@@ -989,6 +1093,10 @@ function setPage(){const L=S.orders.filter(o=>!o.del).length,sc=srcCur();
  $("setp").innerHTML=`<div class="pt">商品源</div><div class="card">
  <button class="setb" onclick="srcModal()"><span>🏷</span><span style="flex:1">商品源管理</span><small style="color:#999">${SRCS.list.length} 个源</small></button>
  <button class="setb" onclick="homeCat()"><span>📥</span><span style="flex:1">从商品源导入到订单</span><small style="color:#999">${esc(sc.name)}</small></button></div>
+ <div class="pt">外观与反馈</div><div class="card">
+ <div class="setb" style="flex-wrap:wrap"><span>🌗</span><span style="flex:1">外观</span><div class="seg3" style="display:flex;gap:4px">${[["auto","跟随系统"],["light","浅色"],["dark","深色"]].map(([k,t])=>`<button class="${themePref()==k?"on":""}" onclick="setThemePref('${k}')">${t}</button>`).join("")}</div></div>
+ <button class="setb" onclick="setFxPref('haptic',${PREF("haptic","1")!="1"})"><span>📳</span><span style="flex:1">触感反馈（振动）</span><small style="color:${PREF("haptic","1")=="1"?"#3aa655":"#999"}">${PREF("haptic","1")=="1"?"已开":"已关"}</small></button>
+ <button class="setb" onclick="setFxPref('sound',${PREF("sound","1")!="1"})"><span>🔔</span><span style="flex:1">提示音</span><small style="color:${PREF("sound","1")=="1"?"#3aa655":"#999"}">${PREF("sound","1")=="1"?"已开":"已关"}</small></button></div>
  <div class="pt">数据</div><div class="card">
  <button class="setb" onclick="exportAll()"><span>💾</span><span style="flex:1">导出全部备份</span><small style="color:#999">${L} 个订单</small></button>
  <button class="setb" onclick="bkModal()"><span>🛟</span><span style="flex:1">恢复点（自动备份）</span><small style="color:#999">点开查看</small></button>
@@ -1012,6 +1120,46 @@ async function bkRestore(name){
 function bkHint(){const el=$("bkHint");if(!el)return;const t=+(localStorage.getItem("pedidos_lastexp")||0),n=S.orders.length;
  const days=t?Math.floor((Date.now()-t)/864e5):null;
  el.innerHTML=(n&&(days===null||days>=7))?`<div class="bkh"><span>🛟 ${days===null?"还没有导出过备份":"已 "+days+" 天没导出备份"}，建议存一份到「文件」</span><button onclick="exportAll();bkHint()">导出</button></div>`:""}
+/* ---------- 触觉 + 提示音 ---------- */
+const PREF=(k,d)=>{try{const v=localStorage.getItem("pedidos_"+k);return v===null?d:v}catch(e){return d}};
+const setPref=(k,v)=>{try{localStorage.setItem("pedidos_"+k,v)}catch(e){}};
+let _ac=null;
+function webTone(kind){try{const A=window.AudioContext||window.webkitAudioContext;if(!A)return;_ac=_ac||new A();if(_ac.state=="suspended")_ac.resume();
+ const f={tick:[900,.03],sel:[700,.03],add:[1180,.07],warn:[300,.12],ok:[1320,.09]}[kind]||[800,.03];
+ const o=_ac.createOscillator(),g=_ac.createGain();o.type="sine";o.frequency.value=f[0];g.gain.setValueAtTime(.0001,_ac.currentTime);g.gain.exponentialRampToValueAtTime(.12,_ac.currentTime+.005);g.gain.exponentialRampToValueAtTime(.0001,_ac.currentTime+f[1]);
+ o.connect(g);g.connect(_ac.destination);o.start();o.stop(_ac.currentTime+f[1]+.02)}catch(e){}}
+function FX(kind){const hap=PREF("haptic","1")=="1",snd=PREF("sound","1")=="1";if(!hap&&!snd)return;
+ if(NATIVE){try{window.webkit.messageHandlers.native.postMessage({type:"fx",kind:kind,haptic:hap,sound:snd})}catch(e){}}
+ else if(snd)webTone(kind)}
+/* ---------- 深色模式 ---------- */
+function themePref(){return PREF("theme","auto")}
+function isDarkNow(){const t=themePref();return t=="dark"||(t=="auto"&&!!(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches))}
+function applyTheme(){const d=isDarkNow();document.documentElement.dataset.theme=d?"dark":"light";
+ if(NATIVE){try{window.webkit.messageHandlers.native.postMessage({type:"theme",mode:themePref(),dark:d})}catch(e){}}}
+function setThemePref(v){setPref("theme",v);applyTheme();setPage()}
+function setFxPref(k,v){setPref(k,v?"1":"0");if(v)FX("ok");setPage()}
+try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{if(themePref()=="auto")applyTheme()})}catch(e){}
+applyTheme();
+/* ---------- 分享文字 ---------- */
+function orderText(o){const d=sheetData(o),X=XL[o.lang||"es"];const L=[];L.push((o.sup||X.sheet)+" · "+(o.dt||""));
+ d.cats.forEach(({c,items})=>{L.push("");L.push(c.name||"");items.forEach(it=>L.push("• "+it.n+" x"+it.q+(o.price&&it.p?"  "+o.cur+fmt(it.q*it.p):"")))});
+ L.push("");L.push(X.t+": "+d.q+(o.price&&d.a?"  "+o.cur+fmt(d.a):""));return L.join("\n")}
+function shareText(){const o=cur();if(!o)return;if(!sheetData(o).n){toast("没有数量大于 0 的品项");return}const t=orderText(o);
+ if(NATIVE){try{window.webkit.messageHandlers.native.postMessage({type:"shareText",text:t});closeModal();return}catch(e){}}
+ if(navigator.share){navigator.share({text:t}).then(()=>closeModal()).catch(()=>{});return}
+ copyText(t)}
+function copyText(t){const done=()=>{closeModal();FX("ok");toast("已复制文字，可直接粘贴到聊天")};
+ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done).catch(()=>fb())}else fb();
+ function fb(){const a=document.createElement("textarea");a.value=t;a.style.cssText="position:fixed;opacity:0";document.body.appendChild(a);a.select();try{document.execCommand("copy");done()}catch(e){toast("⚠ 复制失败")}a.remove()}}
+function copyOrderText(){const o=cur();if(!o)return;if(!sheetData(o).n){toast("没有数量大于 0 的品项");return}copyText(orderText(o))}
+/* ---------- 键盘细节：键盘真的占掉屏幕时才收起底栏，避免被顶到输入框上方遮挡 ---------- */
+(function(){const vv=window.visualViewport;if(!vv)return;let H=vv.height;
+ const upd=()=>{const a=document.activeElement,typing=a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
+  const shrunk=(window.innerHeight-vv.height)>120;document.body.classList.toggle("kb",!!(typing&&shrunk))};
+ vv.addEventListener("resize",upd);document.addEventListener("focusout",()=>setTimeout(upd,150))})();
+function qKey(e){if(e.key!="Enter")return;e.preventDefault();const o=cur();if(!o||!o.cats.length)return;
+ if(CAND&&CAND.length&&Q.trim()){candAdd(0);return}
+ if(Q.trim()&&QC>=0){quick(QC)}}
 
 /* 左边缘右滑返回 */
 (function(){let sx=0,sy=0,on=false,t0=0;
