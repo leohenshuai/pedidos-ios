@@ -1,6 +1,7 @@
 import SwiftUI
 import WebKit
 import UIKit
+import AudioToolbox
 
 struct ContentView: View {
     var body: some View {
@@ -194,8 +195,68 @@ struct WebContainer: UIViewRepresentable {
     final class Coordinator: NSObject, WKScriptMessageHandler, WKUIDelegate {
         weak var web: WKWebView?
 
+        let light = UIImpactFeedbackGenerator(style: .light)
+        let medium = UIImpactFeedbackGenerator(style: .medium)
+        let select = UISelectionFeedbackGenerator()
+        let notify = UINotificationFeedbackGenerator()
+
+        func fx(_ kind: String, haptic: Bool, sound: Bool) {
+            if haptic {
+                switch kind {
+                case "tick": light.impactOccurred()
+                case "sel": select.selectionChanged()
+                case "add": medium.impactOccurred()
+                case "warn": notify.notificationOccurred(.warning)
+                case "ok": notify.notificationOccurred(.success)
+                default: light.impactOccurred()
+                }
+            }
+            if sound {
+                // 系统自带键盘/锁屏类短音，随静音开关和系统音量
+                let id: SystemSoundID
+                switch kind {
+                case "tick": id = 1104
+                case "sel": id = 1104
+                case "add": id = 1057
+                case "warn": id = 1053
+                case "ok": id = 1025
+                default: id = 1104
+                }
+                AudioServicesPlaySystemSound(id)
+            }
+        }
+
         func userContentController(_ uc: WKUserContentController, didReceive m: WKScriptMessage) {
-            guard let d = m.body as? [String: Any], d["type"] as? String == "save",
+            guard let d = m.body as? [String: Any], let type = d["type"] as? String else { return }
+            if type == "fx" {
+                fx(d["kind"] as? String ?? "tick", haptic: d["haptic"] as? Bool ?? true, sound: d["sound"] as? Bool ?? true)
+                return
+            }
+            if type == "theme" {
+                let mode = d["mode"] as? String ?? "auto"
+                let dark = d["dark"] as? Bool ?? false
+                DispatchQueue.main.async {
+                    let bg = dark ? UIColor(red: 0.09, green: 0.075, blue: 0.063, alpha: 1)
+                                  : UIColor(red: 0.984, green: 0.957, blue: 0.918, alpha: 1)
+                    self.web?.backgroundColor = bg
+                    self.web?.scrollView.backgroundColor = bg
+                    let style: UIUserInterfaceStyle = mode == "dark" ? .dark : (mode == "light" ? .light : .unspecified)
+                    UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.forEach { $0.overrideUserInterfaceStyle = style }
+                }
+                return
+            }
+            if type == "shareText", let text = d["text"] as? String {
+                DispatchQueue.main.async {
+                    let vc = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+                    guard let root = UIApplication.shared.connectedScenes.compactMap({ ($0 as? UIWindowScene)?.keyWindow }).first?.rootViewController else { return }
+                    var top = root; while let p = top.presentedViewController { top = p }
+                    vc.popoverPresentationController?.sourceView = top.view
+                    vc.popoverPresentationController?.sourceRect = CGRect(x: top.view.bounds.midX, y: top.view.bounds.maxY - 40, width: 1, height: 1)
+                    top.present(vc, animated: true)
+                }
+                return
+            }
+            guard type == "save",
                   let name = d["name"] as? String, let b64 = d["b64"] as? String,
                   let data = Data(base64Encoded: b64) else { return }
             let safe = name.replacingOccurrences(of: "/", with: "_")
