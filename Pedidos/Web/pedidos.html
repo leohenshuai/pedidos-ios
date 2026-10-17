@@ -117,14 +117,21 @@ textarea.nm:focus{outline:none;border-bottom:2px solid var(--c);background:#fffb
 #pv .in{max-width:760px;margin:0 auto}
 #pv img{width:100%;border-radius:10px;display:block}
 .pbw{position:sticky;top:0;z-index:2;background:#000c;margin:calc(-12px - var(--sat)) -12px 8px;padding:calc(12px + var(--sat)) 12px 12px}
-.pb{display:flex;gap:8px;margin-bottom:8px}
-.pb button,.pb a{flex:1;text-align:center;padding:11px 4px;border:0;border-radius:12px;font-size:15px;background:#fff;color:#3a2e2a;text-decoration:none}
-.po{display:flex;align-items:center;gap:8px;color:#fff;font-size:13px}
+.pvb{display:flex;gap:8px;margin-bottom:8px}
+.pvb button,.pvb a{flex:1;text-align:center;padding:11px 4px;border:0;border-radius:12px;font-size:15px;background:#fff;color:#3a2e2a;text-decoration:none}
+.po{display:flex;align-items:center;gap:8px;color:#fff;font-size:13px;margin-top:8px}
 .po .th{width:30px;height:30px;border-radius:50%;border:3px solid transparent;padding:0}
 .po .th.on{border-color:#fff;box-shadow:0 0 0 2px #0008}
 .po .lg{margin-left:auto;display:flex;border-radius:10px;overflow:hidden}
 .po .lg button{border:0;background:#ffffff33;color:#fff;padding:7px 14px;font-size:13px}
 .po .lg button.on{background:#fff;color:#3a2e2a;font-weight:700}
+html[data-theme=dark] #pv{background:#000e}
+html[data-theme=dark] .pvb button,html[data-theme=dark] .pvb a{background:rgba(255,255,255,.14);color:#f1e8de}
+html[data-theme=dark] .pbw{background:rgba(24,19,16,.94)}
+html[data-theme=dark] .po .th.on{border-color:#f1e8de}
+html[data-theme=dark] .po .th{box-shadow:0 0 0 1px rgba(255,255,255,.25)}
+html[data-theme=dark] .po .lg button{background:rgba(255,255,255,.1);color:#cfc4b8}
+html[data-theme=dark] .po .lg button.on{background:#f1e8de;color:#2a2018}
 #pv p{color:#fff9;font-size:12px;text-align:center;margin:8px 0 30px}
 #md{position:fixed;inset:0;z-index:40;background:#0007;display:none;align-items:flex-end;justify-content:center}
 #md.c{align-items:center;padding:20px}
@@ -383,7 +390,7 @@ html[data-theme=dark] #toast{background:rgba(70,60,55,.95)!important}
 html[data-theme=dark] .sh input.cn{filter:brightness(1.15)}
 html[data-theme=dark] .xp td{border-color:rgba(255,255,255,.12)}
 /* 海报与导出表格是发给别人的，预览保持浅色 */
-html[data-theme=dark] .xp table,html[data-theme=dark] .xp td,html[data-theme=dark] .xp td.n,html[data-theme=dark] .xp td.q,html[data-theme=dark] .xp td.c{color:#3a2e2a}
+html[data-theme=dark] .xp table{color:#3a2e2a}
 html[data-theme=dark] .xp{background:#fff}
 html[data-theme=dark] .xp th{background:#3a2e2a;color:#fff}
 html[data-theme=dark] .xp tr.tot td{background:#f0c987;color:#3a2e2a}
@@ -449,8 +456,9 @@ html[data-theme=dark] .vr button{background:rgba(255,255,255,.1)}
 <div id="toast"></div>
 <div id="pv"><div class="in">
  <div class="pbw">
-  <div class="pb"><button onclick="$('pv').style.display='none'">← 返回</button><a id="dl" download="pedido.png">保存图片</a><button onclick="exportPdf()">导出 PDF</button></div>
-  <div class="po"><span>主题</span><span id="thm" style="display:flex;gap:8px"></span><div class="lg"><button id="lgEs" onclick="setLang('es')">Español</button><button id="lgZh" onclick="setLang('zh')">中文</button></div></div>
+  <div class="pvb"><button onclick="$('pv').style.display='none'">← 返回</button><a id="dl" download="pedido.png">保存图片</a><button onclick="exportPdf()">导出 PDF</button></div>
+  <div class="po"><span>主题</span><span id="thm" style="display:flex;gap:8px"></span></div>
+  <div class="po"><span>底色</span><div class="lg" style="margin-left:0"><button id="dkL" onclick="setDk(0)">浅色</button><button id="dkD" onclick="setDk(1)">深色</button></div><div class="lg"><button id="lgEs" onclick="setLang('es')">Español</button><button id="lgZh" onclick="setLang('zh')">中文</button></div></div>
  </div>
  <img id="pimg"><p>也可以长按图片 → 存储到照片 / 分享</p>
 </div></div>
@@ -465,7 +473,7 @@ const LANG={
  es:{p1:s=>s?"PEDIDO A":"PEDIDO",big:"ORDEN",p2:s=>"ORDEN DE COMPRA",date:"Fecha",total:n=>"TOTAL GENERAL: "+n+" unidades",head:s=>s?"PEDIDO A "+s:"PEDIDO",amount:"Importe estimado"},
  zh:{p1:s=>s?"订货给":"",big:"订货单",p2:s=>s?"订 货 单":"",date:"日期",total:n=>"合计："+n+" 件",head:s=>s?"订货单 · "+s:"订货单",amount:"预计金额"}};
 const NATIVE=!!window.__NATIVE__;
-const APP_VERSION="1.6 · 2026-10-17";
+const APP_VERSION="1.7 · 2026-10-17";
 let S=null,Q="",QC=-1,PQ="",HQ="",HF="all",HR=[],draft={},SG={},SERVER=false,REV=0,tt=null,MI=null,MT=null,DCB=null,PCV=null,pushT=null,pending=false,pushing=false,dirty=false;
 const $=id=>document.getElementById(id);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
@@ -506,7 +514,7 @@ function fix(s){
  s.del=(s.del&&typeof s.del=="object")?s.del:{};
  s.orders.forEach(o=>{o.id=o.id||uid();o.upd=o.upd||0;o.sup=o.sup||"";o.dt=o.dt||"";
   o.status=STAT[o.status]?o.status:"draft";o.sort=["manual","az","qty"].includes(o.sort)?o.sort:"manual";
-  o.price=!!o.price;o.cur=o.cur||"$";o.lang=o.lang=="zh"?"zh":"es";o.theme=(o.theme>=0&&o.theme<THEMES.length)?(o.theme|0):0;
+  o.price=!!o.price;o.dk=o.dk?1:0;o.cur=o.cur||"$";o.lang=o.lang=="zh"?"zh":"es";o.theme=(o.theme>=0&&o.theme<THEMES.length)?(o.theme|0):0;
   o.cats=(o.cats||[]).map((c,i)=>({name:c.name||"",sub:c.sub||"",color:c.color||COLORS[i%8],items:(c.items||[]).map(it=>Array.isArray(it)?{n:String(it[0]),q:parseInt(it[1])||0,p:null}:{n:String(it.n||""),q:Math.max(0,parseInt(it.q)||0),p:(it.p==null||it.p==="")?null:Math.max(0,parseFloat(it.p)||0)})}))});
  if(!s.vocab){const m=new Map();s.orders.forEach(o=>o.cats.forEach(c=>c.items.forEach(i=>{const k=norm(i.n);if(k&&!m.has(k))m.set(k,i.n)})));s.vocab=[...m.values()]}
 
@@ -819,10 +827,11 @@ function zipStore(files){ // 无压缩 zip，足够 xlsx 使用
  eo.setUint32(0,0x06054b50,true);eo.setUint16(8,files.length,true);eo.setUint16(10,files.length,true);eo.setUint32(12,cdLen,true);eo.setUint32(16,off,true);
  return new Blob([...parts,...cd,new Uint8Array(eo.buffer)],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"})}
 const xe=s=>String(s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const shd=(hex,k)=>{const n=parseInt(hex.slice(1),16),m=v=>Math.round(v*k).toString(16).padStart(2,"0");return(m(n>>16&255)+m(n>>8&255)+m(n&255)).toUpperCase()};
 const tint=(hex,k)=>{const n=parseInt(hex.slice(1),16),m=v=>Math.round(v+(255-v)*k).toString(16).padStart(2,"0");return(m(n>>16&255)+m(n>>8&255)+m(n&255)).toUpperCase()};
 const XL={es:{cat:"Categoría",it:"Producto",q:"Cantidad",p:"Precio",a:"Importe",t:"TOTAL",sheet:"Pedido"},zh:{cat:"类别",it:"品名",q:"数量",p:"单价",a:"小计",t:"合计",sheet:"订货单"}};
 function buildXlsx(o){
- const X=XL[o.lang||"es"],price=!!o.price,ncol=price?5:3,col="ABCDE";
+ const X=XL[o.lang||"es"],price=!!o.price,ncol=price?5:3,col="ABCDE",DKM=!!o.dk,rowC=c=>DKM?shd(c,.3):tint(c,.86);
  const cats=o.cats.map(c=>({c,items:sorted(o,c).map(i=>c.items[i]).filter(i=>i.q>0)})).filter(x=>x.items.length);
  // 样式表：每个种类一个浅色底
  const fills=['<fill><patternFill patternType="none"/></fill>','<fill><patternFill patternType="gray125"/></fill>','<fill><patternFill patternType="solid"><fgColor rgb="FF3A2E2A"/><bgColor indexed="64"/></patternFill></fill>','<fill><patternFill patternType="solid"><fgColor rgb="FFF0C987"/><bgColor indexed="64"/></patternFill></fill>'];
@@ -836,12 +845,12 @@ function buildXlsx(o){
   '<xf numFmtId="4" fontId="2" fillId="3" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>']; // 7 合计金额
  const catStyle={};
  const itStyle={},qtStyle={},amStyle={};
- cats.forEach(({c},i)=>{fills.push(`<fill><patternFill patternType="solid"><fgColor rgb="FF${tint(c.color,.86)}"/><bgColor indexed="64"/></patternFill></fill>`);const fid=fills.length-1;
-  xfs.push(`<xf numFmtId="0" fontId="2" fillId="${fid}" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>`);catStyle[i]=xfs.length-1;
-  xfs.push(`<xf numFmtId="0" fontId="0" fillId="${fid}" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>`);itStyle[i]=xfs.length-1;
-  xfs.push(`<xf numFmtId="1" fontId="0" fillId="${fid}" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center"/></xf>`);qtStyle[i]=xfs.length-1;
-  xfs.push(`<xf numFmtId="4" fontId="0" fillId="${fid}" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1"/>`);amStyle[i]=xfs.length-1});
- const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="${fills.length}">${fills.join("")}</fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFD9D2C5"/></left><right style="thin"><color rgb="FFD9D2C5"/></right><top style="thin"><color rgb="FFD9D2C5"/></top><bottom style="thin"><color rgb="FFD9D2C5"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${xfs.length}">${xfs.join("")}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+ cats.forEach(({c},i)=>{fills.push(`<fill><patternFill patternType="solid"><fgColor rgb="FF${rowC(c.color)}"/><bgColor indexed="64"/></patternFill></fill>`);const fid=fills.length-1;
+  xfs.push(`<xf numFmtId="0" fontId="${DKM?4:2}" fillId="${fid}" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>`);catStyle[i]=xfs.length-1;
+  xfs.push(`<xf numFmtId="0" fontId="${DKM?3:0}" fillId="${fid}" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>`);itStyle[i]=xfs.length-1;
+  xfs.push(`<xf numFmtId="1" fontId="${DKM?3:0}" fillId="${fid}" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center"/></xf>`);qtStyle[i]=xfs.length-1;
+  xfs.push(`<xf numFmtId="4" fontId="${DKM?3:0}" fillId="${fid}" borderId="1" xfId="0" applyNumberFormat="1" applyFill="1" applyBorder="1"/>`);amStyle[i]=xfs.length-1});
+ const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="5"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><sz val="11"/><color rgb="FFF1E8DE"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFF1E8DE"/><name val="Calibri"/></font></fonts><fills count="${fills.length}">${fills.join("")}</fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFD9D2C5"/></left><right style="thin"><color rgb="FFD9D2C5"/></right><top style="thin"><color rgb="FFD9D2C5"/></top><bottom style="thin"><color rgb="FFD9D2C5"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${xfs.length}">${xfs.join("")}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
  // 数据行
  const T=(r,c,v,st)=>`<c r="${col[c]}${r}" s="${st}" t="inlineStr"><is><t xml:space="preserve">${xe(v)}</t></is></c>`;
  const N=(r,c,v,st)=>`<c r="${col[c]}${r}" s="${st}"><v>${v}</v></c>`;
@@ -883,13 +892,15 @@ function sheetPreview(){
  const o=cur(),X=XL[o.lang||"es"],d=sheetData(o),price=!!o.price;
  if(!d.n){closeModal();toast("没有数量大于 0 的品项");return}
  const head=[X.cat,X.it,X.q].concat(price?[X.p,X.a]:[]);
+ const bgs=cl=>o.dk?"background:#"+shd(cl,.3)+";color:#f1e8de":"background:#"+tint(cl,.86)+";color:#3a2e2a";
  let body="";
  d.cats.forEach(({c,items})=>items.forEach((it,ii)=>{
-  body+=`<tr>${ii==0?`<td class="c" rowspan="${items.length}" style="background:#${tint(c.color,.86)}">${esc(c.name)}</td>`:""}<td class="n" style="background:#${tint(c.color,.86)}">${esc(it.n)}</td><td class="q" style="background:#${tint(c.color,.86)}">${it.q}</td>`+(price?`<td class="r" style="background:#${tint(c.color,.86)}">${it.p?fmt(it.p):""}</td><td class="r" style="background:#${tint(c.color,.86)}">${it.p?fmt(it.q*it.p):""}</td>`:"")+`</tr>`}));
+  body+=`<tr>${ii==0?`<td class="c" rowspan="${items.length}" style="${bgs(c.color)}">${esc(c.name)}</td>`:""}<td class="n" style="${bgs(c.color)}">${esc(it.n)}</td><td class="q" style="${bgs(c.color)}">${it.q}</td>`+(price?`<td class="r" style="${bgs(c.color)}">${it.p?fmt(it.p):""}</td><td class="r" style="${bgs(c.color)}">${it.p?fmt(it.q*it.p):""}</td>`:"")+`</tr>`}));
  body+=`<tr class="tot"><td>${X.t}</td><td></td><td class="q">${d.q}</td>`+(price?`<td></td><td class="r">${d.a?fmt(d.a):""}</td>`:"")+`</tr>`;
  modal(`<div class="mh">表格预览</div>
  <div class="mt">共 ${d.n} 行 · 合计 ${d.q} 件${price&&d.a?" · "+esc(o.cur)+fmt(d.a):""}。数量为 0 的品项已隐藏；下面就是 Excel 里的内容。</div>
  <div class="opt">语言：<select onchange="mut(x=>{x.lang=this.value},'',true);sheetPreview()"><option value="es" ${o.lang!="zh"?"selected":""}>Español</option><option value="zh" ${o.lang=="zh"?"selected":""}>中文</option></select><span style="color:#999;font-size:12px">（只改表头和合计文字）</span></div>
+ <div class="opt">底色：<select onchange="mut(x=>{x.dk=this.value=='1'?1:0},'',true);sheetPreview()"><option value="0" ${!o.dk?"selected":""}>浅色</option><option value="1" ${o.dk?"selected":""}>深色</option></select><span style="color:#999;font-size:12px">（只影响导出的表格，与软件外观无关）</span></div>
  <div class="xp"><table><thead><tr>${head.map((h,i)=>`<th class="${i==1||i==2?'q':''}">${esc(h)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>
  <div class="xm">文件名：${esc(sheetName(o))}</div>
  <div class="mb2" style="flex-wrap:wrap"><button class="g" onclick="copyOrderText()">复制文字</button><button class="g" onclick="shareText()">发送文字</button><button class="g" onclick="closeModal()">取消</button><button onclick="confirmSheet()">${isMobile()?"发送 Excel":"下载 Excel"}</button></div>`)}
@@ -1007,38 +1018,41 @@ function poster(){
 }
 function setTheme(i){mut(o=>{o.theme=i},"",true);$("thm").querySelectorAll(".th").forEach((b,k)=>b.classList.toggle("on",k==i));drawPoster()}
 function setLang(l){mut(o=>{o.lang=l},"",true);drawPoster()}
+function setDk(v){mut(o=>{o.dk=v},"",true);drawPoster()}
 function drawPoster(){
- const o=cur(),L=LANG[o.lang||"es"],T=THEMES[o.theme||0],[ ,BG,DK,GD]=T;
- $("lgEs").classList.toggle("on",(o.lang||"es")=="es");$("lgZh").classList.toggle("on",o.lang=="zh");
+ const o=cur(),L=LANG[o.lang||"es"],T=THEMES[o.theme||0],dk=!!o.dk;let [ ,BG,DK,GD]=T;
+ const HD=dk?"#"+tint(DK,.16).toLowerCase():DK,CARD=dk?"#241f1b":"#fff",TX=dk?"#f1e8de":DK,LINE=dk?"#4a423b":"#ddd",DATE=dk?"#a89a8e":"#7a6a60",SUBC=dk?"#9a8d82":"#888",HT=dk?"#f5efe6":BG,TOTT=dk?"#2a2018":DK;
+ if(dk)BG="#14110f";
+ $("dkL").classList.toggle("on",!o.dk);$("dkD").classList.toggle("on",!!o.dk);$("lgEs").classList.toggle("on",(o.lang||"es")=="es");$("lgZh").classList.toggle("on",o.lang=="zh");
  const cats=o.cats.map(c=>({...c,items:sorted(o,c).map(i=>c.items[i]).filter(i=>i.q>0)})).filter(c=>c.items.length);
  const W=1080,P=50,IW=W-2*P,CP=32,COLW=(IW-2*CP-44)/2,RH=58,SF='-apple-system,"PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif';
  const showAmt=o.price&&amtO(o)>0,sup=(o.sup||"").trim().toUpperCase();
  let H=P+270+44+30+90+(showAmt?20+70:0)+P;cats.forEach(c=>H+=12+86+Math.ceil(c.items.length/2)*RH+24+28);
  const cv=document.createElement("canvas");cv.width=W;cv.height=H;const x=cv.getContext("2d");
  x.fillStyle=BG;x.fillRect(0,0,W,H);
- let y=P;rr(x,DK,P,y,IW,270,28);
- x.textAlign="center";x.fillStyle=BG+"b3";x.font="22px "+SF;x.letterSpacing="8px";const p1=L.p1(sup);if(p1)x.fillText(p1,W/2+4,y+68);
- x.fillStyle=BG;x.letterSpacing="6px";x.fillText(fit(x,sup||L.big,'bold 88px '+SF,IW-60,36),W/2+3,y+160);
+ let y=P;rr(x,HD,P,y,IW,270,28);
+ x.textAlign="center";x.fillStyle=HT+"b3";x.font="22px "+SF;x.letterSpacing="8px";const p1=L.p1(sup);if(p1)x.fillText(p1,W/2+4,y+68);
+ x.fillStyle=HT;x.letterSpacing="6px";x.fillText(fit(x,sup||L.big,'bold 88px '+SF,IW-60,36),W/2+3,y+160);
  x.fillStyle=GD;x.font="26px "+SF;x.letterSpacing="4px";const p2=L.p2(sup);if(p2)x.fillText(p2,W/2+2,y+225);x.letterSpacing="0px";
- y+=270+44;x.font="24px "+SF;x.fillStyle="#7a6a60";x.textAlign="left";
+ y+=270+44;x.font="24px "+SF;x.fillStyle=DATE;x.textAlign="left";
  x.fillText(L.date+": "+(o.dt||"____/____/______"),P+8,y);y+=30;
  cats.forEach(c=>{
   const rows=Math.ceil(c.items.length/2),h=12+86+rows*RH+24;
-  x.save();x.beginPath();x.roundRect(P,y,IW,h,24);x.clip();x.fillStyle="#fff";x.fillRect(P,y,IW,h);x.fillStyle=c.color;x.fillRect(P,y,IW,12);x.restore();
+  x.save();x.beginPath();x.roundRect(P,y,IW,h,24);x.clip();x.fillStyle=CARD;x.fillRect(P,y,IW,h);x.fillStyle=c.color;x.fillRect(P,y,IW,12);x.restore();
   x.fillStyle=c.color;x.font="bold 44px "+SF;x.letterSpacing="3px";x.textAlign="left";const nm=fit(x,c.name||" ","bold 44px "+SF,IW-2*CP-40,24);x.fillText(nm,P+CP,y+12+58);
   const nw=x.measureText(nm).width;x.letterSpacing="0px";
-  if(c.sub){x.fillStyle="#888";x.font="italic 22px "+SF;const sw=IW-2*CP-nw-30;if(sw>80)x.fillText(fit(x,c.sub,"italic 22px "+SF,sw,14),P+CP+nw+18,y+12+58)}
+  if(c.sub){x.fillStyle=SUBC;x.font="italic 22px "+SF;const sw=IW-2*CP-nw-30;if(sw>80)x.fillText(fit(x,c.sub,"italic 22px "+SF,sw,14),P+CP+nw+18,y+12+58)}
   c.items.forEach((it,i)=>{
    const col=i%2,r=Math.floor(i/2),cx=P+CP+col*(COLW+44),cy=y+12+86+r*RH;
-   x.strokeStyle="#ddd";x.setLineDash([2,6]);x.lineWidth=2;x.lineCap="round";x.beginPath();x.moveTo(cx,cy+RH-4);x.lineTo(cx+COLW,cy+RH-4);x.stroke();x.setLineDash([]);
+   x.strokeStyle=LINE;x.setLineDash([2,6]);x.lineWidth=2;x.lineCap="round";x.beginPath();x.moveTo(cx,cy+RH-4);x.lineTo(cx+COLW,cy+RH-4);x.stroke();x.setLineDash([]);
    x.font="bold 26px "+SF;const q=String(it.q),pw=Math.max(54,x.measureText(q).width+30);
-   x.fillStyle=DK;x.textAlign="left";const t=fit(x,it.n,"28px "+SF,COLW-pw-16,18);x.fillText(t,cx,cy+RH/2+6);
+   x.fillStyle=TX;x.textAlign="left";const t=fit(x,it.n,"28px "+SF,COLW-pw-16,18);x.fillText(t,cx,cy+RH/2+6);
    rr(x,c.color,cx+COLW-pw,cy+(RH-4)/2-20,pw,40,20);x.fillStyle="#fff";x.font="bold 26px "+SF;x.textAlign="center";x.fillText(q,cx+COLW-pw/2,cy+(RH-4)/2+9);
   });
   x.textAlign="left";y+=h+28;
  });
- rr(x,GD,P,y,IW,90,24);x.fillStyle=DK;x.font="bold 38px "+SF;x.textAlign="center";x.fillText(L.total(sumO(o)),W/2,y+58);y+=90;
- if(showAmt){y+=20;x.font="30px "+SF;x.fillStyle=DK;x.fillText(L.amount+": "+o.cur+fmt(amtO(o)),W/2,y+46)}
+ rr(x,GD,P,y,IW,90,24);x.fillStyle=TOTT;x.font="bold 38px "+SF;x.textAlign="center";x.fillText(L.total(sumO(o)),W/2,y+58);y+=90;
+ if(showAmt){y+=20;x.font="30px "+SF;x.fillStyle=TX;x.fillText(L.amount+": "+o.cur+fmt(amtO(o)),W/2,y+46)}
  PCV=cv;const url=cv.toDataURL("image/png");$("pimg").src=url;$("dl").href=url;
  $("dl").download="pedido_"+((o.sup||"orden").replace(/[^\w\u4e00-\u9fa5-]+/g,"_"))+"_"+(o.dt||"").replace(/\//g,"-")+".png";
 }
