@@ -302,6 +302,8 @@ section .sh{padding-top:12px}
 .ncw .ok{border:0;border-radius:999px;background:var(--acc,#b85c38);color:#fff;padding:0 16px;font-size:15px;min-height:42px}.ncw .cx{border:0;background:none;color:#999;font-size:14px;padding:0 6px}
 .row3 .tiny{border:0;background:none;color:#a89888;font-size:13px;padding:8px 14px;border-radius:999px}.row3 .tiny.arm{background:#d9534f;color:#fff}
 #vEdit .bar{padding:8px 10px;gap:8px}#vEdit .bar .sm2{flex:none;width:44px;height:44px;padding:0;font-size:18px}#vEdit .bar .fl{flex:1}
+.bkh{margin:10px 12px 0;padding:10px 14px;border-radius:16px;background:rgba(192,86,47,.1);color:#8a4a2a;font-size:13px;display:flex;gap:8px;align-items:center}.bkh button{margin-left:auto;border:0;border-radius:999px;background:var(--acc,#c0562f);color:#fff;padding:7px 14px;font-size:13px;white-space:nowrap}
+.bkr{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #eee}.bkr:last-child{border:0}.bkr small{color:#999}.bkr button{margin-left:auto;border:0;background:#f6ecdd;border-radius:999px;padding:7px 14px;color:#8a6a45;font-size:14px}
 </style></head><body>
 
 <div id="vHome"><div class="vwrap">
@@ -309,6 +311,7 @@ section .sh{padding-top:12px}
   <div class="top"><div class="r1"><h1>📦 订货单管理器</h1><b id="hCnt"></b></div>
    <input id="hq" class="sq" type="search" placeholder="搜索所有订单里的品项，如 Lola" oninput="HQ=this.value;renderHome()">
    <div id="hf" class="qc"></div></div>
+  <div id="bkHint"></div>
   <div id="olist"></div>
  </div>
  <div id="tab_s" class="tp" style="display:none">
@@ -499,7 +502,7 @@ function syncUndo(){const o=cur();if(!o)return;const h=hist(o);$("bUndo").disabl
 addEventListener("keydown",e=>{if(!(e.ctrlKey||e.metaKey)||e.key.toLowerCase()!="z"||isTyping()||!cur())return;e.preventDefault();e.shiftKey?redo():undo()});
 
 /* ---------- 主页 ---------- */
-function renderHome(){
+function renderHome(){if(typeof bkHint=="function")bkHint();
  const os=[...S.orders].sort((a,b)=>b.upd-a.upd);
  $("hCnt").textContent=os.length+" 个订单";
  const cn={all:os.length};Object.keys(STAT).forEach(k=>cn[k]=os.filter(o=>o.status==k).length);
@@ -522,10 +525,10 @@ function openHit(i){const h=HR[i];if(!h)return;PQ=h.it.n;open_(h.o.id)}
 function cycleSt(id){const o=S.orders.find(x=>x.id==id);if(!o)return;const k=Object.keys(STAT);o.status=k[(k.indexOf(o.status)+1)%k.length];o.upd=Date.now();save();renderHome()}
 function newOrder(){const o=blank();S.orders.push(o);save();open_(o.id);setTimeout(()=>$("eSup").focus(),50)}
 function dup(id){const s=S.orders.find(o=>o.id==id);if(!s)return;const o=JSON.parse(JSON.stringify(s));o.id=uid();o.sup=(s.sup||"未命名订单")+" 副本";o.dt=today();o.status="draft";o.upd=Date.now();S.orders.push(o);save();renderHome();toast("已复制，数量保留，进入后可“全部数量清零”")}
-function delOrder(id){const i=S.orders.findIndex(o=>o.id==id);if(i<0)return;const o=S.orders[i];S.orders.splice(i,1);S.del[id]=Date.now();save();renderHome();
+function delOrder(id){const i=S.orders.findIndex(o=>o.id==id);if(i<0)return;bkSnap("pre-delete");const o=S.orders[i];S.orders.splice(i,1);S.del[id]=Date.now();save();renderHome();
  toast("已删除："+(o.sup||"未命名订单"),()=>{delete S.del[id];o.upd=Date.now();S.orders.splice(i,0,o);save();renderHome()})}
-function exportAll(){dlBlob(new Blob([JSON.stringify(S,null,1)],{type:"application/json"}),"pedidos_backup_"+today().replace(/\//g,"-")+".json")}
-function importAll(inp){const f=inp.files[0];if(!f)return;f.text().then(t=>{const j=fix(JSON.parse(t));if(!j||!j.orders.length)throw 0;const have=new Set(S.orders.map(o=>o.id));let n=0;j.orders.forEach(o=>{if(have.has(o.id))o.id=uid();S.orders.push(o);n++});(j.vocab||[]).forEach(addVocab);save();renderHome();toast("已导入 "+n+" 个订单")}).catch(()=>toast("⚠ 备份文件无法识别")).finally(()=>inp.value="")}
+function exportAll(){try{localStorage.setItem("pedidos_lastexp",String(Date.now()))}catch(e){}dlBlob(new Blob([JSON.stringify(S,null,1)],{type:"application/json"}),"pedidos_backup_"+today().replace(/\//g,"-")+".json")}
+function importAll(inp){const f=inp.files[0];if(!f)return;bkSnap("pre-import");f.text().then(t=>{const j=fix(JSON.parse(t));if(!j||!j.orders.length)throw 0;const have=new Set(S.orders.map(o=>o.id));let n=0;j.orders.forEach(o=>{if(have.has(o.id))o.id=uid();S.orders.push(o);n++});(j.vocab||[]).forEach(addVocab);save();renderHome();toast("已导入 "+n+" 个订单")}).catch(()=>toast("⚠ 备份文件无法识别")).finally(()=>inp.value="")}
 function nativeSave(name,b64){try{window.webkit.messageHandlers.native.postMessage({type:"save",name:name,b64:b64})}catch(e){toast("⚠ 无法保存文件")}}
 function dlBlob(b,name){if(NATIVE){const r=new FileReader();r.onload=()=>nativeSave(name,String(r.result).split(",")[1]||"");r.readAsDataURL(b);return}const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove()}
 function vocabModal(){
@@ -635,7 +638,7 @@ function cat(ci,k,v){mut(o=>{o.cats[ci][k]=k=="name"?v.trim().toUpperCase():v.tr
 function recolor(ci){mut(o=>{const c=o.cats[ci];c.color=COLORS[(COLORS.indexOf(c.color)+1)%COLORS.length]})}
 function delCat(ci){const n=cur().cats[ci].name;QC=-1;mut(o=>{o.cats.splice(ci,1)});toast("已删除种类："+n,undo)}
 function addCat(){const n=$("ncn").value.trim();if(!n)return;mut(o=>{o.cats.push({name:n.toUpperCase(),sub:"",color:COLORS[o.cats.length%COLORS.length],items:[]})});closeNC();scrollTo(0,document.body.scrollHeight)}
-function clearQty(){mut(o=>o.cats.forEach(c=>c.items.forEach(i=>i.q=0)));toast("所有数量已清零",undo)}
+function clearQty(){bkSnap("pre-clear");mut(o=>o.cats.forEach(c=>c.items.forEach(i=>i.q=0)));toast("所有数量已清零",undo)}
 
 /* 添加: 重名提醒 + 近似拼写提醒 */
 function addItem(ci,force){
@@ -988,8 +991,28 @@ function setPage(){const L=S.orders.filter(o=>!o.del).length,sc=srcCur();
  <button class="setb" onclick="homeCat()"><span>📥</span><span style="flex:1">从商品源导入到订单</span><small style="color:#999">${esc(sc.name)}</small></button></div>
  <div class="pt">数据</div><div class="card">
  <button class="setb" onclick="exportAll()"><span>💾</span><span style="flex:1">导出全部备份</span><small style="color:#999">${L} 个订单</small></button>
+ <button class="setb" onclick="bkModal()"><span>🛟</span><span style="flex:1">恢复点（自动备份）</span><small style="color:#999">点开查看</small></button>
  <label class="setb"><span>📂</span><span style="flex:1">导入备份</span><input type="file" accept=".json,application/json" style="display:none" onchange="importAll(this)"></label></div>
- <div class="card"><div class="setb"><span>ℹ️</span><span style="flex:1">版本</span><small style="color:#999">${esc(APP_VERSION)}</small></div></div>`}
+ <div class="card"><div class="setb"><span>ℹ️</span><span style="flex:1">版本</span><small style="color:#999">${esc(APP_VERSION)}</small></div></div>`}/* ---------- 数据安全: 快照 / 恢复点 / 导出提醒 ---------- */
+function bkSnap(label){if(!SERVER)return Promise.resolve();return fetch("api/snapshot?label="+encodeURIComponent(label),{method:"POST"}).catch(()=>{})}
+const BKL={"pre-delete":"删除订单前","pre-import":"导入备份前","pre-clear":"清零前","pre-restore":"恢复前","manual":"手动"};
+function bkTime(n){const m=n.match(/^pedidos_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/);return m?`${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}`:n}
+async function bkModal(){
+ modal(`<div class="mh">恢复点</div><div class="mt">每次保存、删除订单、导入、清零前都会自动留一份。恢复前会再备份当前数据，可以反悔。</div><div id="bkl" class="mt">读取中…</div><div class="mb2"><button class="g" onclick="closeModal()">关闭</button><button onclick="bkNow()">现在备份一份</button></div>`);
+ let l=[];try{l=(await (await fetch("api/backups",{cache:"no-store"})).json()).list||[]}catch(e){}
+ const box=$("bkl");if(!box)return;
+ box.innerHTML=l.length?`<div style="max-height:46vh;overflow:auto">`+l.slice(0,60).map(b=>`<div class="bkr"><div><b>${bkTime(b.name)}</b><br><small>${b.orders>=0?b.orders+" 个订单":"无法读取"}${b.label?" · "+(BKL[b.label]||esc(b.label)):""}</small></div><button onclick="bkRestore('${b.name}')">恢复</button></div>`).join("")+`</div>`:"还没有恢复点（修改数据后会自动生成）";
+}
+async function bkNow(){await bkSnap("manual");toast("已备份当前数据");bkModal()}
+async function bkRestore(name){
+ if(!confirm("恢复到 "+bkTime(name)+" 的数据？\n当前数据会先自动备份。"))return;
+ try{const r=await fetch("api/restore",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name})});if(!r.ok)throw 0;
+  const j=fix(await (await fetch("api/data",{cache:"no-store"})).json());S=j;REV=j.rev||0;lsSave();closeModal();location.hash="";route();toast("已恢复到 "+bkTime(name))}catch(e){toast("⚠ 恢复失败")}
+}
+function bkHint(){const el=$("bkHint");if(!el)return;const t=+(localStorage.getItem("pedidos_lastexp")||0),n=S.orders.length;
+ const days=t?Math.floor((Date.now()-t)/864e5):null;
+ el.innerHTML=(n&&(days===null||days>=7))?`<div class="bkh"><span>🛟 ${days===null?"还没有导出过备份":"已 "+days+" 天没导出备份"}，建议存一份到「文件」</span><button onclick="exportAll();bkHint()">导出</button></div>`:""}
+
 /* 左边缘右滑返回 */
 (function(){let sx=0,sy=0,on=false,t0=0;
 addEventListener("touchstart",e=>{const p=e.touches[0];on=e.touches.length==1&&p.clientX<26;sx=p.clientX;sy=p.clientY;t0=Date.now()},{passive:true});
