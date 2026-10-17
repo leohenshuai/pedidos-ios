@@ -42,6 +42,7 @@ enum Store {
             var c = cur; c["rev"] = curRev
             return (409, (try? JSONSerialization.data(withJSONObject: c)) ?? Data())
         }
+        lock.lock(); defer { lock.unlock() }
         backup()
         new["rev"] = curRev + 1
         guard let out = try? JSONSerialization.data(withJSONObject: new, options: [.prettyPrinted]) else {
@@ -51,17 +52,60 @@ enum Store {
         return (200, Data("{\"ok\":true,\"rev\":\(curRev + 1)}".utf8))
     }
 
-    static func backup() {
+    static let lock = NSLock()
+    static func prune() {
         let fm = FileManager.default
-        guard fm.fileExists(atPath: dataURL.path) else { return }
+        let files = ((try? fm.contentsOfDirectory(atPath: backupDir.path)) ?? [])
+            .filter { $0.hasPrefix("pedidos_") && $0.hasSuffix(".json") }.sorted()
+        var keep = Set(files.suffix(40))
+        var days: [String: String] = [:]
+        for f in files { days[String(f.dropFirst(8).prefix(8))] = f }
+        for d in days.keys.sorted().suffix(14) { if let f = days[d] { keep.insert(f) } }
+        for f in files where !keep.contains(f) { try? fm.removeItem(at: backupDir.appendingPathComponent(f)) }
+    }
+
+    @discardableResult
+    static func backup(label: String? = nil, force: Bool = false) -> String? {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: dataURL.path) else { return nil }
         let files = ((try? fm.contentsOfDirectory(atPath: backupDir.path)) ?? []).sorted()
-        if let last = files.last,
+        if !force, let last = files.last,
            let attrs = try? fm.attributesOfItem(atPath: backupDir.appendingPathComponent(last).path),
-           let m = attrs[.modificationDate] as? Date, Date().timeIntervalSince(m) < 60 { return }
-        let f = DateFormatter(); f.dateFormat = "yyyyMMdd_HHmmss"
-        try? fm.copyItem(at: dataURL, to: backupDir.appendingPathComponent("pedidos_\(f.string(from: Date())).json"))
-        let all = ((try? fm.contentsOfDirectory(atPath: backupDir.path)) ?? []).sorted()
-        if all.count > 30 { all.prefix(all.count - 30).forEach { try? fm.removeItem(at: backupDir.appendingPathComponent($0)) } }
+           let m = attrs[.modificationDate] as? Date, Date().timeIntervalSince(m) < 60 { return nil }
+        let f = DateFormatter(); f.dateFormat = "yyyyMMdd_HHmmss"; f.locale = Locale(identifier: "en_US_POSIX")
+        let name = "pedidos_\(f.string(from: Date()))" + (label.map { "_" + $0 } ?? "") + ".json"
+        try? fm.copyItem(at: dataURL, to: backupDir.appendingPathComponent(name))
+        prune()
+        return name
+    }
+
+    static func listBackups() -> [[String: Any]] {
+        let fm = FileManager.default
+        let files = ((try? fm.contentsOfDirectory(atPath: backupDir.path)) ?? [])
+            .filter { $0.hasPrefix("pedidos_") && $0.hasSuffix(".json") }.sorted(by: >)
+        return files.map { f in
+            let u = backupDir.appendingPathComponent(f)
+            let size = ((try? fm.attributesOfItem(atPath: u.path))?[.size] as? Int) ?? 0
+            var n = -1
+            if let d = try? Data(contentsOf: u), let o = (try? JSONSerialization.jsonObject(with: d)) as? [String: Any],
+               let a = o["orders"] as? [Any] { n = a.count }
+            let label = f.count > 29 ? String(f.dropFirst(24).dropLast(5)) : ""
+            return ["name": f, "size": size, "orders": n, "label": label]
+        }
+    }
+
+    static func restore(_ name: String) -> (Int, Data) {
+        guard !name.contains("/"), !name.contains(".."), name.hasPrefix("pedidos_"),
+              let d = try? Data(contentsOf: backupDir.appendingPathComponent(name)),
+              var o = (try? JSONSerialization.jsonObject(with: d)) as? [String: Any],
+              o["orders"] is [Any] else { return (400, Data("{\"error\":\"bad backup\"}".utf8)) }
+        lock.lock(); defer { lock.unlock() }
+        let curRev = (read()?["rev"] as? Int) ?? 0
+        backup(label: "pre-restore", force: true)
+        o["rev"] = curRev + 1
+        guard let out = try? JSONSerialization.data(withJSONObject: o, options: [.prettyPrinted]),
+              (try? out.write(to: dataURL, options: .atomic)) != nil else { return (500, Data()) }
+        return (200, Data("{\"ok\":true,\"rev\":\(curRev + 1)}".utf8))
     }
 }
 
@@ -75,14 +119,34 @@ final class SchemeHandler: NSObject, WKURLSchemeHandler {
             let r = HTTPURLResponse(url: url, statusCode: code, httpVersion: "HTTP/1.1", headerFields: h)!
             task.didReceive(r); task.didReceive(data); task.didFinish()
         }
+        func readBody() -> Data? {
+            var body = task.request.httpBody
+            if body == nil, let s = task.request.httpBodyStream {
+                s.open(); var d = Data(); let buf = UnsafeMutablePointer<UInt8>.allocate(capacity: 65536)
+                while s.hasBytesAvailable { let n = s.read(buf, maxLength: 65536); if n <= 0 { break }; d.append(buf, count: n) }
+                buf.deallocate(); s.close(); body = d
+            }
+            return body
+        }
+        let json = "application/json; charset=utf-8"
+        if path == "/api/backups" {
+            let d = (try? JSONSerialization.data(withJSONObject: ["list": Store.listBackups()])) ?? Data("{\"list\":[]}".utf8)
+            send(200, d, json); return
+        }
+        if path == "/api/snapshot" {
+            let q = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "label" }?.value ?? "manual"
+            let label = String(q.filter { $0.isLetter || $0.isNumber || $0 == "-" }.prefix(20))
+            Store.lock.lock(); let n = Store.backup(label: label.isEmpty ? "manual" : label, force: true); Store.lock.unlock()
+            send(200, Data("{\"ok\":true,\"name\":\"\(n ?? "")\"}".utf8), json); return
+        }
+        if path == "/api/restore" {
+            let name = ((try? JSONSerialization.jsonObject(with: readBody() ?? Data())) as? [String: Any])?["name"] as? String ?? ""
+            let (code, out) = Store.restore(name)
+            send(code, out, json); return
+        }
         if path == "/api/data" {
             if task.request.httpMethod == "POST" {
-                var body = task.request.httpBody
-                if body == nil, let s = task.request.httpBodyStream {
-                    s.open(); var d = Data(); let buf = UnsafeMutablePointer<UInt8>.allocate(capacity: 65536)
-                    while s.hasBytesAvailable { let n = s.read(buf, maxLength: 65536); if n <= 0 { break }; d.append(buf, count: n) }
-                    buf.deallocate(); s.close(); body = d
-                }
+                let body = readBody()
                 let (code, out) = Store.write(body ?? Data())
                 send(code, out, "application/json; charset=utf-8")
             } else if let o = Store.read(), let d = try? JSONSerialization.data(withJSONObject: o) {
