@@ -484,7 +484,13 @@ html[data-theme=dark] .vr button{background:rgba(255,255,255,.1)}
 <script>
 // 官方商品库 (saphirus.com.ar, 2026-10-13)  [名称, 参考价(ARS), 是否60ml]
 const OFFICIAL_BUILTIN={"src":"saphirus.com.ar","date":"2026-10-13","cats":{"AROMA":[["Angel",6900,0],["Antitabaco",6900,0],["Apple",6900,0],["Atlantis",6900,0],["Bamboo",6900,0],["Bebé",6900,0],["Bergamota y Naranja",6900,0],["Blossom Rouge",6900,0],["Bouquet Floral",6900,0],["Breeze",6900,0],["Bubblegum",6900,0],["Café au Chocolat",6900,0],["Cappuccino",6900,0],["Capri Summer",6900,0],["Celestial Wings",6900,0],["Ciruela",6900,0],["Citronella",6900,0],["Citrus",6900,0],["Clean Cotton",6900,0],["Coco Maracuyá",6900,0],["Coco Vai",6900,0],["Cony",6900,0],["Cristal Eden",6900,0],["Cristóbal",6900,0],["Damasco",6900,0],["Daniel",6900,0],["Duvet",6900,0],["Etiqueta",6900,0],["Fantasía",6900,0],["Flores Blancas",6900,0],["Frutilla",6900,0],["Golden Lady",6900,0],["Golden Lord",6900,0],["Gossip King",6900,0],["Green",6900,0],["Guaraná",6900,0],["Hawai",6900,0],["Indiana",6900,0],["Jazmín",6900,0],["Lavanda",6900,0],["Lavanda y Te Verde",6900,0],["Life In Petals",6900,0],["Limón",6900,0],["Limón Dulce y Vainilla",6900,0],["Linah",6900,0],["Lola",6900,0],["London",6900,0],["Magnolia y Fresias",6900,0],["Mandarina",6900,0],["Mango",6900,0],["Manzana Canela",6900,0],["Maracuyá",6900,0],["Marino",6900,0],["Melón",6900,0],["Mery",6900,0],["Miel y Limón",6900,0],["Mito",6900,0],["Mix Tropical",6900,0],["Naranja Pimienta",6900,0],["Naranja y Chocolate",6900,0],["New York",6900,0],["Orange",6900,0],["Oriente",6900,0],["Palace",6900,0],["Palo Santo",6900,0],["Papaya",6900,0],["Patio",6900,0],["Paula",6900,0],["Peonias y Cedro",6900,0],["Pera y Durazno",6900,0],["Peras y Flores",6900,0],["Pitanga",6900,0],["Pomelo Rosado",6900,0],["Rocío",6900,0],["Rosas",6900,0],["Sandía Pepino",6900,0],["Soft Love",6900,0],["Sunset Fire",6900,0],["Tilo",6900,0],["Tokyo",6900,0],["Tropical",6900,0],["Uva",6900,0],["Vainilla",6900,0],["Vainilla Tonka",6900,0],["Velocity",6900,0],["Verbena",6900,0],["Violetas",6900,0],["Wanted",6900,0]],"TEXTIL":[["Antitabaco",4800,0],["Apple",4800,0],["Atlantis",4800,0],["Atlantis Blue",4800,0],["Bamboo",4800,0],["Bebé",4800,0],["Bergamota & Cedro",4800,0],["Blossom Rouge",4800,0],["Breeze",4800,0],["Bubblegum",4800,0],["Capri Summer",4800,0],["Celebrity Shoe",4800,0],["Celestial wings",4800,0],["Cereza Malbec",4800,0],["Citrus",4800,0],["Coco Vai",4800,0],["Cony",4800,0],["Cristal Eden",4800,0],["Cristóbal",4800,0],["Daniel",4800,0],["Dark Night",4800,0],["Deep Desert",4800,0],["Due Fusion",4800,0],["Duvet",4800,0],["Erba",4800,0],["Etiqueta",4800,0],["Flores Blancas",4800,0],["Flores Silvestres",4800,0],["Fresias y Bergamota",4800,0],["Frutilla",4800,0],["Frutos Patagónicos",4800,0],["Glitter Bot",4800,0],["Golden Lady",4800,0],["Golden Lord",4800,0],["Gossip King",4800,0],["Gossip Princess",4800,0],["Green",4800,0],["Green Eden",4800,0],["Guaraná",4800,0],["Hawai",4800,0],["Heaven And Hell",4800,0],["Indiana",4800,0],["Jade Horse",4800,0],["Jazmín",4800,0],["Last Shot",4800,0],["Lavanda",4800,0],["Life in Petals",4800,0],["Lilas",4800,0],["Limón",4800,0],["Limón Dulce y Vainilla",4800,0],["Linah",4800,0],["Lola",4800,0],["Lucy",4800,0],["Magnolia y Fresias",4800,0],["Man",4800,0],["Maracuyá",4800,0],["Marino",4800,0],["Medalla",4800,0],["Mery",4800,0],["Naranja Pimienta",4800,0],["New York",4800,0],["Night Empire",4800,0],["Nocturnal Shadow",4800,0],["Obelisco",4800,0],["Oriente",4800,0],["Palace",4800,0],["Papaya",4800,0],["Patio",4800,0],["Paula",4800,0],["Peonias y Cedro",4800,0],["Pistacho Caramel",4800,0],["Pitanga",4800,0],["Pomelo Rosado",4800,0],["Pétalos de Orquídeas",4800,0],["Red Vanilla",4800,0],["Rocío",4800,0],["Rosas",4800,0],["Sailor Man",4800,0],["Saphiruneta",4800,0],["Shadow Storm",4800,0],["Silver Bot",4800,0],["Snake & Roses",4800,0],["Soft Love",4800,0],["Suit Yourself",4800,0],["Sunset Fire",4800,0],["Sándalo y Violetas",4800,0],["Teakwood",4800,0],["Tokyo",4800,0],["Tribuna",4800,0],["Tropical",4800,0],["Uva",4800,0],["Vainilla",4800,0],["Velocity",4800,0],["Verbena",4800,0],["Violetas",4800,0]],"DIFUSORES":[["Adventure",6700,0],["Amanecer Citríco",3700,1],["Apple",6700,0],["Bamboo",6700,0],["Bebé",6700,0],["Bergamota & Cedro",6700,0],["Blossom Rouge",6700,0],["Bomba tropical",3700,1],["Brisa Floral",3700,1],["Bubblegum",6700,0],["Buttermilk",3700,1],["Café au Chocolat",6700,0],["Cappuccino",6700,0],["Citronella",6700,0],["Citrus",6700,0],["Clean Cotton",6700,0],["Coco Maracuyá",6700,0],["Coco Vai",6700,0],["Cony",6700,0],["Cookies & Cream",6700,0],["Corazón De Moras",3700,1],["Cristal Eden",6700,0],["Cristóbal",6700,0],["Damasco",6700,0],["Flores Blancas",6700,0],["Fresias & Bergamota",6700,0],["Frutas Exóticas",3700,1],["Frutos Patagónicos",6700,0],["Green",6700,0],["Guaraná",6700,0],["Hawai",6700,0],["Honey Elixir",3700,1],["Indiana",6700,0],["Jardín Marino",3700,1],["Jazmín",6700,0],["Lavanda",6700,0],["Lavanda Vainilla",6700,0],["Lavanda y Te Verde",6700,0],["Life In Petals",6700,0],["Lima Limón",6700,0],["Limón",6700,0],["Limón Dulce y Vainilla",6700,0],["Linah",6700,0],["Lola",6700,0],["London",6700,0],["Magnolia y Fresias",6700,0],["Mango",6700,0],["Manzana Canela",6700,0],["Maracuyá",6700,0],["Marino",6700,0],["Melocotón Blanco",6700,0],["Melón",6700,0],["Mery",6700,0],["Miel y Limón",6700,0],["Naranja & Chocolate",6700,0],["Naranja Pimienta",6700,0],["Orange",6700,0],["Oriente",6700,0],["Palo Santo",6700,0],["Papaya",6700,0],["Patio",6700,0],["Paula",6700,0],["Pera y Durazno",6700,0],["Peras y Flores",6700,0],["Pomelo Rosado",6700,0],["Pétalos de Orquídeas",6700,0],["Rocío",6700,0],["Sandía Pepino",6700,0],["Shadow Storm",6700,0],["Soft Love",6700,0],["Spicy Lemon",3700,1],["Strawberry And Roses",3700,1],["Sweet Bubble",3700,1],["Tokyo",6700,0],["Tropical",6700,0],["Uva",6700,0],["Vainilla",6700,0],["Vainilla Caramel",3700,1],["Vainilla Tonka",6700,0],["Verbena",6700,0],["Violetas",6700,0],["Wanted",6700,0]]}};
-const COLORS=["#e8788a","#4aa3a0","#e9a23b","#7a6bc4","#5b9bd5","#8bb34a","#c9645b","#b0824f"];
+const COLORS=["#e8788a","#4aa3a0","#e9a23b","#7a6bc4","#5b9bd5","#8bb34a","#c9645b","#b0824f","#d4609e","#2f8f6b","#e07b39","#3d6fb5","#8e5ea2","#2c9fb0","#a8a03a","#7a8794"];
+/* 同一订单里每个种类的颜色必须不同：新增取未用色；加载/导出前自动修复重复 */
+function hsl2hex(h,sat,l){sat/=100;l/=100;const k=n=>(n+h/30)%12,a=sat*Math.min(l,1-l),f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));return"#"+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,"0")).join("")}
+function extraColor(used){for(let i=0;i<400;i++){const c=hsl2hex((i*137.5+20)%360,58+(i%3)*8,46+(i%4)*3);if(!used.has(c))return c}return COLORS[0]}
+function freeColor(used){return COLORS.find(x=>!used.has(x))||extraColor(used)}
+function pickColor(o){return freeColor(new Set(o.cats.map(c=>c.color)))}
+function ensureColors(o){let ch=false;const seen=new Set();o.cats.forEach((c,i)=>{if(!c.color||seen.has(c.color)){const later=new Set(o.cats.slice(i+1).map(d=>d.color));c.color=freeColor(new Set([...seen,...later]));ch=true}seen.add(c.color)});return ch}
 const KEY="pedidos_v2",KEY1="pedidos_v1",OLD="saphirus_pedido_editor_v1";
 const STAT={draft:["草稿","#999"],sent:["已发送","#e9a23b"],recv:["已收货","#3aa655"]};
 const THEMES=[["经典","#fbf4ea","#3a2e2a","#f0c987"],["海蓝","#eef3f8","#1d3557","#ffd166"],["墨绿","#eef5ee","#1f4d3a","#f0d27a"],["酒红","#f8eeee","#6d2230","#f3c98b"],["黑白","#f4f4f4","#111111","#dddddd"]];
@@ -492,7 +498,7 @@ const LANG={
  es:{p1:s=>s?"PEDIDO A":"PEDIDO",big:"ORDEN",p2:s=>"ORDEN DE COMPRA",date:"Fecha",total:n=>"TOTAL GENERAL: "+n+" unidades",head:s=>s?"PEDIDO A "+s:"PEDIDO",amount:"Importe estimado"},
  zh:{p1:s=>s?"订货给":"",big:"订货单",p2:s=>s?"订 货 单":"",date:"日期",total:n=>"合计："+n+" 件",head:s=>s?"订货单 · "+s:"订货单",amount:"预计金额"}};
 const NATIVE=!!window.__NATIVE__;
-const APP_VERSION="2.0 · 2026-10-21";
+const APP_VERSION="2.1 · 2026-10-21";
 let S=null,Q="",QC=-1,PQ="",HQ="",HF="all",HR=[],draft={},SG={},SERVER=false,REV=0,tt=null,MI=null,MT=null,DCB=null,PCV=null,pushT=null,pending=false,pushing=false,dirty=false;
 const $=id=>document.getElementById(id);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
@@ -534,10 +540,11 @@ function fix(s){
  s.orders.forEach(o=>{o.id=o.id||uid();o.upd=o.upd||0;o.sup=o.sup||"";o.dt=o.dt||"";
   o.status=STAT[o.status]?o.status:"draft";o.sort=["manual","az","qty"].includes(o.sort)?o.sort:"manual";
   o.price=!!o.price;o.dk=o.dk?1:0;o.cur=o.cur||"$";o.lang=o.lang=="zh"?"zh":"es";o.theme=(o.theme>=0&&o.theme<THEMES.length)?(o.theme|0):0;
-  o.cats=(o.cats||[]).map((c,i)=>({name:c.name||"",sub:c.sub||"",color:c.color||COLORS[i%8],items:(c.items||[]).map(it=>Array.isArray(it)?{n:String(it[0]),q:parseInt(it[1])||0,p:null}:{n:String(it.n||""),id:it.id||(it.n?undefined:uid()),q:Math.max(0,parseInt(it.q)||0),p:(it.p==null||it.p==="")?null:Math.max(0,parseFloat(it.p)||0)})}))});
+  o.cats=(o.cats||[]).map((c,i)=>({name:c.name||"",sub:c.sub||"",color:c.color||COLORS[i%COLORS.length],items:(c.items||[]).map(it=>Array.isArray(it)?{n:String(it[0]),q:parseInt(it[1])||0,p:null}:{n:String(it.n||""),id:it.id||(it.n?undefined:uid()),q:Math.max(0,parseInt(it.q)||0),p:(it.p==null||it.p==="")?null:Math.max(0,parseFloat(it.p)||0)})}))});
  if(!s.vocab){const m=new Map();s.orders.forEach(o=>o.cats.forEach(c=>c.items.forEach(i=>{const k=norm(i.n);if(k&&!m.has(k))m.set(k,i.n)})));s.vocab=[...m.values()]}
 
  if(!s.uses||typeof s.uses!="object"||Array.isArray(s.uses)){const u={};s.orders.forEach(o=>o.cats.forEach(cc=>cc.items.forEach(i=>{const k=norm(i.n).replace(/\s*&\s*/g," y ").replace(/\s+/g," ").trim();if(!k)return;const e=u[k]||(u[k]=[0,0]);e[0]++;e[1]=Math.max(e[1],o.upd||0)})));s.uses=u}
+ s.orders.forEach(ensureColors);
  return s}
 function loadLocal(){
  for(const k of [KEY,KEY1]){try{const s=fix(JSON.parse(localStorage.getItem(k)));if(s)return s}catch(e){}}
@@ -754,9 +761,9 @@ function rename(ci,i,v){const nv=fixName(v),c0=cur().cats[ci],it0=c0.items[i];if
 function delItem(ci,i){FX("warn");const n=cur().cats[ci].items[i].n;mut(o=>{o.cats[ci].items.splice(i,1)});toast("已删除："+n,undo)}
 function catLive(ci,k,v){mut(o=>{o.cats[ci][k]=k=="name"?v.trim().toUpperCase():v.trim()},"cl:"+ci+k,true)}
 function cat(ci,k,v){mut(o=>{o.cats[ci][k]=k=="name"?v.trim().toUpperCase():v.trim()})}
-function recolor(ci){mut(o=>{const c=o.cats[ci];c.color=COLORS[(COLORS.indexOf(c.color)+1)%COLORS.length]})}
+function recolor(ci){mut(o=>{const c=o.cats[ci],used=new Set(o.cats.filter((_,j)=>j!=ci).map(x=>x.color));let k=COLORS.indexOf(c.color),nc=null;for(let n=1;n<=COLORS.length;n++){const x=COLORS[(k+n)%COLORS.length];if(!used.has(x)){nc=x;break}}c.color=nc||extraColor(used)})}
 function delCat(ci){FX("warn");const n=cur().cats[ci].name;QC=-1;mut(o=>{o.cats.splice(ci,1)});toast("已删除种类："+n,undo)}
-function addCat(){const n=$("ncn").value.trim();FX("add");mut(o=>{o.cats.push({name:n.toUpperCase(),sub:"",color:COLORS[o.cats.length%COLORS.length],items:[]})});closeNC();scrollTo(0,document.body.scrollHeight)}
+function addCat(){const n=$("ncn").value.trim();FX("add");mut(o=>{o.cats.push({name:n.toUpperCase(),sub:"",color:pickColor(o),items:[]})});closeNC();scrollTo(0,document.body.scrollHeight)}
 function addBlank(ci){FX("add");const id=uid();mut(o=>{o.cats[ci].items.push({id,n:"",q:1,p:null})});const n=cur().cats[ci].items.length-1;setTimeout(()=>picModal(ci,n),60)}
 function clearQty(){FX("warn");bkSnap("pre-clear");mut(o=>o.cats.forEach(c=>c.items.forEach(i=>i.q=0)));toast("所有数量已清零",undo)}
 
@@ -827,7 +834,7 @@ function importReview(){
  `<div class="mb2"><button class="g" onclick="importModal()">‹ 重新粘贴</button><button onclick="importApply()">导入 ${n} 项</button></div>`)}
 function importApply(){
  const mode=MI.mode,cats=MI.cats;let add=0,mer=0,nc=0;
- mut(o=>{cats.forEach(c=>{let t;if(c.target>=0&&o.cats[c.target])t=o.cats[c.target];else{t=o.cats.find(x=>norm(x.name)==norm(c.name));if(!t){t={name:c.name,sub:"",color:COLORS[o.cats.length%COLORS.length],items:[]};o.cats.push(t);nc++}}
+ mut(o=>{cats.forEach(c=>{let t;if(c.target>=0&&o.cats[c.target])t=o.cats[c.target];else{t=o.cats.find(x=>norm(x.name)==norm(c.name));if(!t){t={name:c.name,sub:"",color:pickColor(o),items:[]};o.cats.push(t);nc++}}
   c.items.forEach(it=>{if(!it.n)return;const e=t.items.find(x=>norm(x.n)==norm(it.n));
    if(e&&mode=="merge"){e.q+=it.q;mer++}else if(e&&mode=="replace"){e.q=it.q;mer++}else{t.items.push({n:it.n,q:it.q,p:null});add++}})})});
  cats.forEach(c=>c.items.forEach(i=>addVocab(i.n)));save();closeModal();
@@ -913,7 +920,7 @@ function xlImgParts(pics,ncol){const E=9525,fs=[],hd='<?xml version="1.0" encodi
  return fs}
 function sheetName(o){return "pedido_"+((o.sup||"orden").replace(/[^\w\u4e00-\u9fa5-]+/g,"_"))+"_"+(o.dt||"").replace(/\//g,"-")+".xlsx"}
 const isMobile=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform));
-function sheetData(o){
+function sheetData(o){if(ensureColors(o)){o.upd=Date.now();save()}
  const cats=o.cats.map(c=>({c,items:sorted(o,c).map(i=>c.items[i]).filter(i=>i.q>0)})).filter(x=>x.items.length);
  let q=0,a=0,n=0;cats.forEach(x=>x.items.forEach(it=>{q+=it.q;n++;if(it.p)a+=it.q*it.p}));
  return {cats,q,a,n}}
@@ -1011,7 +1018,7 @@ function catApply(){
  mut(o=>{Object.entries(OFFICIAL.cats).forEach(([key,list])=>{
   const picked=list.filter((it,i)=>CSEL[catKey(key,i)]);if(!picked.length)return;
   let ti=offTargetIdx(o,key),tgt=ti>=0?o.cats[ti]:null;
-  if(!tgt){tgt={name:key,sub:{AROMA:"Aromatizante",TEXTIL:"Perfume para telas",DIFUSORES:"Difusores"}[key]||"",color:COLORS[o.cats.length%COLORS.length],items:[]};o.cats.push(tgt);newCats++}
+  if(!tgt){tgt={name:key,sub:{AROMA:"Aromatizante",TEXTIL:"Perfume para telas",DIFUSORES:"Difusores"}[key]||"",color:pickColor(o),items:[]};o.cats.push(tgt);newCats++}
   const have=new Set(tgt.items.map(i=>norm(i.n)));
   picked.forEach(it=>{if(have.has(norm(it[0])))return;tgt.items.push({n:it[0],q:0,p:o.price&&it[1]?it[1]:null});have.add(norm(it[0]));addVocab(it[0]);add++})})});
  save();closeModal();if(CATO)renderHome();toast("已导入 "+add+" 项"+(newCats?"，新建 "+newCats+" 个种类":"")+"（数量均为 0）",undo)}
@@ -1107,7 +1114,7 @@ function rr(x,c,X,y,w,h,r){x.beginPath();x.roundRect(X,y,w,h,r);x.fillStyle=c;x.
 function fit(x,t,font,maxw,min){let s=parseInt(font.match(/(\d+)px/)[1]);min=min||16;while(s>min){x.font=font.replace(/\d+px/,s+"px");if(x.measureText(t).width<=maxw)return t;s-=2}x.font=font.replace(/\d+px/,min+"px");while(t.length>1&&x.measureText(t).width>maxw)t=t.slice(0,-1);return t}
 function hexA(h,a){return h+a}
 function poster(){
- const o=cur();
+ const o=cur();if(o&&ensureColors(o)){o.upd=Date.now();save();renderEdit()}
  if(!o.cats.some(c=>c.items.some(i=>i.q>0))){toast("没有数量大于 0 的品项");return}
  $("thm").innerHTML=THEMES.map((t,i)=>`<button class="th ${o.theme==i?'on':''}" style="background:${t[2]}" onclick="setTheme(${i})"></button>`).join("");
  $("pv").style.display="block";$("pv").scrollTop=0;drawPoster();
