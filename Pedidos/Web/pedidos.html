@@ -86,6 +86,13 @@ input.cs{display:block;width:100%;font-size:16px;color:#999;border:0;background:
 .picbar{margin:6px 12px}.picbar button{width:100%;border:0;border-radius:14px;padding:11px;font-size:15px;background:#f1eee9;color:#3a2e2a}
 html[data-theme=dark] .picbar button{background:rgba(255,255,255,.08);color:var(--ink)}
 .pxc small{color:#999;font-size:10px}
+.qc{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.qc button.drag{transform:scale(1.08);position:relative;z-index:3;transition:none;box-shadow:0 8px 22px rgba(0,0,0,.35)}
+.qc button.over{outline:2px dashed rgba(255,255,255,.7);outline-offset:1px}
+.addimg{margin:0 10px 10px;width:calc(100% - 20px);border:1px dashed #cdbfa9;border-radius:12px;background:none;color:#8a6a45;padding:9px;font-size:14px}
+html[data-theme=dark] .addimg{border-color:#5a4d44;color:#d9b98a}
+.xp td.im{width:60px;padding:4px;text-align:center;vertical-align:middle}.xp td.im img{width:48px;height:48px;object-fit:contain;background:#fff;border-radius:6px;display:block;margin:auto}
+.xp td.n,.xp td.q{vertical-align:middle}
 .nmr{display:flex;gap:6px;align-items:flex-start}.nmr textarea.nm{flex:1;min-width:0}
 .pxb{flex:none;width:40px;height:40px;border:1px dashed #d8cfc0;border-radius:10px;background:none;padding:0;font-size:16px;opacity:.7;overflow:hidden}
 .pxb.has{border:0;opacity:1;background:#fff}.pxb img{width:100%;height:100%;object-fit:cover;display:block}
@@ -453,7 +460,7 @@ html[data-theme=dark] .vr button{background:rgba(255,255,255,.1)}
  </div>
  <div class="picbar"><button class="g" onclick="picAuto()">🖼 一键匹配全部图片</button></div>
  <div id="list"></div>
- <div class="row3"><button id="ncb" class="pill" onclick="openNC()">＋ 新增种类</button><div id="ncw" class="ncw" hidden><input id="ncn" placeholder="种类名（如 JABÓN LÍQUIDO）" autocapitalize="characters" oninput="liveCase(this,'upper')" onkeydown="if(event.key=='Enter')addCat();if(event.key=='Escape')closeNC()"><button class="ok" onclick="addCat()">添加</button><button class="cx" onclick="closeNC()">取消</button></div></div>
+ <div class="row3"><button id="ncb" class="pill" onclick="openNC()">＋ 新增种类</button><div id="ncw" class="ncw" hidden><input id="ncn" placeholder="种类名（可留空，只用图片）" autocapitalize="characters" oninput="liveCase(this,'upper')" onkeydown="if(event.key=='Enter')addCat();if(event.key=='Escape')closeNC()"><button class="ok" onclick="addCat()">添加</button><button class="cx" onclick="closeNC()">取消</button></div></div>
  <div class="row3"><button id="clrBtn" class="tiny" onclick="arm(this,clearQty,'再点一次确认清零')">全部数量清零</button></div>
  <div class="bar">
   <button class="g sm2" id="bUndo" onclick="undo()" title="撤销">↶</button>
@@ -485,7 +492,7 @@ const LANG={
  es:{p1:s=>s?"PEDIDO A":"PEDIDO",big:"ORDEN",p2:s=>"ORDEN DE COMPRA",date:"Fecha",total:n=>"TOTAL GENERAL: "+n+" unidades",head:s=>s?"PEDIDO A "+s:"PEDIDO",amount:"Importe estimado"},
  zh:{p1:s=>s?"订货给":"",big:"订货单",p2:s=>s?"订 货 单":"",date:"日期",total:n=>"合计："+n+" 件",head:s=>s?"订货单 · "+s:"订货单",amount:"预计金额"}};
 const NATIVE=!!window.__NATIVE__;
-const APP_VERSION="1.9 · 2026-10-21";
+const APP_VERSION="2.0 · 2026-10-21";
 let S=null,Q="",QC=-1,PQ="",HQ="",HF="all",HR=[],draft={},SG={},SERVER=false,REV=0,tt=null,MI=null,MT=null,DCB=null,PCV=null,pushT=null,pending=false,pushing=false,dirty=false;
 const $=id=>document.getElementById(id);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
@@ -527,7 +534,7 @@ function fix(s){
  s.orders.forEach(o=>{o.id=o.id||uid();o.upd=o.upd||0;o.sup=o.sup||"";o.dt=o.dt||"";
   o.status=STAT[o.status]?o.status:"draft";o.sort=["manual","az","qty"].includes(o.sort)?o.sort:"manual";
   o.price=!!o.price;o.dk=o.dk?1:0;o.cur=o.cur||"$";o.lang=o.lang=="zh"?"zh":"es";o.theme=(o.theme>=0&&o.theme<THEMES.length)?(o.theme|0):0;
-  o.cats=(o.cats||[]).map((c,i)=>({name:c.name||"",sub:c.sub||"",color:c.color||COLORS[i%8],items:(c.items||[]).map(it=>Array.isArray(it)?{n:String(it[0]),q:parseInt(it[1])||0,p:null}:{n:String(it.n||""),q:Math.max(0,parseInt(it.q)||0),p:(it.p==null||it.p==="")?null:Math.max(0,parseFloat(it.p)||0)})}))});
+  o.cats=(o.cats||[]).map((c,i)=>({name:c.name||"",sub:c.sub||"",color:c.color||COLORS[i%8],items:(c.items||[]).map(it=>Array.isArray(it)?{n:String(it[0]),q:parseInt(it[1])||0,p:null}:{n:String(it.n||""),id:it.id||(it.n?undefined:uid()),q:Math.max(0,parseInt(it.q)||0),p:(it.p==null||it.p==="")?null:Math.max(0,parseFloat(it.p)||0)})}))});
  if(!s.vocab){const m=new Map();s.orders.forEach(o=>o.cats.forEach(c=>c.items.forEach(i=>{const k=norm(i.n);if(k&&!m.has(k))m.set(k,i.n)})));s.vocab=[...m.values()]}
 
  if(!s.uses||typeof s.uses!="object"||Array.isArray(s.uses)){const u={};s.orders.forEach(o=>o.cats.forEach(cc=>cc.items.forEach(i=>{const k=norm(i.n).replace(/\s*&\s*/g," y ").replace(/\s+/g," ").trim();if(!k)return;const e=u[k]||(u[k]=[0,0]);e[0]++;e[1]=Math.max(e[1],o.upd||0)})));s.uses=u}
@@ -681,9 +688,9 @@ function renderEdit(){
   const hidden=c.items.filter(x=>x.q==0).length;
   const sum=c.items.reduce((a,b)=>a+b.q,0),am=amtC(c);
   const cards=idx.map(i=>{const it=c.items[i],isDup=dm[norm(it.n)]>1;
-   return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><button class="dl" title="删除" onclick="delItem(${ci},${i})">×</button><div class="nmr">${picBtn(ci,i,it.n)}<textarea class="nm" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea></div>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onfocus="this.select()" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="empty2"><div class="ei">🔍</div><b>${c.items.length?"还没有订货的品项":"这个种类还没有品项"}</b><small>点上方搜索框，输入品名开始订货${hidden?"（已收录 "+hidden+" 项）":""}<br>搜不到的新品名，可直接“＋ 新增”</small></div>`);
+   return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><button class="dl" title="删除" onclick="delItem(${ci},${i})">×</button><div class="nmr">${picBtn(ci,i,it.n)}<textarea class="nm" placeholder="商品名（可留空，只用图片）" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea></div>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onfocus="this.select()" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="empty2"><div class="ei">🔍</div><b>${c.items.length?"还没有订货的品项":"这个种类还没有品项"}</b><small>点上方搜索框，输入品名开始订货${hidden?"（已收录 "+hidden+" 项）":""}<br>搜不到的新品名，可直接“＋ 新增”</small></div>`);
   const d=draft[ci]||{n:"",q:3};
-  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)"><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${sum}件${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="${c.items.length?`arm(this,()=>delCat(${ci}),'删?')`:`delCat(${ci})`}">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div>
+  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" placeholder="种类名（可留空）" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)"><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${sum}件${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="${c.items.length?`arm(this,()=>delCat(${ci}),'删?')`:`delCat(${ci})`}">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div><button class="addimg" onclick="addBlank(${ci})">＋ 添加图片商品（不用写名字）</button>
   </section>`;
  });
  $("cbox").innerHTML=(o.cats.length&&(nq||SF))?candPanel(o,QC,nq,exact):"";if(!o.cats.length)h=`<div class="card"><div class="hint">这个订单还没有种类，请先在下方新增一个种类。</div></div>`+h;
@@ -740,14 +747,17 @@ const JUST0=new Set();
 function adj(ci,i,d){FX("tick");qBlur();const o0=cur();const it0=o0.cats[ci].items[i];if(it0.q>0&&it0.q+d<=0)JUST0.add(o0.id+":"+ci+":"+i);mut(o=>{const it=o.cats[ci].items[i];it.q=Math.max(0,it.q+d)},"q:"+ci+":"+i)}
 function setq(ci,i,v){FX("tick");SF=false;const o0=cur();const it0=o0.cats[ci].items[i];const nv=Math.max(0,parseInt(v)||0);if(it0.q>0&&nv==0)JUST0.add(o0.id+":"+ci+":"+i);mut(o=>{o.cats[ci].items[i].q=nv})}
 function setp(ci,i,v){mut(o=>{o.cats[ci].items[i].p=v===""?null:Math.max(0,parseFloat(v)||0)})}
-function rename(ci,i,v){const nv=fixName(v);if(!nv)return renderEdit();mut(o=>{o.cats[ci].items[i].n=nv});addVocab(nv);save();
+function rename(ci,i,v){const nv=fixName(v),c0=cur().cats[ci],it0=c0.items[i];if(!nv&&!it0.n)return;itId(it0);const ok=picKey(it0.n,c0,it0),old=PICS[ok];
+ mut(o=>{o.cats[ci].items[i].n=nv});if(old){const nk=picKey(nv,c0,it0);if(!PICS[nk]){PICS[nk]=old;picSave()}}if(nv)addVocab(nv);save();
+ if(!nv)return;
  const c=cur().cats[ci];if(c.items.filter(x=>norm(x.n)==norm(nv)).length>1)toast("⚠ 本类别里已有同名品项，请确认是否重复")}
 function delItem(ci,i){FX("warn");const n=cur().cats[ci].items[i].n;mut(o=>{o.cats[ci].items.splice(i,1)});toast("已删除："+n,undo)}
 function catLive(ci,k,v){mut(o=>{o.cats[ci][k]=k=="name"?v.trim().toUpperCase():v.trim()},"cl:"+ci+k,true)}
 function cat(ci,k,v){mut(o=>{o.cats[ci][k]=k=="name"?v.trim().toUpperCase():v.trim()})}
 function recolor(ci){mut(o=>{const c=o.cats[ci];c.color=COLORS[(COLORS.indexOf(c.color)+1)%COLORS.length]})}
 function delCat(ci){FX("warn");const n=cur().cats[ci].name;QC=-1;mut(o=>{o.cats.splice(ci,1)});toast("已删除种类："+n,undo)}
-function addCat(){const n=$("ncn").value.trim();if(!n)return;FX("add");mut(o=>{o.cats.push({name:n.toUpperCase(),sub:"",color:COLORS[o.cats.length%COLORS.length],items:[]})});closeNC();scrollTo(0,document.body.scrollHeight)}
+function addCat(){const n=$("ncn").value.trim();FX("add");mut(o=>{o.cats.push({name:n.toUpperCase(),sub:"",color:COLORS[o.cats.length%COLORS.length],items:[]})});closeNC();scrollTo(0,document.body.scrollHeight)}
+function addBlank(ci){FX("add");const id=uid();mut(o=>{o.cats[ci].items.push({id,n:"",q:1,p:null})});const n=cur().cats[ci].items.length-1;setTimeout(()=>picModal(ci,n),60)}
 function clearQty(){FX("warn");bkSnap("pre-clear");mut(o=>o.cats.forEach(c=>c.items.forEach(i=>i.q=0)));toast("所有数量已清零",undo)}
 
 /* 添加: 重名提醒 + 近似拼写提醒 */
@@ -869,20 +879,19 @@ function buildXlsx(o,IMG){IMG=IMG||new Map();
  const N=(r,c,v,st)=>`<c r="${col[c]}${r}" s="${st}"><v>${v}</v></c>`;
  const F=(r,c,f,v,st)=>`<c r="${col[c]}${r}" s="${st}"><f>${f}</f><v>${v}</v></c>`;
  const E=(r,c,st)=>`<c r="${col[c]}${r}" s="${st}"/>`;
- const hasImg=IMG.size>0,hdr=[X.cat,X.it,X.q].concat(price?[X.p,X.a]:[]).concat(hasImg?[X.img]:[]);
+ const hasImg=IMG.size>0,iN=hasImg?2:1,iQ=iN+1,iP=iQ+1,iA=iQ+2,qL=col[iQ],hdr=[X.cat].concat(hasImg?[X.img]:[]).concat([X.it,X.q]).concat(price?[X.p,X.a]:[]);
  const rows=[`<row r="1" ht="24" customHeight="1">${hdr.map((h,i)=>T(1,i,h,1)).join("")}</row>`];
  let r=1,totQ=0,totA=0;const merges=[],pics=[];
  cats.forEach(({c,items},ci)=>{const start=r+1;items.forEach((it,ii)=>{
-  r++;totQ+=it.q;let cells=(ii==0?T(r,0,c.name,catStyle[ci]):E(r,0,catStyle[ci]))+T(r,1,it.n,itStyle[ci])+N(r,2,it.q,qtStyle[ci]);
-  if(price){if(it.p){cells+=N(r,3,it.p,amStyle[ci])+F(r,4,`C${r}*D${r}`,Math.round(it.q*it.p*100)/100,amStyle[ci]);totA+=it.q*it.p}else cells+=E(r,3,amStyle[ci])+E(r,4,amStyle[ci])}
-  const im=IMG.get(it);if(hasImg)cells+=E(r,ncol,itStyle[ci]);if(im)pics.push({r,im});
-  rows.push(`<row r="${r}"${im?' ht="52" customHeight="1"':''}>${cells}</row>`)});if(r>start)merges.push(`A${start}:A${r}`)});
+  r++;totQ+=it.q;let cells=(ii==0?T(r,0,c.name,catStyle[ci]):E(r,0,catStyle[ci]))+(hasImg?E(r,1,itStyle[ci]):"")+T(r,iN,it.n,itStyle[ci])+N(r,iQ,it.q,qtStyle[ci]);
+  if(price){if(it.p){cells+=N(r,iP,it.p,amStyle[ci])+F(r,iA,`${qL}${r}*${col[iP]}${r}`,Math.round(it.q*it.p*100)/100,amStyle[ci]);totA+=it.q*it.p}else cells+=E(r,iP,amStyle[ci])+E(r,iA,amStyle[ci])}
+  const im=IMG.get(it);if(im)pics.push({r,im});
+  rows.push(`<row r="${r}"${hasImg?' ht="54" customHeight="1"':''}>${cells}</row>`)});if(r>start)merges.push(`A${start}:A${r}`)});
  const last=r,tr=r+1;
- let tc=T(tr,0,X.t,5)+E(tr,1,5)+F(tr,2,`SUM(C2:C${last})`,totQ,6);
- if(price)tc+=E(tr,3,5)+F(tr,4,`SUM(E2:E${last})`,Math.round(totA*100)/100,7);
- if(hasImg)tc+=E(tr,ncol,5);
+ let tc=T(tr,0,X.t,5)+(hasImg?E(tr,1,5):"")+E(tr,iN,5)+F(tr,iQ,`SUM(${qL}2:${qL}${last})`,totQ,6);
+ if(price)tc+=E(tr,iP,5)+F(tr,iA,`SUM(${col[iA]}2:${col[iA]}${last})`,Math.round(totA*100)/100,7);
  rows.push(`<row r="${tr}" ht="22" customHeight="1">${tc}</row>`);
- const widths=[Math.min(28,Math.max(12,...cats.map(x=>x.c.name.length*1.3+4))),Math.min(48,Math.max(16,...cats.flatMap(x=>x.items.map(i=>i.n.length*1.25+4)))),12].concat(price?[12,14]:[]).concat(hasImg?[11]:[]);
+ const widths=[Math.min(28,Math.max(12,...cats.map(x=>x.c.name.length*1.3+4))),Math.min(48,Math.max(16,...cats.flatMap(x=>x.items.map(i=>i.n.length*1.25+4)))),12].concat(price?[12,14]:[]);if(hasImg)widths.splice(1,0,13);
  const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetViews><sheetView workbookViewId="0" tabSelected="1"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="16"/><cols>${widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${Math.round(w*10)/10}" customWidth="1"/>`).join("")}</cols><sheetData>${rows.join("")}</sheetData>${merges.length?`<mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${m}"/>`).join("")}</mergeCells>`:""}<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/>${hasImg?'<drawing r:id="rId1"/>':""}</worksheet>`;
  const sn=(((o.sup||"").trim()||X.sheet).replace(/[\[\]:*?\/\\]/g," ").trim()||X.sheet).slice(0,31);
  const head='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
@@ -892,12 +901,12 @@ function buildXlsx(o,IMG){IMG=IMG||new Map();
   {name:"xl/workbook.xml",data:head+`<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets><sheet name="${xe(sn)}" sheetId="1" r:id="rId1"/></sheets></workbook>`},
   {name:"xl/_rels/workbook.xml.rels",data:head+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
   {name:"xl/styles.xml",data:styles},
-  {name:"xl/worksheets/sheet1.xml",data:sheet}].concat(hasImg?xlImgParts(pics,ncol):[]).map(f=>f))}
+  {name:"xl/worksheets/sheet1.xml",data:sheet}].concat(hasImg?xlImgParts(pics,1):[]).map(f=>f))}
 function xlImgParts(pics,ncol){const E=9525,fs=[],hd='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';let anc="",rel="";
- pics.forEach((p,i)=>{const n=i+1,hh=44,sc=Math.min(hh/p.im.h,60/p.im.w),cx=Math.round(p.im.w*sc*E),cy=Math.round(p.im.h*sc*E);
+ pics.forEach((p,i)=>{const n=i+1,sc=Math.min(62/p.im.h,84/p.im.w),cx=Math.round(p.im.w*sc*E),cy=Math.round(p.im.h*sc*E),ox=Math.round((96-p.im.w*sc)/2*E),oy=Math.round((72-p.im.h*sc)/2*E);
   fs.push({name:"xl/media/image"+n+".jpeg",data:p.im.u});
   rel+=`<Relationship Id="rId${n}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image${n}.jpeg"/>`;
-  anc+=`<xdr:oneCellAnchor><xdr:from><xdr:col>${ncol}</xdr:col><xdr:colOff>${3*E}</xdr:colOff><xdr:row>${p.r-1}</xdr:row><xdr:rowOff>${3*E}</xdr:rowOff></xdr:from><xdr:ext cx="${cx}" cy="${cy}"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${n+1}" name="img${n}"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="rId${n}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>`});
+  anc+=`<xdr:oneCellAnchor><xdr:from><xdr:col>${ncol}</xdr:col><xdr:colOff>${ox}</xdr:colOff><xdr:row>${p.r-1}</xdr:row><xdr:rowOff>${oy}</xdr:rowOff></xdr:from><xdr:ext cx="${cx}" cy="${cy}"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${n+1}" name="img${n}"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="rId${n}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>`});
  fs.push({name:"xl/drawings/drawing1.xml",data:hd+'<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'+anc+'</xdr:wsDr>'});
  fs.push({name:"xl/drawings/_rels/drawing1.xml.rels",data:hd+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+rel+'</Relationships>'});
  fs.push({name:"xl/worksheets/_rels/sheet1.xml.rels",data:hd+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/></Relationships>'});
@@ -915,17 +924,18 @@ function sendSheet(){
 function sheetPreview(){
  const o=cur(),X=XL[o.lang||"es"],d=sheetData(o),price=!!o.price;
  if(!d.n){closeModal();toast("没有数量大于 0 的品项");return}
- const head=[X.cat,X.it,X.q].concat(price?[X.p,X.a]:[]);
+ const hasI=d.cats.some(x=>x.items.some(it=>picUrl(picOf(it.n,x.c,it))));
+ const head=[X.cat].concat(hasI?[X.img]:[]).concat([X.it,X.q]).concat(price?[X.p,X.a]:[]);
  const bgs=cl=>o.dk?"background:#"+shd(cl,.3)+";color:#f1e8de":"background:#"+tint(cl,.86)+";color:#3a2e2a";
  let body="";
- d.cats.forEach(({c,items})=>items.forEach((it,ii)=>{
-  body+=`<tr>${ii==0?`<td class="c" rowspan="${items.length}" style="${bgs(c.color)}">${esc(c.name)}</td>`:""}<td class="n" style="${bgs(c.color)}">${picUrl(picOf(it.n,c))?`<img src="${esc(picUrl(picOf(it.n,c)))}" style="width:26px;height:26px;object-fit:cover;border-radius:5px;vertical-align:middle;margin-right:6px;background:#fff">`:""}${esc(it.n)}</td><td class="q" style="${bgs(c.color)}">${it.q}</td>`+(price?`<td class="r" style="${bgs(c.color)}">${it.p?fmt(it.p):""}</td><td class="r" style="${bgs(c.color)}">${it.p?fmt(it.q*it.p):""}</td>`:"")+`</tr>`}));
- body+=`<tr class="tot"><td>${X.t}</td><td></td><td class="q">${d.q}</td>`+(price?`<td></td><td class="r">${d.a?fmt(d.a):""}</td>`:"")+`</tr>`;
+ d.cats.forEach(({c,items})=>items.forEach((it,ii)=>{const st=bgs(c.color),u=picUrl(picOf(it.n,c,it));
+  body+=`<tr>${ii==0?`<td class="c" rowspan="${items.length}" style="${st}">${esc(c.name)}</td>`:""}${hasI?`<td class="im" style="${st}">${u?`<img src="${esc(u)}">`:""}</td>`:""}<td class="n" style="${st}">${esc(it.n)}</td><td class="q" style="${st}">${it.q}</td>`+(price?`<td class="r" style="${st}">${it.p?fmt(it.p):""}</td><td class="r" style="${st}">${it.p?fmt(it.q*it.p):""}</td>`:"")+`</tr>`}));
+ body+=`<tr class="tot"><td>${X.t}</td>${hasI?"<td></td>":""}<td></td><td class="q">${d.q}</td>`+(price?`<td></td><td class="r">${d.a?fmt(d.a):""}</td>`:"")+`</tr>`;
  modal(`<div class="mh">表格预览</div>
  <div class="mt">共 ${d.n} 行 · 合计 ${d.q} 件${price&&d.a?" · "+esc(o.cur)+fmt(d.a):""}。数量为 0 的品项已隐藏；下面就是 Excel 里的内容。</div>
  <div class="opt">语言：<select onchange="mut(x=>{x.lang=this.value},'',true);sheetPreview()"><option value="es" ${o.lang!="zh"?"selected":""}>Español</option><option value="zh" ${o.lang=="zh"?"selected":""}>中文</option></select><span style="color:#999;font-size:12px">（只改表头和合计文字）</span></div>
  <div class="opt">底色：<select onchange="mut(x=>{x.dk=this.value=='1'?1:0},'',true);sheetPreview()"><option value="0" ${!o.dk?"selected":""}>浅色</option><option value="1" ${o.dk?"selected":""}>深色</option></select><span style="color:#999;font-size:12px">（只影响导出的表格，与软件外观无关）</span></div>
- <div class="xp"><table><thead><tr>${head.map((h,i)=>`<th class="${i==1||i==2?'q':''}">${esc(h)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>
+ <div class="xp"><table><thead><tr>${head.map((h,i)=>`<th class="${i>0?'q':''}">${esc(h)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>
  <div class="xm">文件名：${esc(sheetName(o))}</div>
  <div class="mb2" style="flex-wrap:wrap"><button class="g" onclick="copyOrderText()">复制文字</button><button class="g" onclick="shareText()">发送文字</button><button class="g" onclick="closeModal()">取消</button><button onclick="confirmSheet()">${isMobile()?"发送 Excel":"下载 Excel"}</button></div>`)}
 async function confirmSheet(){
@@ -1038,8 +1048,9 @@ const PIC_ALIAS={aroma:"aerosol",aromas:"aerosol",aromatizante:"aerosol",aromati
 const PIC_STOP=new Set(["de","del","la","el","los","las","para","con","y","e","en","general"]);
 let PICS=(()=>{try{return JSON.parse(localStorage.getItem(PIC_KEY))||{}}catch(e){return{}}})(),PIDX=null,PM=null;
 function picSave(){try{localStorage.setItem(PIC_KEY,JSON.stringify(PICS));return true}catch(e){toast("⚠ 图片存储空间不足，请移除一些图片");return false}}
-function picKey(n,c){return catKeyFor(c)+"|"+skey(n)}
-function picOf(n,c){return PICS[picKey(n,c)]}
+const itId=it=>it.id||(it.id=uid());
+function picKey(n,c,it){return catKeyFor(c)+"|"+(skey(n)||"#"+(it?itId(it):""))}
+function picOf(n,c,it){return PICS[picKey(n,c,it)]}
 function picPrep(x){x.list=x.items.map(r=>{const k=skey(r[0]),w=k.split(" "),cl=String(r[3]||"").split("|").filter(Boolean);return{n:r[0],k,core:w.slice(1).join(" "),t:r[1],s:r[2],cl,cs:cl.map(norm)}});x.cats=new Set(x.list.flatMap(o=>o.cs));return x}
 function picIdx(){if(PIDX)return PIDX;try{const x=JSON.parse(localStorage.getItem(IDX_KEY));if(x&&x.items)PIDX=picPrep(x)}catch(e){}return PIDX}
 async function picFetchIdx(force){if(PIDX&&PIDX.v>=2&&!force)return PIDX;try{const r=await fetch(IDX_URL+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw 0;const x=await r.json();if(!x.items)throw 0;try{localStorage.setItem(IDX_KEY,JSON.stringify(x))}catch(e){}PIDX=picPrep(x)}catch(e){}return picIdx()}
@@ -1053,15 +1064,15 @@ function picCatFilter(c){const x=picIdx();if(!x)return null;
 function picScore(o,q){const s=Math.max(matchScore(o.k,q),o.core?matchScore(o.core,q):0);return s?s+(o.s?3:0):0}
 function picCands(name,c,lim,all){const x=picIdx();if(!x)return[];const q=skey(name);if(!q)return[];const f=all?null:picCatFilter(c);
  return x.list.filter(o=>!f||f(o)).map(o=>({o,s:picScore(o,q)})).filter(r=>r.s>=55).sort((a,b)=>b.s-a.s).slice(0,lim||6)}
-function picBtn(ci,i,n){const c=cur().cats[ci],u=picUrl(picOf(n,c));
+function picBtn(ci,i,n){const c=cur().cats[ci],u=picUrl(picOf(n,c,c.items[i]));
  return `<button class="pxb ${u?"has":""}" onclick="picModal(${ci},${i})" title="商品图片">${u?`<img src="${esc(u)}" loading="lazy" onerror="this.parentNode.classList.remove('has');this.remove()">`:"🖼"}</button>`}
-function picModal(ci,i){const o=cur(),c=o&&o.cats[ci],it=c&&c.items[i];if(!it)return;PM={ci,i,n:it.n,k:picKey(it.n,c),all:false};const p=PICS[PM.k],u=picUrl(p);
- modal(`<div class="mh">商品图片 · ${esc(it.n)}</div><div class="mt">类别：${esc(c.name||"未命名")}（图片按类别记录，不会和别的类别同名商品混用）</div>${u?`<div style="text-align:center;margin:6px 0"><img src="${esc(u)}" style="max-width:60%;border-radius:12px"></div>`:""}
+function picModal(ci,i){const o=cur(),c=o&&o.cats[ci],it=c&&c.items[i];if(!it)return;PM={ci,i,n:it.n,k:picKey(it.n,c,it),all:false};const p=PICS[PM.k],u=picUrl(p);
+ modal(`<div class="mh">商品图片 · ${esc(it.n||"无名称商品")}</div><div class="mt">类别：${esc(c.name||"未命名")}（图片按类别记录，不会和别的类别同名商品混用）</div>${u?`<div style="text-align:center;margin:6px 0"><img src="${esc(u)}" style="max-width:60%;border-radius:12px"></div>`:""}
  <div class="ab" style="margin-top:6px"><button onclick="picMatchUI()">🔎 从官方匹配图片</button>
  <label class="ab-l"><span>📷 使用我的图片（相册/文件）</span><input type="file" accept="image/*" style="display:none" onchange="picOwn(this)"></label>
  ${p?`<button class="g" onclick="picDel()">移除图片</button>`:""}<button class="g" onclick="closeModal()">关闭</button></div>`)}
 async function picMatchUI(){const c=cur().cats[PM.ci];
- modal(`<div class="mh">官方图片 · ${esc(PM.n)}</div><input class="sq" id="pq" style="border:1px solid #e3d8c8;margin:0 0 6px" placeholder="换个关键词搜索官方商品" oninput="picSearch(this.value)"><div class="mt" id="pinfo">加载官方目录…</div><div id="pl" class="pgrid"></div><div class="mb2"><button class="g" onclick="picModal(PM.ci,PM.i)">返回</button><button class="g" id="pall" onclick="PM.all=!PM.all;picSearch($('pq').value)">搜全部类别</button></div>`);
+ modal(`<div class="mh">官方图片 · ${esc(PM.n||"无名称商品")}</div><input class="sq" id="pq" style="border:1px solid #e3d8c8;margin:0 0 6px" placeholder="换个关键词搜索官方商品" oninput="picSearch(this.value)"><div class="mt" id="pinfo">加载官方目录…</div><div id="pl" class="pgrid"></div><div class="mb2"><button class="g" onclick="picModal(PM.ci,PM.i)">返回</button><button class="g" id="pall" onclick="PM.all=!PM.all;picSearch($('pq').value)">搜全部类别</button></div>`);
  await picFetchIdx();if(!picIdx()){$("pinfo").innerHTML='<span style="color:#c0392b">无法获取官方图片目录，请检查网络后重试</span>';return}
  picSearch("")}
 function picSearch(q){const c=cur().cats[PM.ci],f=PM.all?null:picCatFilter(c);let r;
@@ -1079,14 +1090,14 @@ function picOwn(inp){const f=inp.files&&inp.files[0];inp.value="";if(!f)return;c
 /* 一键匹配：当前订单所有品项，只在各自类别里找；自己的图片永远不覆盖 */
 async function picAuto(force){const o=cur();if(!o)return;toast("匹配中…");await picFetchIdx();if(!picIdx()){toast("⚠ 无法获取官方图片目录，请检查网络");return}
  let ok=0,skip=0;const miss=[];
- o.cats.forEach((c,ci)=>c.items.forEach((it,i)=>{const k=picKey(it.n,c),p=PICS[k];if(p&&(!force||p.d)){skip++;return}
+ o.cats.forEach((c,ci)=>c.items.forEach((it,i)=>{if(!it.n)return;const k=picKey(it.n,c,it),p=PICS[k];if(p&&(!force||p.d)){skip++;return}
   const r=picCands(it.n,c,1)[0];if(r&&r.s>=85){PICS[k]={u:r.o.t};ok++}else if(!p)miss.push([ci,i,it.n])}));
  picSave();renderEdit();
  modal(`<div class="mh">图片匹配完成</div><div class="mt">新匹配 ${ok} 个${skip?"，已有图片跳过 "+skip+" 个":""}${miss.length?"，未匹配 "+miss.length+" 个（只在本类别里找）。点名字可手动选图：":"。"}</div>${miss.length?`<div class="ab" style="max-height:40vh;overflow:auto">${miss.map(m=>`<button class="g" onclick="picModal(${m[0]},${m[1]})">${esc(m[2])}</button>`).join("")}</div>`:""}<div class="mb2"><button onclick="closeModal()">好</button></div>`)}
 /* 海报/表格用：预载图片 */
 const IMGC={};
 function picLoad(u){if(!u)return Promise.resolve(null);if(IMGC[u])return IMGC[u];return IMGC[u]=new Promise(r=>{const im=new Image();if(!/^(data:|api\/)/.test(u))im.crossOrigin="anonymous";im.onload=()=>r(im);im.onerror=()=>{delete IMGC[u];r(null)};im.src=u})}
-async function picPre(cats){const m=new Map();await Promise.all(cats.flatMap(c=>c.items.map(async it=>{const u=picUrl(picOf(it.n,c));if(!u)return;const im=await picLoad(u);if(im)m.set(it,im)})));return m}
+async function picPre(cats){const m=new Map();await Promise.all(cats.flatMap(c=>c.items.map(async it=>{const u=picUrl(picOf(it.n,c,it));if(!u)return;const im=await picLoad(u);if(im)m.set(it,im)})));return m}
 async function picXl(cats){const m=new Map(),im=await picPre(cats.map(x=>({...x.c,items:x.items})));
  im.forEach((img,it)=>{const cv=document.createElement("canvas"),s=Math.min(1,160/Math.max(img.width,img.height));cv.width=Math.round(img.width*s);cv.height=Math.round(img.height*s);const g=cv.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,cv.width,cv.height);g.drawImage(img,0,0,cv.width,cv.height);
   const b=atob(cv.toDataURL("image/jpeg",.85).split(",")[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);m.set(it,{u,w:cv.width,h:cv.height})});return m}
@@ -1246,7 +1257,7 @@ try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{if
 applyTheme();
 /* ---------- 分享文字 ---------- */
 function orderText(o){const d=sheetData(o),X=XL[o.lang||"es"];const L=[];L.push((o.sup||X.sheet)+" · "+(o.dt||""));
- d.cats.forEach(({c,items})=>{L.push("");L.push(c.name||"");items.forEach(it=>L.push("• "+it.n+" x"+it.q+(o.price&&it.p?"  "+o.cur+fmt(it.q*it.p):"")))});
+ d.cats.forEach(({c,items})=>{L.push("");L.push(c.name||"");items.forEach(it=>L.push("• "+(it.n||"（图片商品）")+" x"+it.q+(o.price&&it.p?"  "+o.cur+fmt(it.q*it.p):"")))});
  L.push("");L.push(X.t+": "+d.q+(o.price&&d.a?"  "+o.cur+fmt(d.a):""));return L.join("\n")}
 function shareText(){const o=cur();if(!o)return;if(!sheetData(o).n){toast("没有数量大于 0 的品项");return}const t=orderText(o);
  if(NATIVE){try{window.webkit.messageHandlers.native.postMessage({type:"shareText",text:t});closeModal();return}catch(e){}}
@@ -1264,6 +1275,31 @@ function copyOrderText(){const o=cur();if(!o)return;if(!sheetData(o).n){toast("�
 function qKey(e){if(e.key!="Enter")return;e.preventDefault();const o=cur();if(!o||!o.cats.length)return;
  if(CAND&&CAND.length&&Q.trim()){candAdd(0);return}
  if(Q.trim()&&QC>=0){quick(QC)}}
+
+/* 种类标签：长按后左右拖动排序 */
+let QDRAG=0;
+function moveCat(from,to){const o=cur();if(!o||from===to||from<0||to<0||from>=o.cats.length||to>=o.cats.length)return;
+ const mp=i=>i===from?to:(from<to?(i>from&&i<=to?i-1:i):(i>=to&&i<from?i+1:i));
+ const nd={};Object.keys(draft).forEach(k=>{nd[mp(+k)]=draft[k]});draft=nd;SG={};
+ QC=mp(QC);QCMAP[o.id]=QC;FX("add");
+ mut(x=>{const [c]=x.cats.splice(from,1);x.cats.splice(to,0,c)})}
+(function(){const qc=$("qc");let T=null,D=null,sx=0,sy=0;
+ const cancelT=()=>{clearTimeout(T);T=null};
+ qc.addEventListener("touchstart",e=>{const b=e.target.closest("button");if(!b||e.touches.length!=1)return;const ci=[...qc.children].indexOf(b);if(ci<0)return;const t=e.touches[0];sx=t.clientX;sy=t.clientY;cancelT();
+  T=setTimeout(()=>{T=null;const r=b.getBoundingClientRect();D={ci,b,to:ci,x0:sx,sl:qc.scrollLeft,l0:r.left,r0:r.right};b.classList.add("drag");FX("tick")},420)},{passive:true});
+ qc.addEventListener("touchmove",e=>{const t=e.touches[0];
+  if(T){if(Math.abs(t.clientX-sx)>8||Math.abs(t.clientY-sy)>8)cancelT();return}
+  if(!D)return;e.preventDefault();
+  const R=qc.getBoundingClientRect();if(t.clientX>R.right-36)qc.scrollLeft+=10;else if(t.clientX<R.left+36)qc.scrollLeft-=10;
+  const ds=qc.scrollLeft-D.sl;D.b.style.transform="translateX("+(t.clientX-D.x0+ds)+"px) scale(1.08)";
+  const btns=[...qc.children];let to=D.to;
+  if(t.clientX>=D.l0-ds&&t.clientX<=D.r0-ds)to=D.ci;
+  btns.forEach((b,i)=>{if(b===D.b)return;const q=b.getBoundingClientRect();if(t.clientX>=q.left&&t.clientX<=q.right)to=i});
+  if(to!==D.to){D.to=to;btns.forEach((b,i)=>b.classList.toggle("over",i===to&&b!==D.b));FX("tick")}},{passive:false});
+ function end(){cancelT();if(!D)return;const d=D;D=null;d.b.classList.remove("drag");d.b.style.transform="";[...qc.children].forEach(b=>b.classList.remove("over"));QDRAG=Date.now();if(d.to!==d.ci)moveCat(d.ci,d.to)}
+ qc.addEventListener("touchend",end);qc.addEventListener("touchcancel",end);
+ qc.addEventListener("click",e=>{if(Date.now()-QDRAG<400){e.stopPropagation();e.preventDefault()}},true);
+ qc.addEventListener("contextmenu",e=>e.preventDefault())})();
 
 /* 左边缘右滑返回 */
 (function(){let sx=0,sy=0,on=false,t0=0;

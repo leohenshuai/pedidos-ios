@@ -26,6 +26,12 @@ targets:
       path: Pedidos/Info.plist
       properties:
         CFBundleDisplayName: 订货单
+        CFBundleDevelopmentRegion: zh-Hans
+        CFBundleLocalizations: [zh-Hans, en]
+        NSCameraUsageDescription: 订货单需要使用相机拍摄商品图片
+        NSPhotoLibraryUsageDescription: 订货单需要读取相册，用于为商品选择图片
+        NSPhotoLibraryAddUsageDescription: 订货单需要把海报图片保存到相册
+        NSMicrophoneUsageDescription: 拍摄照片时系统可能请求麦克风权限
         CFBundleName: Pedidos
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
