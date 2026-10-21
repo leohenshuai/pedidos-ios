@@ -83,6 +83,14 @@ input.cs{display:block;width:100%;font-size:16px;color:#999;border:0;background:
 .ic.zero{opacity:.45}
 .ic.dup{border-color:#e9a23b;background:#fff8e8}
 .dupb{font-size:11px;color:#c07d10;margin-top:-2px}
+.nmr{display:flex;gap:6px;align-items:flex-start}.nmr textarea.nm{flex:1;min-width:0}
+.pxb{flex:none;width:40px;height:40px;border:1px dashed #d8cfc0;border-radius:10px;background:none;padding:0;font-size:16px;opacity:.7;overflow:hidden}
+.pxb.has{border:0;opacity:1;background:#fff}.pxb img{width:100%;height:100%;object-fit:cover;display:block}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:50vh;overflow:auto}
+.pxc{border:1px solid #e5e0d7;border-radius:10px;background:#fff;padding:4px;display:flex;flex-direction:column;gap:2px;font-size:11px;color:#3a2e2a}
+.pxc img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}
+.ab-l{display:block;text-align:center;padding:12px;border-radius:12px;background:#f1eee9;font-size:16px}
+html[data-theme=dark] .pxb{border-color:#5a4d44}html[data-theme=dark] .pxc,html[data-theme=dark] .ab-l{background:rgba(255,255,255,.08);color:var(--ink);border-color:rgba(255,255,255,.12)}
 textarea.nm{width:100%;height:40px;resize:none;border:0;border-bottom:1px dashed #d8cfc0;background:none;font-size:16px;line-height:1.25;padding:0 0 2px;color:#3a2e2a;font-family:inherit;overflow:hidden;border-radius:0}
 textarea.nm:focus{outline:none;border-bottom:2px solid var(--c);background:#fffbe9}
 .ctr{display:flex;align-items:center;gap:4px}
@@ -473,7 +481,7 @@ const LANG={
  es:{p1:s=>s?"PEDIDO A":"PEDIDO",big:"ORDEN",p2:s=>"ORDEN DE COMPRA",date:"Fecha",total:n=>"TOTAL GENERAL: "+n+" unidades",head:s=>s?"PEDIDO A "+s:"PEDIDO",amount:"Importe estimado"},
  zh:{p1:s=>s?"订货给":"",big:"订货单",p2:s=>s?"订 货 单":"",date:"日期",total:n=>"合计："+n+" 件",head:s=>s?"订货单 · "+s:"订货单",amount:"预计金额"}};
 const NATIVE=!!window.__NATIVE__;
-const APP_VERSION="1.7 · 2026-10-17";
+const APP_VERSION="1.8 · 2026-10-21";
 let S=null,Q="",QC=-1,PQ="",HQ="",HF="all",HR=[],draft={},SG={},SERVER=false,REV=0,tt=null,MI=null,MT=null,DCB=null,PCV=null,pushT=null,pending=false,pushing=false,dirty=false;
 const $=id=>document.getElementById(id);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
@@ -669,7 +677,7 @@ function renderEdit(){
   const hidden=c.items.filter(x=>x.q==0).length;
   const sum=c.items.reduce((a,b)=>a+b.q,0),am=amtC(c);
   const cards=idx.map(i=>{const it=c.items[i],isDup=dm[norm(it.n)]>1;
-   return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><button class="dl" title="删除" onclick="delItem(${ci},${i})">×</button><textarea class="nm" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onfocus="this.select()" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="empty2"><div class="ei">🔍</div><b>${c.items.length?"还没有订货的品项":"这个种类还没有品项"}</b><small>点上方搜索框，输入品名开始订货${hidden?"（已收录 "+hidden+" 项）":""}<br>搜不到的新品名，可直接“＋ 新增”</small></div>`);
+   return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><button class="dl" title="删除" onclick="delItem(${ci},${i})">×</button><div class="nmr">${picBtn(ci,i,it.n)}<textarea class="nm" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea></div>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onfocus="this.select()" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="empty2"><div class="ei">🔍</div><b>${c.items.length?"还没有订货的品项":"这个种类还没有品项"}</b><small>点上方搜索框，输入品名开始订货${hidden?"（已收录 "+hidden+" 项）":""}<br>搜不到的新品名，可直接“＋ 新增”</small></div>`);
   const d=draft[ci]||{n:"",q:3};
   h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)"><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${sum}件${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="${c.items.length?`arm(this,()=>delCat(${ci}),'删?')`:`delCat(${ci})`}">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div>
   </section>`;
@@ -986,6 +994,7 @@ function catApply(){
 function moreMenu(){
  modal(`<div class="mh">更多</div><div class="ab" style="margin-top:6px">
   <button onclick="closeModal();importModal()">📋 批量导入（粘贴文字清单）</button>
+  <button onclick="closeModal();picAuto()">🖼 自动匹配官方图片（所有品项）</button>
   <button class="g" onclick="closeModal()">关闭</button></div>`)}
 
 function openNC(){$("ncb").hidden=true;$("ncw").hidden=false;$("ncn").focus()}
@@ -1005,6 +1014,46 @@ function segPlace(seg,ln,key,tries){const act=seg.querySelector("button.on");if(
   clearTimeout(seg._t);seg._t=setTimeout(()=>{ln.classList.remove("stretch");ln.style.left=x+"px";ln.style.width=w+"px"},150)}
  else{ln.style.transition="none";ln.style.left=x+"px";ln.style.width=w+"px";void ln.offsetWidth;ln.style.transition=""}
  ln.style.opacity=1;seg.dataset.key=key;seg.dataset.lx=x;seg.dataset.lw=w}
+
+/* ================= 商品图片：官方匹配 / 自己的图片 ================= */
+const PIC_KEY="pedidos_pics_v1",IDX_KEY="pedidos_imgidx_v1",IDX_URL="https://raw.githubusercontent.com/leohenshuai/pedidos-ios/main/sources/saphirus_img.json";
+const PIC_PFX={AROMA:["aerosol"],TEXTIL:["textil"],DIFUSORES:["difusor"]};
+let PICS=(()=>{try{return JSON.parse(localStorage.getItem(PIC_KEY))||{}}catch(e){return{}}})(),PIDX=null,PM=null;
+function picSave(){try{localStorage.setItem(PIC_KEY,JSON.stringify(PICS));return true}catch(e){toast("⚠ 图片存储空间不足，请移除一些图片");return false}}
+function picIdx(){if(PIDX)return PIDX;try{const x=JSON.parse(localStorage.getItem(IDX_KEY));if(x&&x.items)PIDX=picPrep(x)}catch(e){}return PIDX}
+function picPrep(x){x.list=x.items.map(r=>{const k=skey(r[0]),w=k.split(" ");return{n:r[0],k,core:w.slice(1).join(" "),w0:w[0],t:r[1],s:r[2]}});return x}
+async function picFetchIdx(force){if(PIDX&&!force)return PIDX;try{const r=await fetch(IDX_URL+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw 0;const x=await r.json();if(!x.items)throw 0;localStorage.setItem(IDX_KEY,JSON.stringify(x));PIDX=picPrep(x)}catch(e){}return picIdx()}
+function picUrl(p){if(!p)return"";if(p.d)return p.d;const x=picIdx();return x&&p.u?x.base+p.u:""}
+function picOf(n){return PICS[skey(n)]}
+function picScore(o,q,pf){let s=Math.max(matchScore(o.k,q),o.core?matchScore(o.core,q):0);if(!s)return 0;
+ if(pf.length)s+=pf.includes(o.w0)?25:-30;if(o.s)s+=3;return s}
+function picCands(name,c,lim){const x=picIdx();if(!x)return[];const q=skey(name),pf=PIC_PFX[catKeyFor(c)]||[];if(!q)return[];
+ return x.list.map(o=>({o,s:picScore(o,q,pf)})).filter(r=>r.s>=55).sort((a,b)=>b.s-a.s).slice(0,lim||6)}
+function picBtn(ci,i,n){const p=picOf(n),u=picUrl(p);
+ return `<button class="pxb ${u?"has":""}" onclick="picModal(${ci},${i})" title="商品图片">${u?`<img src="${esc(u)}" loading="lazy" onerror="this.parentNode.classList.remove('has');this.remove()">`:"🖼"}</button>`}
+function picModal(ci,i){const o=cur(),c=o&&o.cats[ci],it=c&&c.items[i];if(!it)return;PM={ci,i,n:it.n};const p=picOf(it.n),u=picUrl(p);
+ modal(`<div class="mh">商品图片 · ${esc(it.n)}</div>${u?`<div style="text-align:center;margin:6px 0"><img src="${esc(u)}" style="max-width:60%;border-radius:12px"></div>`:""}
+ <div class="ab" style="margin-top:6px"><button onclick="picMatchUI()">🔎 从官方匹配图片</button>
+ <label class="ab-l"><span>📷 使用我的图片（相册/文件）</span><input type="file" accept="image/*" style="display:none" onchange="picOwn(this)"></label>
+ ${p?`<button class="g" onclick="picDel()">移除图片</button>`:""}<button class="g" onclick="closeModal()">关闭</button></div>`)}
+async function picMatchUI(){const n=PM.n,c=cur().cats[PM.ci];
+ modal(`<div class="mh">官方图片 · ${esc(n)}</div><input class="sq" id="pq" style="border:1px solid #e3d8c8;margin:0 0 6px" placeholder="换个关键词搜索官方商品" value="" oninput="picSearch(this.value)"><div class="mt" id="pinfo">加载官方目录…</div><div id="pl" class="pgrid"></div><div class="mb2"><button class="g" onclick="picModal(PM.ci,PM.i)">返回</button></div>`);
+ await picFetchIdx();if(!picIdx()){$("pinfo").innerHTML='<span style="color:#c0392b">无法获取官方图片目录，请检查网络后重试</span>';return}
+ $("pinfo").textContent="官方目录 "+PIDX.list.length+" 件 · "+(PIDX.date||"");picSearch("")}
+function picSearch(q){const c=cur().cats[PM.ci];let r;
+ if(q.trim()){const k=skey(q);r=PIDX.list.map(o=>({o,s:Math.max(matchScore(o.k,k),o.core?matchScore(o.core,k):0)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,18)}else r=picCands(PM.n,c,12);
+ $("pl").innerHTML=r.map((x,j)=>`<button class="pxc" onclick="picPick(${PIDX.list.indexOf(x.o)})"><img src="${esc(PIDX.base+x.o.t)}" loading="lazy"><span>${esc(x.o.n)}</span></button>`).join("")||'<div class="hint">没有匹配，换个关键词试试</div>'}
+function picPick(ix){const o=PIDX.list[ix];PICS[skey(PM.n)]={u:o.t};if(picSave()){closeModal();renderEdit();toast("已设置图片")}}
+function picDel(){delete PICS[skey(PM.n)];picSave();closeModal();renderEdit()}
+function picOwn(inp){const f=inp.files&&inp.files[0];inp.value="";if(!f)return;const im=new Image(),u=URL.createObjectURL(f);
+ im.onload=()=>{const m=260,s=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*s);cv.height=Math.round(im.height*s);
+  const g=cv.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,cv.width,cv.height);g.drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);
+  PICS[skey(PM.n)]={d:cv.toDataURL("image/jpeg",.78)};if(picSave()){closeModal();renderEdit();toast("已设置我的图片")}};
+ im.onerror=()=>toast("⚠ 无法读取这张图片");im.src=u}
+async function picAuto(){toast("匹配中…");await picFetchIdx();if(!picIdx()){toast("⚠ 无法获取官方图片目录，请检查网络");return}
+ let ok=0,no=0,seen=new Set();S.orders.filter(o=>!o.del).forEach(o=>o.cats.forEach(c=>c.items.forEach(it=>{const k=skey(it.n);if(!k||seen.has(k))return;seen.add(k);if(PICS[k])return;
+  const r=picCands(it.n,c,1)[0];if(r&&r.s>=85){PICS[k]={u:r.o.t};ok++}else no++})));
+ picSave();if(CATO)renderEdit();toast("已匹配 "+ok+" 个"+(no?"，"+no+" 个未匹配（点缩略图可手动选）":""))}
 
 /* ================= 海报 ================= */
 function rr(x,c,X,y,w,h,r){x.beginPath();x.roundRect(X,y,w,h,r);x.fillStyle=c;x.fill()}
