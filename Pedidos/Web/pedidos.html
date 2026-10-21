@@ -498,7 +498,7 @@ const LANG={
  es:{p1:s=>s?"PEDIDO A":"PEDIDO",big:"ORDEN",p2:s=>"ORDEN DE COMPRA",date:"Fecha",total:n=>"TOTAL GENERAL: "+n+" unidades",head:s=>s?"PEDIDO A "+s:"PEDIDO",amount:"Importe estimado"},
  zh:{p1:s=>s?"订货给":"",big:"订货单",p2:s=>s?"订 货 单":"",date:"日期",total:n=>"合计："+n+" 件",head:s=>s?"订货单 · "+s:"订货单",amount:"预计金额"}};
 const NATIVE=!!window.__NATIVE__;
-const APP_VERSION="2.1 · 2026-10-21";
+const APP_VERSION="2.2 · 2026-10-21";
 let S=null,Q="",QC=-1,PQ="",HQ="",HF="all",HR=[],draft={},SG={},SERVER=false,REV=0,tt=null,MI=null,MT=null,DCB=null,PCV=null,pushT=null,pending=false,pushing=false,dirty=false;
 const $=id=>document.getElementById(id);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
@@ -1062,7 +1062,8 @@ function picPrep(x){x.list=x.items.map(r=>{const k=skey(r[0]),w=k.split(" "),cl=
 function picIdx(){if(PIDX)return PIDX;try{const x=JSON.parse(localStorage.getItem(IDX_KEY));if(x&&x.items)PIDX=picPrep(x)}catch(e){}return PIDX}
 async function picFetchIdx(force){if(PIDX&&PIDX.v>=2&&!force)return PIDX;try{const r=await fetch(IDX_URL+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw 0;const x=await r.json();if(!x.items)throw 0;try{localStorage.setItem(IDX_KEY,JSON.stringify(x))}catch(e){}PIDX=picPrep(x)}catch(e){}return picIdx()}
 let PIC_HOOK=null;const picSrc=u=>PIC_HOOK?PIC_HOOK(u):NATIVE?"api/img?p="+encodeURIComponent(u):PIC_BASE+u;
-function picUrl(p){if(!p)return"";if(p.d)return p.d;return p.u?picSrc(p.u):""}
+function hiRes(u){return u.replace(/-430x430(\.\w+)$/,"-800x800$1")}
+function picUrl(p,hi){if(!p)return"";if(p.d)return p.d;return p.u?picSrc(hi?hiRes(p.u):p.u):""}
 /* 该商品所在种类 → 官方分类过滤器（认不出种类时返回 null = 不限制） */
 function picCatFilter(c){const x=picIdx();if(!x)return null;
  const tk=s=>norm(s||"").split(/[^a-z0-9]+/).filter(w=>w.length>=3&&!PIC_STOP.has(w)).map(w=>PIC_ALIAS[w]||w.replace(/(es|s)$/,"")).filter(w=>w.length>=3),all=[...x.cats];
@@ -1090,9 +1091,9 @@ function picSearch(q){const c=cur().cats[PM.ci],f=PM.all?null:picCatFilter(c);le
 function picPick(ix){const o=PIDX.list[ix];PICS[PM.k]={u:o.t};if(picSave()){closeModal();renderEdit();toast("已设置图片")}}
 function picDel(){delete PICS[PM.k];picSave();closeModal();renderEdit()}
 function picOwn(inp){const f=inp.files&&inp.files[0];inp.value="";if(!f)return;const im=new Image(),u=URL.createObjectURL(f);
- im.onload=()=>{const m=260,s=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*s);cv.height=Math.round(im.height*s);
+ im.onload=()=>{const m=520,s=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*s);cv.height=Math.round(im.height*s);
   const g=cv.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,cv.width,cv.height);g.drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);
-  PICS[PM.k]={d:cv.toDataURL("image/jpeg",.78)};if(picSave()){closeModal();renderEdit();toast("已设置我的图片")}};
+  PICS[PM.k]={d:cv.toDataURL("image/jpeg",.86)};if(picSave()){closeModal();renderEdit();toast("已设置我的图片")}};
  im.onerror=()=>toast("⚠ 无法读取这张图片");im.src=u}
 /* 一键匹配：当前订单所有品项，只在各自类别里找；自己的图片永远不覆盖 */
 async function picAuto(force){const o=cur();if(!o)return;toast("匹配中…");await picFetchIdx();if(!picIdx()){toast("⚠ 无法获取官方图片目录，请检查网络");return}
@@ -1104,10 +1105,10 @@ async function picAuto(force){const o=cur();if(!o)return;toast("匹配中…");a
 /* 海报/表格用：预载图片 */
 const IMGC={};
 function picLoad(u){if(!u)return Promise.resolve(null);if(IMGC[u])return IMGC[u];return IMGC[u]=new Promise(r=>{const im=new Image();if(!/^(data:|api\/)/.test(u))im.crossOrigin="anonymous";im.onload=()=>r(im);im.onerror=()=>{delete IMGC[u];r(null)};im.src=u})}
-async function picPre(cats){const m=new Map();await Promise.all(cats.flatMap(c=>c.items.map(async it=>{const u=picUrl(picOf(it.n,c,it));if(!u)return;const im=await picLoad(u);if(im)m.set(it,im)})));return m}
+async function picPre(cats){const m=new Map();await Promise.all(cats.flatMap(c=>c.items.map(async it=>{const u=picUrl(picOf(it.n,c,it),true);if(!u)return;const im=await picLoad(u)||await picLoad(picUrl(picOf(it.n,c,it)));if(im)m.set(it,im)})));return m}
 async function picXl(cats){const m=new Map(),im=await picPre(cats.map(x=>({...x.c,items:x.items})));
- im.forEach((img,it)=>{const cv=document.createElement("canvas"),s=Math.min(1,160/Math.max(img.width,img.height));cv.width=Math.round(img.width*s);cv.height=Math.round(img.height*s);const g=cv.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,cv.width,cv.height);g.drawImage(img,0,0,cv.width,cv.height);
-  const b=atob(cv.toDataURL("image/jpeg",.85).split(",")[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);m.set(it,{u,w:cv.width,h:cv.height})});return m}
+ im.forEach((img,it)=>{const cv=document.createElement("canvas"),s=Math.min(1,420/Math.max(img.width,img.height));cv.width=Math.round(img.width*s);cv.height=Math.round(img.height*s);const g=cv.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,cv.width,cv.height);g.drawImage(img,0,0,cv.width,cv.height);
+  const b=atob(cv.toDataURL("image/jpeg",.92).split(",")[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);m.set(it,{u,w:cv.width,h:cv.height})});return m}
 
 /* ================= 海报 ================= */
 function rr(x,c,X,y,w,h,r){x.beginPath();x.roundRect(X,y,w,h,r);x.fillStyle=c;x.fill()}
@@ -1130,10 +1131,10 @@ async function drawPoster(){
  $("dkL").classList.toggle("on",!o.dk);$("dkD").classList.toggle("on",!!o.dk);$("lgEs").classList.toggle("on",(o.lang||"es")=="es");$("lgZh").classList.toggle("on",o.lang=="zh");
  const cats=o.cats.map(c=>({...c,items:sorted(o,c).map(i=>c.items[i]).filter(i=>i.q>0)})).filter(c=>c.items.length);
  const IM=await picPre(cats);if(tk!==DPT)return;
- const W=1080,P=50,IW=W-2*P,CP=32,COLW=(IW-2*CP-44)/2,RH=IM.size?92:58,TH=RH-12,SF='-apple-system,"PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif';
+ const W=1080,P=50,IW=W-2*P,CP=32,COLW=(IW-2*CP-44)/2,RH=IM.size?112:58,TH=RH-12,SF='-apple-system,"PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif';
  const showAmt=o.price&&amtO(o)>0,sup=(o.sup||"").trim().toUpperCase();
  let H=P+270+44+30+90+(showAmt?20+70:0)+P;cats.forEach(c=>H+=12+86+Math.ceil(c.items.length/2)*RH+24+28);
- const cv=document.createElement("canvas");cv.width=W;cv.height=H;const x=cv.getContext("2d");
+ const SC=Math.min(2,Math.sqrt(14e6/(W*H))),cv=document.createElement("canvas");cv.width=Math.round(W*SC);cv.height=Math.round(H*SC);const x=cv.getContext("2d");x.setTransform(cv.width/W,0,0,cv.height/H,0,0);x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";
  x.fillStyle=BG;x.fillRect(0,0,W,H);
  let y=P;rr(x,HD,P,y,IW,270,28);
  x.textAlign="center";x.fillStyle=HT+"b3";x.font="22px "+SF;x.letterSpacing="8px";const p1=L.p1(sup);if(p1)x.fillText(p1,W/2+4,y+68);
@@ -1167,7 +1168,7 @@ async function drawPoster(){
 /* ---------- PDF（纯前端，不依赖外部库：把 JPEG 直接封装成单页 PDF） ---------- */
 function exportPdf(){
  if(!PCV)return;
- const jpg=atob(PCV.toDataURL("image/jpeg",0.92).split(",")[1]),w=PCV.width,h=PCV.height,pw=595,ph=Math.round(595*h/w);
+ const jpg=atob(PCV.toDataURL("image/jpeg",0.95).split(",")[1]),w=PCV.width,h=PCV.height,pw=595,ph=Math.round(595*h/w);
  const bin=s=>{const a=new Uint8Array(s.length);for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i)&255;return a};
  const parts=[],offs=[];let len=0;
  const add=s=>{const b=typeof s=="string"?bin(s):s;parts.push(b);len+=b.length};
