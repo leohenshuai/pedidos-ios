@@ -724,7 +724,8 @@ function candPanel(o,ci,nq,exact){
  h+=CAND.map((x,i)=>`<button class="cb" style="--c:${c.color}" onclick="candAdd(${i})"><b>${hl(x.n,Q)}</b><small>${x.ex?"本单·数量0":(x.src&2?"商品源":"品名库")}${x.price&&o.price?" · "+esc(o.cur)+fmt(x.price):""}</small></button>`).join("");
  if(!h)return nq?`<div class="cand"><div class="ct">没有匹配的品名</div></div>`:"";
  return `<div class="cand ${nq?"":"row"}"><div class="ct">${nq?"点一下加入 "+esc(c.name||"")+"（数量 1）":"常用 · 点一下加入 "+esc(c.name||"")+" →"}</div><div class="cw">${h}</div></div>`}
-function candAdd(i){const x=CAND[i],o=cur();if(!x||!o)return;const ci=QC,k=skey(x.n);
+function qBlur(){SF=false;const q=$("q");if(q&&document.activeElement===q)q.blur()}
+function candAdd(i){const x=CAND[i],o=cur();if(!x||!o)return;qBlur();const ci=QC,k=skey(x.n);
  mut(o=>{const c=o.cats[ci],ex=c.items.find(it=>skey(it.n)==k);
   if(ex){ex.q=Math.max(1,ex.q+1)}else c.items.push({n:x.n,q:1,p:o.price&&x.price&&x.hasCat?x.price:null})});
  FX("add");addVocab(x.n);bumpUse(x.n);save();Q="";$("q").value="";JUST0.clear();renderEdit();toast("已加入："+x.n)}
@@ -732,8 +733,8 @@ function onSearch(v){if(!v.trim())JUST0.clear();Q=v;renderEdit()}
 function setQC(i){JUST0.clear();QC=i;renderEdit()}
 const dr=ci=>draft[ci]||(draft[ci]={n:"",q:3});
 const JUST0=new Set();
-function adj(ci,i,d){FX(d>0?"tick":"tick");const o0=cur();const it0=o0.cats[ci].items[i];if(it0.q>0&&it0.q+d<=0)JUST0.add(o0.id+":"+ci+":"+i);mut(o=>{const it=o.cats[ci].items[i];it.q=Math.max(0,it.q+d)},"q:"+ci+":"+i)}
-function setq(ci,i,v){FX("tick");const o0=cur();const it0=o0.cats[ci].items[i];const nv=Math.max(0,parseInt(v)||0);if(it0.q>0&&nv==0)JUST0.add(o0.id+":"+ci+":"+i);mut(o=>{o.cats[ci].items[i].q=nv})}
+function adj(ci,i,d){FX("tick");qBlur();const o0=cur();const it0=o0.cats[ci].items[i];if(it0.q>0&&it0.q+d<=0)JUST0.add(o0.id+":"+ci+":"+i);mut(o=>{const it=o.cats[ci].items[i];it.q=Math.max(0,it.q+d)},"q:"+ci+":"+i)}
+function setq(ci,i,v){FX("tick");SF=false;const o0=cur();const it0=o0.cats[ci].items[i];const nv=Math.max(0,parseInt(v)||0);if(it0.q>0&&nv==0)JUST0.add(o0.id+":"+ci+":"+i);mut(o=>{o.cats[ci].items[i].q=nv})}
 function setp(ci,i,v){mut(o=>{o.cats[ci].items[i].p=v===""?null:Math.max(0,parseFloat(v)||0)})}
 function rename(ci,i,v){const nv=fixName(v);if(!nv)return renderEdit();mut(o=>{o.cats[ci].items[i].n=nv});addVocab(nv);save();
  const c=cur().cats[ci];if(c.items.filter(x=>norm(x.n)==norm(nv)).length>1)toast("⚠ 本类别里已有同名品项，请确认是否重复")}
@@ -759,7 +760,7 @@ function addItem(ci,force){
    if(a.startsWith("use:")){d.n=a.slice(4);addItem(ci,"ok")}else if(a=="keep")addItem(ci,"ok")});return}}
  mut(o=>{o.cats[ci].items.push({n,q,p:null})});addVocab(n);bumpUse(n);draft[ci]={n:"",q:d.q};save();renderEdit();
 }
-function quick(ci){const n=fixName(Q);dr(ci).n=n;dr(ci).q=1;Q="";$("q").value="";addItem(ci)}
+function quick(ci){qBlur();const n=fixName(Q);dr(ci).n=n;dr(ci).q=1;Q="";$("q").value="";addItem(ci)}
 function sug(ci){const v=dr(ci).n,k=norm(v),box=$("sg"+ci);if(!box)return;
  if(!k){box.innerHTML="";return}
  const c=cur().cats[ci],have=new Set(c.items.map(i=>norm(i.n)));
