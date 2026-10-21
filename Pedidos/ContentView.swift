@@ -157,6 +157,28 @@ final class SchemeHandler: NSObject, WKURLSchemeHandler {
             }
             return
         }
+        if path == "/api/img" {
+            // 官方商品图代理：本机磁盘缓存，供页面画布（海报/表格）使用，避免跨域
+            let rel = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "p" }?.value ?? ""
+            let ok = !rel.isEmpty && !rel.contains("..") && rel.range(of: "^[A-Za-z0-9_./%-]+$", options: .regularExpression) != nil
+            func mime(_ r: String) -> String { r.hasSuffix(".webp") ? "image/webp" : (r.hasSuffix(".png") ? "image/png" : "image/jpeg") }
+            guard ok else { send(400, Data(), "text/plain"); return }
+            let cacheDir = Store.dir.appendingPathComponent("imgcache", isDirectory: true)
+            try? FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true)
+            let fname = rel.replacingOccurrences(of: "/", with: "_")
+            let f = cacheDir.appendingPathComponent(fname)
+            if let d = try? Data(contentsOf: f), d.count > 0 { send(200, d, mime(rel)); return }
+            guard let remote = URL(string: "https://saphirus.com.ar/wp-content/uploads/" + rel) else { send(400, Data(), "text/plain"); return }
+            var rq = URLRequest(url: remote, timeoutInterval: 20)
+            rq.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
+            URLSession.shared.dataTask(with: rq) { d, r, _ in
+                if let d = d, let h = r as? HTTPURLResponse, h.statusCode == 200, d.count > 0 {
+                    try? d.write(to: f, options: .atomic)
+                    send(200, d, mime(rel))
+                } else { send(502, Data(), "text/plain") }
+            }.resume()
+            return
+        }
         let name = (path == "/" || path.isEmpty) ? "pedidos.html" : String(path.dropFirst())
         let found = Bundle.main.url(forResource: "Web/" + name, withExtension: nil)
             ?? Bundle.main.url(forResource: name, withExtension: nil)

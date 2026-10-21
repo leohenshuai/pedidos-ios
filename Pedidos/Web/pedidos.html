@@ -83,6 +83,9 @@ input.cs{display:block;width:100%;font-size:16px;color:#999;border:0;background:
 .ic.zero{opacity:.45}
 .ic.dup{border-color:#e9a23b;background:#fff8e8}
 .dupb{font-size:11px;color:#c07d10;margin-top:-2px}
+.picbar{margin:6px 12px}.picbar button{width:100%;border:0;border-radius:14px;padding:11px;font-size:15px;background:#f1eee9;color:#3a2e2a}
+html[data-theme=dark] .picbar button{background:rgba(255,255,255,.08);color:var(--ink)}
+.pxc small{color:#999;font-size:10px}
 .nmr{display:flex;gap:6px;align-items:flex-start}.nmr textarea.nm{flex:1;min-width:0}
 .pxb{flex:none;width:40px;height:40px;border:1px dashed #d8cfc0;border-radius:10px;background:none;padding:0;font-size:16px;opacity:.7;overflow:hidden}
 .pxb.has{border:0;opacity:1;background:#fff}.pxb img{width:100%;height:100%;object-fit:cover;display:block}
@@ -448,6 +451,7 @@ html[data-theme=dark] .vr button{background:rgba(255,255,255,.1)}
   <select id="eSort" onchange="setf('sort',this.value);renderEdit()"><option value="manual">排序：手动</option><option value="az">排序：A → Z</option><option value="qty">排序：数量多→少</option></select>
   <div class="ptog"><button id="ePr" onclick="togglePrice()">&#36; 单价</button><input id="eCur" maxlength="4" oninput="setf('cur',this.value||'$');renderEdit()" title="货币符号"></div>
  </div>
+ <div class="picbar"><button class="g" onclick="picAuto()">🖼 一键匹配全部图片</button></div>
  <div id="list"></div>
  <div class="row3"><button id="ncb" class="pill" onclick="openNC()">＋ 新增种类</button><div id="ncw" class="ncw" hidden><input id="ncn" placeholder="种类名（如 JABÓN LÍQUIDO）" autocapitalize="characters" oninput="liveCase(this,'upper')" onkeydown="if(event.key=='Enter')addCat();if(event.key=='Escape')closeNC()"><button class="ok" onclick="addCat()">添加</button><button class="cx" onclick="closeNC()">取消</button></div></div>
  <div class="row3"><button id="clrBtn" class="tiny" onclick="arm(this,clearQty,'再点一次确认清零')">全部数量清零</button></div>
@@ -481,7 +485,7 @@ const LANG={
  es:{p1:s=>s?"PEDIDO A":"PEDIDO",big:"ORDEN",p2:s=>"ORDEN DE COMPRA",date:"Fecha",total:n=>"TOTAL GENERAL: "+n+" unidades",head:s=>s?"PEDIDO A "+s:"PEDIDO",amount:"Importe estimado"},
  zh:{p1:s=>s?"订货给":"",big:"订货单",p2:s=>s?"订 货 单":"",date:"日期",total:n=>"合计："+n+" 件",head:s=>s?"订货单 · "+s:"订货单",amount:"预计金额"}};
 const NATIVE=!!window.__NATIVE__;
-const APP_VERSION="1.8 · 2026-10-21";
+const APP_VERSION="1.9 · 2026-10-21";
 let S=null,Q="",QC=-1,PQ="",HQ="",HF="all",HR=[],draft={},SG={},SERVER=false,REV=0,tt=null,MI=null,MT=null,DCB=null,PCV=null,pushT=null,pending=false,pushing=false,dirty=false;
 const $=id=>document.getElementById(id);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
@@ -827,7 +831,7 @@ function zipStore(files){ // 无压缩 zip，足够 xlsx 使用
  const enc=new TextEncoder(),parts=[],cd=[];let off=0;
  const d=new Date(),dt=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate(),tm=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1);
  files.forEach(f=>{
-  const nm=enc.encode(f.name),data=enc.encode(f.data),crc=crc32(data);
+  const nm=enc.encode(f.name),data=f.data instanceof Uint8Array?f.data:enc.encode(f.data),crc=crc32(data);
   const lh=new DataView(new ArrayBuffer(30));lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(8,0,true);lh.setUint16(10,tm,true);lh.setUint16(12,dt,true);lh.setUint32(14,crc,true);lh.setUint32(18,data.length,true);lh.setUint32(22,data.length,true);lh.setUint16(26,nm.length,true);lh.setUint16(28,0,true);
   parts.push(new Uint8Array(lh.buffer),nm,data);
   const ch=new DataView(new ArrayBuffer(46));ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(10,0,true);ch.setUint16(12,tm,true);ch.setUint16(14,dt,true);ch.setUint32(16,crc,true);ch.setUint32(20,data.length,true);ch.setUint32(24,data.length,true);ch.setUint16(28,nm.length,true);ch.setUint32(42,off,true);
@@ -838,9 +842,9 @@ function zipStore(files){ // 无压缩 zip，足够 xlsx 使用
 const xe=s=>String(s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 const shd=(hex,k)=>{const n=parseInt(hex.slice(1),16),m=v=>Math.round(v*k).toString(16).padStart(2,"0");return(m(n>>16&255)+m(n>>8&255)+m(n&255)).toUpperCase()};
 const tint=(hex,k)=>{const n=parseInt(hex.slice(1),16),m=v=>Math.round(v+(255-v)*k).toString(16).padStart(2,"0");return(m(n>>16&255)+m(n>>8&255)+m(n&255)).toUpperCase()};
-const XL={es:{cat:"Categoría",it:"Producto",q:"Cantidad",p:"Precio",a:"Importe",t:"TOTAL",sheet:"Pedido"},zh:{cat:"类别",it:"品名",q:"数量",p:"单价",a:"小计",t:"合计",sheet:"订货单"}};
-function buildXlsx(o){
- const X=XL[o.lang||"es"],price=!!o.price,ncol=price?5:3,col="ABCDE",DKM=!!o.dk,rowC=c=>DKM?shd(c,.3):tint(c,.86);
+const XL={es:{cat:"Categoría",it:"Producto",q:"Cantidad",p:"Precio",a:"Importe",t:"TOTAL",sheet:"Pedido",img:"Imagen"},zh:{cat:"类别",it:"品名",q:"数量",p:"单价",a:"小计",t:"合计",sheet:"订货单",img:"图片"}};
+function buildXlsx(o,IMG){IMG=IMG||new Map();
+ const X=XL[o.lang||"es"],price=!!o.price,ncol=price?5:3,col="ABCDEF",DKM=!!o.dk,rowC=c=>DKM?shd(c,.3):tint(c,.86);
  const cats=o.cats.map(c=>({c,items:sorted(o,c).map(i=>c.items[i]).filter(i=>i.q>0)})).filter(x=>x.items.length);
  // 样式表：每个种类一个浅色底
  const fills=['<fill><patternFill patternType="none"/></fill>','<fill><patternFill patternType="gray125"/></fill>','<fill><patternFill patternType="solid"><fgColor rgb="FF3A2E2A"/><bgColor indexed="64"/></patternFill></fill>','<fill><patternFill patternType="solid"><fgColor rgb="FFF0C987"/><bgColor indexed="64"/></patternFill></fill>'];
@@ -865,28 +869,39 @@ function buildXlsx(o){
  const N=(r,c,v,st)=>`<c r="${col[c]}${r}" s="${st}"><v>${v}</v></c>`;
  const F=(r,c,f,v,st)=>`<c r="${col[c]}${r}" s="${st}"><f>${f}</f><v>${v}</v></c>`;
  const E=(r,c,st)=>`<c r="${col[c]}${r}" s="${st}"/>`;
- const hdr=[X.cat,X.it,X.q].concat(price?[X.p,X.a]:[]);
+ const hasImg=IMG.size>0,hdr=[X.cat,X.it,X.q].concat(price?[X.p,X.a]:[]).concat(hasImg?[X.img]:[]);
  const rows=[`<row r="1" ht="24" customHeight="1">${hdr.map((h,i)=>T(1,i,h,1)).join("")}</row>`];
- let r=1,totQ=0,totA=0;const merges=[];
+ let r=1,totQ=0,totA=0;const merges=[],pics=[];
  cats.forEach(({c,items},ci)=>{const start=r+1;items.forEach((it,ii)=>{
   r++;totQ+=it.q;let cells=(ii==0?T(r,0,c.name,catStyle[ci]):E(r,0,catStyle[ci]))+T(r,1,it.n,itStyle[ci])+N(r,2,it.q,qtStyle[ci]);
   if(price){if(it.p){cells+=N(r,3,it.p,amStyle[ci])+F(r,4,`C${r}*D${r}`,Math.round(it.q*it.p*100)/100,amStyle[ci]);totA+=it.q*it.p}else cells+=E(r,3,amStyle[ci])+E(r,4,amStyle[ci])}
-  rows.push(`<row r="${r}">${cells}</row>`)});if(r>start)merges.push(`A${start}:A${r}`)});
+  const im=IMG.get(it);if(hasImg)cells+=E(r,ncol,itStyle[ci]);if(im)pics.push({r,im});
+  rows.push(`<row r="${r}"${im?' ht="52" customHeight="1"':''}>${cells}</row>`)});if(r>start)merges.push(`A${start}:A${r}`)});
  const last=r,tr=r+1;
  let tc=T(tr,0,X.t,5)+E(tr,1,5)+F(tr,2,`SUM(C2:C${last})`,totQ,6);
  if(price)tc+=E(tr,3,5)+F(tr,4,`SUM(E2:E${last})`,Math.round(totA*100)/100,7);
+ if(hasImg)tc+=E(tr,ncol,5);
  rows.push(`<row r="${tr}" ht="22" customHeight="1">${tc}</row>`);
- const widths=[Math.min(28,Math.max(12,...cats.map(x=>x.c.name.length*1.3+4))),Math.min(48,Math.max(16,...cats.flatMap(x=>x.items.map(i=>i.n.length*1.25+4)))),12].concat(price?[12,14]:[]);
- const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0" tabSelected="1"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="16"/><cols>${widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${Math.round(w*10)/10}" customWidth="1"/>`).join("")}</cols><sheetData>${rows.join("")}</sheetData>${merges.length?`<mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${m}"/>`).join("")}</mergeCells>`:""}<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/></worksheet>`;
+ const widths=[Math.min(28,Math.max(12,...cats.map(x=>x.c.name.length*1.3+4))),Math.min(48,Math.max(16,...cats.flatMap(x=>x.items.map(i=>i.n.length*1.25+4)))),12].concat(price?[12,14]:[]).concat(hasImg?[11]:[]);
+ const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetViews><sheetView workbookViewId="0" tabSelected="1"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="16"/><cols>${widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${Math.round(w*10)/10}" customWidth="1"/>`).join("")}</cols><sheetData>${rows.join("")}</sheetData>${merges.length?`<mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${m}"/>`).join("")}</mergeCells>`:""}<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/>${hasImg?'<drawing r:id="rId1"/>':""}</worksheet>`;
  const sn=(((o.sup||"").trim()||X.sheet).replace(/[\[\]:*?\/\\]/g," ").trim()||X.sheet).slice(0,31);
  const head='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
  return zipStore([
-  {name:"[Content_Types].xml",data:head+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'},
+  {name:"[Content_Types].xml",data:head+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpeg" ContentType="image/jpeg"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/></Types>'},
   {name:"_rels/.rels",data:head+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
   {name:"xl/workbook.xml",data:head+`<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets><sheet name="${xe(sn)}" sheetId="1" r:id="rId1"/></sheets></workbook>`},
   {name:"xl/_rels/workbook.xml.rels",data:head+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
   {name:"xl/styles.xml",data:styles},
-  {name:"xl/worksheets/sheet1.xml",data:sheet}])}
+  {name:"xl/worksheets/sheet1.xml",data:sheet}].concat(hasImg?xlImgParts(pics,ncol):[]).map(f=>f))}
+function xlImgParts(pics,ncol){const E=9525,fs=[],hd='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';let anc="",rel="";
+ pics.forEach((p,i)=>{const n=i+1,hh=44,sc=Math.min(hh/p.im.h,60/p.im.w),cx=Math.round(p.im.w*sc*E),cy=Math.round(p.im.h*sc*E);
+  fs.push({name:"xl/media/image"+n+".jpeg",data:p.im.u});
+  rel+=`<Relationship Id="rId${n}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image${n}.jpeg"/>`;
+  anc+=`<xdr:oneCellAnchor><xdr:from><xdr:col>${ncol}</xdr:col><xdr:colOff>${3*E}</xdr:colOff><xdr:row>${p.r-1}</xdr:row><xdr:rowOff>${3*E}</xdr:rowOff></xdr:from><xdr:ext cx="${cx}" cy="${cy}"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${n+1}" name="img${n}"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="rId${n}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>`});
+ fs.push({name:"xl/drawings/drawing1.xml",data:hd+'<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'+anc+'</xdr:wsDr>'});
+ fs.push({name:"xl/drawings/_rels/drawing1.xml.rels",data:hd+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+rel+'</Relationships>'});
+ fs.push({name:"xl/worksheets/_rels/sheet1.xml.rels",data:hd+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/></Relationships>'});
+ return fs}
 function sheetName(o){return "pedido_"+((o.sup||"orden").replace(/[^\w\u4e00-\u9fa5-]+/g,"_"))+"_"+(o.dt||"").replace(/\//g,"-")+".xlsx"}
 const isMobile=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Mac/.test(navigator.platform));
 function sheetData(o){
@@ -904,7 +919,7 @@ function sheetPreview(){
  const bgs=cl=>o.dk?"background:#"+shd(cl,.3)+";color:#f1e8de":"background:#"+tint(cl,.86)+";color:#3a2e2a";
  let body="";
  d.cats.forEach(({c,items})=>items.forEach((it,ii)=>{
-  body+=`<tr>${ii==0?`<td class="c" rowspan="${items.length}" style="${bgs(c.color)}">${esc(c.name)}</td>`:""}<td class="n" style="${bgs(c.color)}">${esc(it.n)}</td><td class="q" style="${bgs(c.color)}">${it.q}</td>`+(price?`<td class="r" style="${bgs(c.color)}">${it.p?fmt(it.p):""}</td><td class="r" style="${bgs(c.color)}">${it.p?fmt(it.q*it.p):""}</td>`:"")+`</tr>`}));
+  body+=`<tr>${ii==0?`<td class="c" rowspan="${items.length}" style="${bgs(c.color)}">${esc(c.name)}</td>`:""}<td class="n" style="${bgs(c.color)}">${picUrl(picOf(it.n,c))?`<img src="${esc(picUrl(picOf(it.n,c)))}" style="width:26px;height:26px;object-fit:cover;border-radius:5px;vertical-align:middle;margin-right:6px;background:#fff">`:""}${esc(it.n)}</td><td class="q" style="${bgs(c.color)}">${it.q}</td>`+(price?`<td class="r" style="${bgs(c.color)}">${it.p?fmt(it.p):""}</td><td class="r" style="${bgs(c.color)}">${it.p?fmt(it.q*it.p):""}</td>`:"")+`</tr>`}));
  body+=`<tr class="tot"><td>${X.t}</td><td></td><td class="q">${d.q}</td>`+(price?`<td></td><td class="r">${d.a?fmt(d.a):""}</td>`:"")+`</tr>`;
  modal(`<div class="mh">表格预览</div>
  <div class="mt">共 ${d.n} 行 · 合计 ${d.q} 件${price&&d.a?" · "+esc(o.cur)+fmt(d.a):""}。数量为 0 的品项已隐藏；下面就是 Excel 里的内容。</div>
@@ -913,9 +928,9 @@ function sheetPreview(){
  <div class="xp"><table><thead><tr>${head.map((h,i)=>`<th class="${i==1||i==2?'q':''}">${esc(h)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>
  <div class="xm">文件名：${esc(sheetName(o))}</div>
  <div class="mb2" style="flex-wrap:wrap"><button class="g" onclick="copyOrderText()">复制文字</button><button class="g" onclick="shareText()">发送文字</button><button class="g" onclick="closeModal()">取消</button><button onclick="confirmSheet()">${isMobile()?"发送 Excel":"下载 Excel"}</button></div>`)}
-function confirmSheet(){
+async function confirmSheet(){
  const o=cur();let blob,name=sheetName(o);
- try{blob=buildXlsx(o)}catch(e){console.error(e);toast("⚠ 生成表格失败");return}
+ try{const cs=sheetData(o).cats,im=await picXl(cs);blob=buildXlsx(o,im)}catch(e){console.error(e);toast("⚠ 生成表格失败");return}
  if(NATIVE){closeModal();dlBlob(blob,name);toast("请在弹出的面板里选择发送方式");return}
  const f=new File([blob],name,{type:blob.type});
  if(isMobile()&&navigator.canShare&&navigator.canShare({files:[f]})){
@@ -995,7 +1010,8 @@ function catApply(){
 function moreMenu(){
  modal(`<div class="mh">更多</div><div class="ab" style="margin-top:6px">
   <button onclick="closeModal();importModal()">📋 批量导入（粘贴文字清单）</button>
-  <button onclick="closeModal();picAuto()">🖼 自动匹配官方图片（所有品项）</button>
+  <button onclick="closeModal();picAuto()">🖼 一键匹配全部图片（只补没有图的）</button>
+  <button class="g" onclick="closeModal();picAuto(true)">🔄 重新匹配官方图（保留我的图片）</button>
   <button class="g" onclick="closeModal()">关闭</button></div>`)}
 
 function openNC(){$("ncb").hidden=true;$("ncw").hidden=false;$("ncn").focus()}
@@ -1016,45 +1032,64 @@ function segPlace(seg,ln,key,tries){const act=seg.querySelector("button.on");if(
  else{ln.style.transition="none";ln.style.left=x+"px";ln.style.width=w+"px";void ln.offsetWidth;ln.style.transition=""}
  ln.style.opacity=1;seg.dataset.key=key;seg.dataset.lx=x;seg.dataset.lw=w}
 
-/* ================= 商品图片：官方匹配 / 自己的图片 ================= */
-const PIC_KEY="pedidos_pics_v1",IDX_KEY="pedidos_imgidx_v1",IDX_URL="https://raw.githubusercontent.com/leohenshuai/pedidos-ios/main/sources/saphirus_img.json";
-const PIC_PFX={AROMA:["aerosol"],TEXTIL:["textil"],DIFUSORES:["difusor"]};
+/* ================= 商品图片：官方匹配 / 自己的图片（按类别匹配） ================= */
+const PIC_KEY="pedidos_pics_v2",IDX_KEY="pedidos_imgidx_v2",IDX_URL="https://raw.githubusercontent.com/leohenshuai/pedidos-ios/main/sources/saphirus_img.json",PIC_BASE="https://saphirus.com.ar/wp-content/uploads/";
+const PIC_ALIAS={aroma:"aerosol",aromas:"aerosol",aromatizante:"aerosol",aromatizantes:"aerosol",perfume:"parfum",perfumes:"parfum"};
+const PIC_STOP=new Set(["de","del","la","el","los","las","para","con","y","e","en","general"]);
 let PICS=(()=>{try{return JSON.parse(localStorage.getItem(PIC_KEY))||{}}catch(e){return{}}})(),PIDX=null,PM=null;
 function picSave(){try{localStorage.setItem(PIC_KEY,JSON.stringify(PICS));return true}catch(e){toast("⚠ 图片存储空间不足，请移除一些图片");return false}}
+function picKey(n,c){return catKeyFor(c)+"|"+skey(n)}
+function picOf(n,c){return PICS[picKey(n,c)]}
+function picPrep(x){x.list=x.items.map(r=>{const k=skey(r[0]),w=k.split(" "),cl=String(r[3]||"").split("|").filter(Boolean);return{n:r[0],k,core:w.slice(1).join(" "),t:r[1],s:r[2],cl,cs:cl.map(norm)}});x.cats=new Set(x.list.flatMap(o=>o.cs));return x}
 function picIdx(){if(PIDX)return PIDX;try{const x=JSON.parse(localStorage.getItem(IDX_KEY));if(x&&x.items)PIDX=picPrep(x)}catch(e){}return PIDX}
-function picPrep(x){x.list=x.items.map(r=>{const k=skey(r[0]),w=k.split(" ");return{n:r[0],k,core:w.slice(1).join(" "),w0:w[0],t:r[1],s:r[2]}});return x}
-async function picFetchIdx(force){if(PIDX&&!force)return PIDX;try{const r=await fetch(IDX_URL+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw 0;const x=await r.json();if(!x.items)throw 0;localStorage.setItem(IDX_KEY,JSON.stringify(x));PIDX=picPrep(x)}catch(e){}return picIdx()}
-function picUrl(p){if(!p)return"";if(p.d)return p.d;const x=picIdx();return x&&p.u?x.base+p.u:""}
-function picOf(n){return PICS[skey(n)]}
-function picScore(o,q,pf){let s=Math.max(matchScore(o.k,q),o.core?matchScore(o.core,q):0);if(!s)return 0;
- if(pf.length)s+=pf.includes(o.w0)?25:-30;if(o.s)s+=3;return s}
-function picCands(name,c,lim){const x=picIdx();if(!x)return[];const q=skey(name),pf=PIC_PFX[catKeyFor(c)]||[];if(!q)return[];
- return x.list.map(o=>({o,s:picScore(o,q,pf)})).filter(r=>r.s>=55).sort((a,b)=>b.s-a.s).slice(0,lim||6)}
-function picBtn(ci,i,n){const p=picOf(n),u=picUrl(p);
+async function picFetchIdx(force){if(PIDX&&PIDX.v>=2&&!force)return PIDX;try{const r=await fetch(IDX_URL+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw 0;const x=await r.json();if(!x.items)throw 0;try{localStorage.setItem(IDX_KEY,JSON.stringify(x))}catch(e){}PIDX=picPrep(x)}catch(e){}return picIdx()}
+let PIC_HOOK=null;const picSrc=u=>PIC_HOOK?PIC_HOOK(u):NATIVE?"api/img?p="+encodeURIComponent(u):PIC_BASE+u;
+function picUrl(p){if(!p)return"";if(p.d)return p.d;return p.u?picSrc(p.u):""}
+/* 该商品所在种类 → 官方分类过滤器（认不出种类时返回 null = 不限制） */
+function picCatFilter(c){const x=picIdx();if(!x)return null;
+ const tk=s=>norm(s||"").split(/[^a-z0-9]+/).filter(w=>w.length>=3&&!PIC_STOP.has(w)).map(w=>PIC_ALIAS[w]||w.replace(/(es|s)$/,"")).filter(w=>w.length>=3),all=[...x.cats];
+ for(const s of [c.name,c.sub]){const hit=tk(s).filter(w=>all.some(cn=>cn.includes(w)));if(hit.length)return o=>o.cs.some(cn=>hit.some(w=>cn.includes(w)))}
+ return null}
+function picScore(o,q){const s=Math.max(matchScore(o.k,q),o.core?matchScore(o.core,q):0);return s?s+(o.s?3:0):0}
+function picCands(name,c,lim,all){const x=picIdx();if(!x)return[];const q=skey(name);if(!q)return[];const f=all?null:picCatFilter(c);
+ return x.list.filter(o=>!f||f(o)).map(o=>({o,s:picScore(o,q)})).filter(r=>r.s>=55).sort((a,b)=>b.s-a.s).slice(0,lim||6)}
+function picBtn(ci,i,n){const c=cur().cats[ci],u=picUrl(picOf(n,c));
  return `<button class="pxb ${u?"has":""}" onclick="picModal(${ci},${i})" title="商品图片">${u?`<img src="${esc(u)}" loading="lazy" onerror="this.parentNode.classList.remove('has');this.remove()">`:"🖼"}</button>`}
-function picModal(ci,i){const o=cur(),c=o&&o.cats[ci],it=c&&c.items[i];if(!it)return;PM={ci,i,n:it.n};const p=picOf(it.n),u=picUrl(p);
- modal(`<div class="mh">商品图片 · ${esc(it.n)}</div>${u?`<div style="text-align:center;margin:6px 0"><img src="${esc(u)}" style="max-width:60%;border-radius:12px"></div>`:""}
+function picModal(ci,i){const o=cur(),c=o&&o.cats[ci],it=c&&c.items[i];if(!it)return;PM={ci,i,n:it.n,k:picKey(it.n,c),all:false};const p=PICS[PM.k],u=picUrl(p);
+ modal(`<div class="mh">商品图片 · ${esc(it.n)}</div><div class="mt">类别：${esc(c.name||"未命名")}（图片按类别记录，不会和别的类别同名商品混用）</div>${u?`<div style="text-align:center;margin:6px 0"><img src="${esc(u)}" style="max-width:60%;border-radius:12px"></div>`:""}
  <div class="ab" style="margin-top:6px"><button onclick="picMatchUI()">🔎 从官方匹配图片</button>
  <label class="ab-l"><span>📷 使用我的图片（相册/文件）</span><input type="file" accept="image/*" style="display:none" onchange="picOwn(this)"></label>
  ${p?`<button class="g" onclick="picDel()">移除图片</button>`:""}<button class="g" onclick="closeModal()">关闭</button></div>`)}
-async function picMatchUI(){const n=PM.n,c=cur().cats[PM.ci];
- modal(`<div class="mh">官方图片 · ${esc(n)}</div><input class="sq" id="pq" style="border:1px solid #e3d8c8;margin:0 0 6px" placeholder="换个关键词搜索官方商品" value="" oninput="picSearch(this.value)"><div class="mt" id="pinfo">加载官方目录…</div><div id="pl" class="pgrid"></div><div class="mb2"><button class="g" onclick="picModal(PM.ci,PM.i)">返回</button></div>`);
+async function picMatchUI(){const c=cur().cats[PM.ci];
+ modal(`<div class="mh">官方图片 · ${esc(PM.n)}</div><input class="sq" id="pq" style="border:1px solid #e3d8c8;margin:0 0 6px" placeholder="换个关键词搜索官方商品" oninput="picSearch(this.value)"><div class="mt" id="pinfo">加载官方目录…</div><div id="pl" class="pgrid"></div><div class="mb2"><button class="g" onclick="picModal(PM.ci,PM.i)">返回</button><button class="g" id="pall" onclick="PM.all=!PM.all;picSearch($('pq').value)">搜全部类别</button></div>`);
  await picFetchIdx();if(!picIdx()){$("pinfo").innerHTML='<span style="color:#c0392b">无法获取官方图片目录，请检查网络后重试</span>';return}
- $("pinfo").textContent="官方目录 "+PIDX.list.length+" 件 · "+(PIDX.date||"");picSearch("")}
-function picSearch(q){const c=cur().cats[PM.ci];let r;
- if(q.trim()){const k=skey(q);r=PIDX.list.map(o=>({o,s:Math.max(matchScore(o.k,k),o.core?matchScore(o.core,k):0)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,18)}else r=picCands(PM.n,c,12);
- $("pl").innerHTML=r.map((x,j)=>`<button class="pxc" onclick="picPick(${PIDX.list.indexOf(x.o)})"><img src="${esc(PIDX.base+x.o.t)}" loading="lazy"><span>${esc(x.o.n)}</span></button>`).join("")||'<div class="hint">没有匹配，换个关键词试试</div>'}
-function picPick(ix){const o=PIDX.list[ix];PICS[skey(PM.n)]={u:o.t};if(picSave()){closeModal();renderEdit();toast("已设置图片")}}
-function picDel(){delete PICS[skey(PM.n)];picSave();closeModal();renderEdit()}
+ picSearch("")}
+function picSearch(q){const c=cur().cats[PM.ci],f=PM.all?null:picCatFilter(c);let r;
+ if(q.trim()){const k=skey(q);r=PIDX.list.filter(o=>!f||f(o)).map(o=>({o,s:picScore(o,k)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,18)}else r=picCands(PM.n,c,12,PM.all);
+ $("pinfo").textContent=PM.all?"范围：全部类别 · "+PIDX.list.length+" 件":(f?"范围：只显示和「"+(c.name||"")+"」同类的官方商品":"这个种类认不出对应的官方类别，显示全部");
+ $("pall").textContent=PM.all?"只搜本类别":"搜全部类别";
+ $("pl").innerHTML=r.map(x=>`<button class="pxc" onclick="picPick(${PIDX.list.indexOf(x.o)})"><img src="${esc(picSrc(x.o.t))}" loading="lazy"><span>${esc(x.o.n)}</span><small>${esc(x.o.cl[0]||"")}</small></button>`).join("")||'<div class="hint">没有匹配，换个关键词试试</div>'}
+function picPick(ix){const o=PIDX.list[ix];PICS[PM.k]={u:o.t};if(picSave()){closeModal();renderEdit();toast("已设置图片")}}
+function picDel(){delete PICS[PM.k];picSave();closeModal();renderEdit()}
 function picOwn(inp){const f=inp.files&&inp.files[0];inp.value="";if(!f)return;const im=new Image(),u=URL.createObjectURL(f);
  im.onload=()=>{const m=260,s=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*s);cv.height=Math.round(im.height*s);
   const g=cv.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,cv.width,cv.height);g.drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);
-  PICS[skey(PM.n)]={d:cv.toDataURL("image/jpeg",.78)};if(picSave()){closeModal();renderEdit();toast("已设置我的图片")}};
+  PICS[PM.k]={d:cv.toDataURL("image/jpeg",.78)};if(picSave()){closeModal();renderEdit();toast("已设置我的图片")}};
  im.onerror=()=>toast("⚠ 无法读取这张图片");im.src=u}
-async function picAuto(){toast("匹配中…");await picFetchIdx();if(!picIdx()){toast("⚠ 无法获取官方图片目录，请检查网络");return}
- let ok=0,no=0,seen=new Set();S.orders.filter(o=>!o.del).forEach(o=>o.cats.forEach(c=>c.items.forEach(it=>{const k=skey(it.n);if(!k||seen.has(k))return;seen.add(k);if(PICS[k])return;
-  const r=picCands(it.n,c,1)[0];if(r&&r.s>=85){PICS[k]={u:r.o.t};ok++}else no++})));
- picSave();if(CATO)renderEdit();toast("已匹配 "+ok+" 个"+(no?"，"+no+" 个未匹配（点缩略图可手动选）":""))}
+/* 一键匹配：当前订单所有品项，只在各自类别里找；自己的图片永远不覆盖 */
+async function picAuto(force){const o=cur();if(!o)return;toast("匹配中…");await picFetchIdx();if(!picIdx()){toast("⚠ 无法获取官方图片目录，请检查网络");return}
+ let ok=0,skip=0;const miss=[];
+ o.cats.forEach((c,ci)=>c.items.forEach((it,i)=>{const k=picKey(it.n,c),p=PICS[k];if(p&&(!force||p.d)){skip++;return}
+  const r=picCands(it.n,c,1)[0];if(r&&r.s>=85){PICS[k]={u:r.o.t};ok++}else if(!p)miss.push([ci,i,it.n])}));
+ picSave();renderEdit();
+ modal(`<div class="mh">图片匹配完成</div><div class="mt">新匹配 ${ok} 个${skip?"，已有图片跳过 "+skip+" 个":""}${miss.length?"，未匹配 "+miss.length+" 个（只在本类别里找）。点名字可手动选图：":"。"}</div>${miss.length?`<div class="ab" style="max-height:40vh;overflow:auto">${miss.map(m=>`<button class="g" onclick="picModal(${m[0]},${m[1]})">${esc(m[2])}</button>`).join("")}</div>`:""}<div class="mb2"><button onclick="closeModal()">好</button></div>`)}
+/* 海报/表格用：预载图片 */
+const IMGC={};
+function picLoad(u){if(!u)return Promise.resolve(null);if(IMGC[u])return IMGC[u];return IMGC[u]=new Promise(r=>{const im=new Image();if(!/^(data:|api\/)/.test(u))im.crossOrigin="anonymous";im.onload=()=>r(im);im.onerror=()=>{delete IMGC[u];r(null)};im.src=u})}
+async function picPre(cats){const m=new Map();await Promise.all(cats.flatMap(c=>c.items.map(async it=>{const u=picUrl(picOf(it.n,c));if(!u)return;const im=await picLoad(u);if(im)m.set(it,im)})));return m}
+async function picXl(cats){const m=new Map(),im=await picPre(cats.map(x=>({...x.c,items:x.items})));
+ im.forEach((img,it)=>{const cv=document.createElement("canvas"),s=Math.min(1,160/Math.max(img.width,img.height));cv.width=Math.round(img.width*s);cv.height=Math.round(img.height*s);const g=cv.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,cv.width,cv.height);g.drawImage(img,0,0,cv.width,cv.height);
+  const b=atob(cv.toDataURL("image/jpeg",.85).split(",")[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);m.set(it,{u,w:cv.width,h:cv.height})});return m}
 
 /* ================= 海报 ================= */
 function rr(x,c,X,y,w,h,r){x.beginPath();x.roundRect(X,y,w,h,r);x.fillStyle=c;x.fill()}
@@ -1069,13 +1104,15 @@ function poster(){
 function setTheme(i){mut(o=>{o.theme=i},"",true);$("thm").querySelectorAll(".th").forEach((b,k)=>b.classList.toggle("on",k==i));drawPoster()}
 function setLang(l){mut(o=>{o.lang=l},"",true);drawPoster()}
 function setDk(v){mut(o=>{o.dk=v},"",true);drawPoster()}
-function drawPoster(){
- const o=cur(),L=LANG[o.lang||"es"],T=THEMES[o.theme||0],dk=!!o.dk;let [ ,BG,DK,GD]=T;
+let DPT=0;
+async function drawPoster(){
+ const tk=++DPT,o=cur(),L=LANG[o.lang||"es"],T=THEMES[o.theme||0],dk=!!o.dk;let [ ,BG,DK,GD]=T;
  const HD=dk?"#"+tint(DK,.16).toLowerCase():DK,CARD=dk?"#241f1b":"#fff",TX=dk?"#f1e8de":DK,LINE=dk?"#4a423b":"#ddd",DATE=dk?"#a89a8e":"#7a6a60",SUBC=dk?"#9a8d82":"#888",HT=dk?"#f5efe6":BG,TOTT=dk?"#2a2018":DK;
  if(dk)BG="#14110f";
  $("dkL").classList.toggle("on",!o.dk);$("dkD").classList.toggle("on",!!o.dk);$("lgEs").classList.toggle("on",(o.lang||"es")=="es");$("lgZh").classList.toggle("on",o.lang=="zh");
  const cats=o.cats.map(c=>({...c,items:sorted(o,c).map(i=>c.items[i]).filter(i=>i.q>0)})).filter(c=>c.items.length);
- const W=1080,P=50,IW=W-2*P,CP=32,COLW=(IW-2*CP-44)/2,RH=58,SF='-apple-system,"PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif';
+ const IM=await picPre(cats);if(tk!==DPT)return;
+ const W=1080,P=50,IW=W-2*P,CP=32,COLW=(IW-2*CP-44)/2,RH=IM.size?92:58,TH=RH-12,SF='-apple-system,"PingFang SC","Microsoft YaHei",Helvetica,Arial,sans-serif';
  const showAmt=o.price&&amtO(o)>0,sup=(o.sup||"").trim().toUpperCase();
  let H=P+270+44+30+90+(showAmt?20+70:0)+P;cats.forEach(c=>H+=12+86+Math.ceil(c.items.length/2)*RH+24+28);
  const cv=document.createElement("canvas");cv.width=W;cv.height=H;const x=cv.getContext("2d");
@@ -1096,7 +1133,9 @@ function drawPoster(){
    const col=i%2,r=Math.floor(i/2),cx=P+CP+col*(COLW+44),cy=y+12+86+r*RH;
    x.strokeStyle=LINE;x.setLineDash([2,6]);x.lineWidth=2;x.lineCap="round";x.beginPath();x.moveTo(cx,cy+RH-4);x.lineTo(cx+COLW,cy+RH-4);x.stroke();x.setLineDash([]);
    x.font="bold 26px "+SF;const q=String(it.q),pw=Math.max(54,x.measureText(q).width+30);
-   x.fillStyle=TX;x.textAlign="left";const t=fit(x,it.n,"28px "+SF,COLW-pw-16,18);x.fillText(t,cx,cy+RH/2+6);
+   const im=IM.get(it),tw=im?TH+12:0;
+   if(im){const ty=cy+(RH-4-TH)/2,sc=Math.min(TH/im.width,TH/im.height);x.save();x.beginPath();x.roundRect(cx,ty,TH,TH,10);x.clip();x.fillStyle="#fff";x.fillRect(cx,ty,TH,TH);x.drawImage(im,cx+(TH-im.width*sc)/2,ty+(TH-im.height*sc)/2,im.width*sc,im.height*sc);x.restore();x.strokeStyle=LINE;x.lineWidth=1;x.setLineDash([]);x.beginPath();x.roundRect(cx,ty,TH,TH,10);x.stroke()}
+   x.fillStyle=TX;x.textAlign="left";const t=fit(x,it.n,"28px "+SF,COLW-pw-16-tw,18);x.fillText(t,cx+tw,cy+RH/2+6);
    rr(x,c.color,cx+COLW-pw,cy+(RH-4)/2-20,pw,40,20);x.fillStyle="#fff";x.font="bold 26px "+SF;x.textAlign="center";x.fillText(q,cx+COLW-pw/2,cy+(RH-4)/2+9);
   });
   x.textAlign="left";y+=h+28;
