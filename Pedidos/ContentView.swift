@@ -203,6 +203,58 @@ final class SchemeHandler: NSObject, WKURLSchemeHandler {
             }.resume()
             return
         }
+        if path == "/api/webimg" {
+            // 网络商品图搜索：/api/webimg?q=关键词 → [{u:原图,t:缩略图,w,h,s:来源,n:标题}]
+            let q = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "q" }?.value ?? ""
+            guard !q.isEmpty else { send(400, Data("[]".utf8), json); return }
+            let ua = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1"
+            func get(_ u: URL, _ headers: [String: String] = [:], _ cb: @escaping (Data?) -> Void) {
+                var rq = URLRequest(url: u, timeoutInterval: 20)
+                rq.setValue(ua, forHTTPHeaderField: "User-Agent")
+                headers.forEach { rq.setValue($1, forHTTPHeaderField: $0) }
+                URLSession.shared.dataTask(with: rq) { d, r, _ in cb((r as? HTTPURLResponse)?.statusCode == 200 ? d : nil) }.resume()
+            }
+            var c1 = URLComponents(string: "https://duckduckgo.com/")!
+            c1.queryItems = [URLQueryItem(name: "q", value: String(q.prefix(100)))]
+            get(c1.url!) { d in
+                guard let d = d, let html = String(data: d, encoding: .utf8),
+                      let r = html.range(of: "vqd=\"[0-9-]+\"", options: .regularExpression) else { send(502, Data("[]".utf8), json); return }
+                let vqd = html[r].replacingOccurrences(of: "vqd=\"", with: "").replacingOccurrences(of: "\"", with: "")
+                var c2 = URLComponents(string: "https://duckduckgo.com/i.js")!
+                c2.queryItems = [URLQueryItem(name: "q", value: String(q.prefix(100))), URLQueryItem(name: "o", value: "json"),
+                                 URLQueryItem(name: "l", value: "ar-es"), URLQueryItem(name: "vqd", value: vqd),
+                                 URLQueryItem(name: "f", value: ",,,,,"), URLQueryItem(name: "p", value: "1")]
+                get(c2.url!, ["Referer": "https://duckduckgo.com/"]) { d2 in
+                    guard let d2 = d2, let o = (try? JSONSerialization.jsonObject(with: d2)) as? [String: Any],
+                          let res = o["results"] as? [[String: Any]] else { send(502, Data("[]".utf8), json); return }
+                    let out: [[String: Any]] = res.prefix(16).compactMap { x in
+                        guard let u = x["image"] as? String, u.hasPrefix("http") else { return nil }
+                        return ["u": u, "t": (x["thumbnail"] as? String) ?? u, "w": (x["width"] as? Int) ?? 0, "h": (x["height"] as? Int) ?? 0,
+                                "s": (x["source"] as? String) ?? "", "n": (x["title"] as? String) ?? ""]
+                    }
+                    send(200, (try? JSONSerialization.data(withJSONObject: out)) ?? Data("[]".utf8), json)
+                }
+            }
+            return
+        }
+        if path == "/api/fetchimg" {
+            // 把网络图下载并缩放后转成 JPEG(base64),避免页面跨域/超大图。/api/fetchimg?u=图片地址
+            let u = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "u" }?.value ?? ""
+            guard let remote = URL(string: u), remote.scheme == "https" || remote.scheme == "http" else { send(400, Data(), "text/plain"); return }
+            var rq = URLRequest(url: remote, timeoutInterval: 25)
+            rq.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
+            URLSession.shared.dataTask(with: rq) { d, r, _ in
+                guard let d = d, (r as? HTTPURLResponse)?.statusCode == 200, d.count < 15_000_000, let img = UIImage(data: d) else { send(502, Data(), "text/plain"); return }
+                let m: CGFloat = 800, sc = min(1, m / max(img.size.width, img.size.height))
+                let sz = CGSize(width: img.size.width * sc, height: img.size.height * sc)
+                let fmt = UIGraphicsImageRendererFormat(); fmt.scale = 1; fmt.opaque = true
+                let out = UIGraphicsImageRenderer(size: sz, format: fmt).jpegData(withCompressionQuality: 0.88) { ctx in
+                    UIColor.white.setFill(); ctx.fill(CGRect(origin: .zero, size: sz)); img.draw(in: CGRect(origin: .zero, size: sz))
+                }
+                send(200, out, "image/jpeg")
+            }.resume()
+            return
+        }
         if path == "/api/ai" {
             // 转发到用户配置的 OpenAI 兼容接口（绕开页面跨域限制）。请求体 JSON：{url,key,body}
             guard let o = (try? JSONSerialization.jsonObject(with: readBody() ?? Data())) as? [String: Any],
