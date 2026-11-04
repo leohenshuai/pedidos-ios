@@ -179,6 +179,30 @@ final class SchemeHandler: NSObject, WKURLSchemeHandler {
             }
             return
         }
+        if path == "/api/shop" {
+            // 官网商品搜索代理：/api/shop?q=名称 → [{n,t,c}]（名称、缩略图相对路径、分类）
+            let q = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "q" }?.value ?? ""
+            guard !q.isEmpty, var comps = URLComponents(string: "https://saphirus.com.ar/wp-json/wc/store/v1/products") else { send(400, Data("[]".utf8), json); return }
+            comps.queryItems = [URLQueryItem(name: "search", value: String(q.prefix(80))), URLQueryItem(name: "per_page", value: "12")]
+            guard let remote = comps.url else { send(400, Data("[]".utf8), json); return }
+            var rq = URLRequest(url: remote, timeoutInterval: 20)
+            rq.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
+            URLSession.shared.dataTask(with: rq) { d, r, _ in
+                guard let d = d, (r as? HTTPURLResponse)?.statusCode == 200,
+                      let arr = (try? JSONSerialization.jsonObject(with: d)) as? [[String: Any]] else { send(502, Data("[]".utf8), json); return }
+                let base = "https://saphirus.com.ar/wp-content/uploads/"
+                let out: [[String: Any]] = arr.compactMap { x in
+                    guard let n = x["name"] as? String else { return nil }
+                    let im = (x["images"] as? [[String: Any]])?.first
+                    var t = (im?["thumbnail"] as? String) ?? (im?["src"] as? String) ?? ""
+                    if t.hasPrefix(base) { t = String(t.dropFirst(base.count)) }
+                    let cats = ((x["categories"] as? [[String: Any]]) ?? []).compactMap { $0["name"] as? String }
+                    return ["n": n, "t": t, "c": cats.joined(separator: "|")]
+                }
+                send(200, (try? JSONSerialization.data(withJSONObject: out)) ?? Data("[]".utf8), json)
+            }.resume()
+            return
+        }
         if path == "/api/ai" {
             // 转发到用户配置的 OpenAI 兼容接口（绕开页面跨域限制）。请求体 JSON：{url,key,body}
             guard let o = (try? JSONSerialization.jsonObject(with: readBody() ?? Data())) as? [String: Any],
