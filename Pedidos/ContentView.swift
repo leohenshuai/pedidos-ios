@@ -2,6 +2,7 @@ import SwiftUI
 import WebKit
 import UIKit
 import AudioToolbox
+import Vision
 
 struct ContentView: View {
     var body: some View {
@@ -155,6 +156,44 @@ final class SchemeHandler: NSObject, WKURLSchemeHandler {
             } else {
                 send(200, Data("{\"orders\":[],\"fresh\":true,\"rev\":0}".utf8), "application/json; charset=utf-8")
             }
+            return
+        }
+        if path == "/api/ocr" {
+            // 本地文字识别（iOS Vision，不联网）。请求体为 JPEG 原始数据，返回 {"lines":[{"t":"文字","c":0.9}]}
+            guard let body = readBody(), let img = UIImage(data: body)?.cgImage else { send(400, Data("{\"error\":\"bad image\"}".utf8), json); return }
+            DispatchQueue.global(qos: .userInitiated).async {
+                let req = VNRecognizeTextRequest()
+                req.recognitionLevel = .accurate
+                req.usesLanguageCorrection = false
+                req.recognitionLanguages = ["es-ES", "en-US"]
+                let h = VNImageRequestHandler(cgImage: img, options: [:])
+                try? h.perform([req])
+                let obs = (req.results as? [VNRecognizedTextObservation]) ?? []
+                let lines: [[String: Any]] = obs.compactMap { o in
+                    guard let c = o.topCandidates(1).first else { return nil }
+                    let b = o.boundingBox
+                    return ["t": c.string, "c": Double(c.confidence), "x": Double(b.midX), "y": Double(1 - b.midY)]
+                }
+                let d = (try? JSONSerialization.data(withJSONObject: ["lines": lines])) ?? Data("{\"lines\":[]}".utf8)
+                send(200, d, json)
+            }
+            return
+        }
+        if path == "/api/ai" {
+            // 转发到用户配置的 OpenAI 兼容接口（绕开页面跨域限制）。请求体 JSON：{url,key,body}
+            guard let o = (try? JSONSerialization.jsonObject(with: readBody() ?? Data())) as? [String: Any],
+                  let u = o["url"] as? String, let remote = URL(string: u), remote.scheme == "https" || remote.scheme == "http",
+                  let b = o["body"] else { send(400, Data("{\"error\":\"bad request\"}".utf8), json); return }
+            var rq = URLRequest(url: remote, timeoutInterval: 90)
+            rq.httpMethod = "POST"
+            rq.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            if let k = o["key"] as? String, !k.isEmpty { rq.setValue("Bearer " + k, forHTTPHeaderField: "Authorization") }
+            rq.httpBody = try? JSONSerialization.data(withJSONObject: b)
+            URLSession.shared.dataTask(with: rq) { d, r, e in
+                let code = (r as? HTTPURLResponse)?.statusCode ?? 502
+                if let d = d { send(code, d, json) }
+                else { send(502, Data("{\"error\":{\"message\":\"\(e?.localizedDescription.replacingOccurrences(of: "\"", with: "'") ?? "network")\"}}".utf8), json) }
+            }.resume()
             return
         }
         if path == "/api/img" {

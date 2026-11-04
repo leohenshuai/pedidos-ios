@@ -89,6 +89,9 @@ html[data-theme=dark] .picbar button{background:rgba(255,255,255,.08);color:var(
 .qc{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .qc button.drag{transform:scale(1.08);position:relative;z-index:3;transition:none;box-shadow:0 8px 22px rgba(0,0,0,.35)}
 .qc button.over{outline:2px dashed rgba(255,255,255,.7);outline-offset:1px}
+.addrow{display:flex;gap:8px;margin:0 10px 10px}.addrow .addimg{margin:0;flex:1;width:auto;text-align:center;display:block}
+.aiold{max-height:42vh;overflow:auto;margin:4px 0}.aiit{display:flex;align-items:center;gap:8px;padding:6px 2px;border-bottom:1px solid #f1eee9}.aiit img{width:44px;height:44px;object-fit:contain;background:#fff;border-radius:8px;flex:none}.aiit .ain{flex:1;min-width:0;display:flex;flex-direction:column}.aiit .ain small{color:#999;font-size:11px}.aiq{display:flex;align-items:center;gap:4px}.aiq button{width:28px;height:28px;border:0;border-radius:8px;background:#f1eee9;color:#3a2e2a;padding:0}.aiq i{min-width:20px;text-align:center;font-style:normal}
+html[data-theme=dark] .aiit{border-color:rgba(255,255,255,.08)}html[data-theme=dark] .aiq button{background:rgba(255,255,255,.1);color:var(--ink)}
 .addimg{margin:0 10px 10px;width:calc(100% - 20px);border:1px dashed #cdbfa9;border-radius:12px;background:none;color:#8a6a45;padding:9px;font-size:14px}
 html[data-theme=dark] .addimg{border-color:#5a4d44;color:#d9b98a}
 .xp td.im{width:60px;padding:4px;text-align:center;vertical-align:middle}.xp td.im img{width:48px;height:48px;object-fit:contain;background:#fff;border-radius:6px;display:block;margin:auto}
@@ -498,7 +501,7 @@ const LANG={
  es:{p1:s=>s?"PEDIDO A":"PEDIDO",big:"ORDEN",p2:s=>"ORDEN DE COMPRA",date:"Fecha",total:n=>"TOTAL GENERAL: "+n+" unidades",head:s=>s?"PEDIDO A "+s:"PEDIDO",amount:"Importe estimado"},
  zh:{p1:s=>s?"订货给":"",big:"订货单",p2:s=>s?"订 货 单":"",date:"日期",total:n=>"合计："+n+" 件",head:s=>s?"订货单 · "+s:"订货单",amount:"预计金额"}};
 const NATIVE=!!window.__NATIVE__;
-const APP_VERSION="2.2 · 2026-10-21";
+const APP_VERSION="2.3 · 2026-11-04";
 let S=null,Q="",QC=-1,PQ="",HQ="",HF="all",HR=[],draft={},SG={},SERVER=false,REV=0,tt=null,MI=null,MT=null,DCB=null,PCV=null,pushT=null,pending=false,pushing=false,dirty=false;
 const $=id=>document.getElementById(id);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
@@ -697,7 +700,7 @@ function renderEdit(){
   const cards=idx.map(i=>{const it=c.items[i],isDup=dm[norm(it.n)]>1;
    return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><button class="dl" title="删除" onclick="delItem(${ci},${i})">×</button><div class="nmr">${picBtn(ci,i,it.n)}<textarea class="nm" placeholder="商品名（可留空，只用图片）" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea></div>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onfocus="this.select()" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="empty2"><div class="ei">🔍</div><b>${c.items.length?"还没有订货的品项":"这个种类还没有品项"}</b><small>点上方搜索框，输入品名开始订货${hidden?"（已收录 "+hidden+" 项）":""}<br>搜不到的新品名，可直接“＋ 新增”</small></div>`);
   const d=draft[ci]||{n:"",q:3};
-  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" placeholder="种类名（可留空）" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)"><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${sum}件${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="${c.items.length?`arm(this,()=>delCat(${ci}),'删?')`:`delCat(${ci})`}">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div><button class="addimg" onclick="addBlank(${ci})">＋ 添加图片商品（不用写名字）</button>
+  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" placeholder="种类名（可留空）" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)"><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${sum}件${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="${c.items.length?`arm(this,()=>delCat(${ci}),'删?')`:`delCat(${ci})`}">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div><div class="addrow"><button class="addimg" onclick="addBlank(${ci})">＋ 图片商品（不写名字）</button><label class="addimg cam">📷 拍照识别<input type="file" accept="image/*" style="display:none" onchange="aiPickPhoto(${ci},this)"></label></div>
   </section>`;
  });
  $("cbox").innerHTML=(o.cats.length&&(nq||SF))?candPanel(o,QC,nq,exact):"";if(!o.cats.length)h=`<div class="card"><div class="hint">这个订单还没有种类，请先在下方新增一个种类。</div></div>`+h;
@@ -1029,6 +1032,7 @@ function moreMenu(){
   <button onclick="closeModal();importModal()">📋 批量导入（粘贴文字清单）</button>
   <button onclick="closeModal();picAuto()">🖼 一键匹配全部图片（只补没有图的）</button>
   <button class="g" onclick="closeModal();picAuto(true)">🔄 重新匹配官方图（保留我的图片）</button>
+  <button class="g" onclick="closeModal();aiSettings()">📷 拍照识别设置（API）</button>
   <button class="g" onclick="closeModal()">关闭</button></div>`)}
 
 function openNC(){$("ncb").hidden=true;$("ncw").hidden=false;$("ncn").focus()}
@@ -1109,6 +1113,80 @@ async function picPre(cats){const m=new Map();await Promise.all(cats.flatMap(c=>
 async function picXl(cats){const m=new Map(),im=await picPre(cats.map(x=>({...x.c,items:x.items})));
  im.forEach((img,it)=>{const cv=document.createElement("canvas"),s=Math.min(1,420/Math.max(img.width,img.height));cv.width=Math.round(img.width*s);cv.height=Math.round(img.height*s);const g=cv.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,cv.width,cv.height);g.drawImage(img,0,0,cv.width,cv.height);
   const b=atob(cv.toDataURL("image/jpeg",.92).split(",")[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);m.set(it,{u,w:cv.width,h:cv.height})});return m}
+
+/* ================= 拍照识别商品：本地文字识别 + 视觉模型(OpenAI 兼容) 兜底 ================= */
+const AI_KEY="pedidos_ai_v1";
+let AIC=(()=>{try{return Object.assign({url:"https://api.openai.com/v1",key:"",model:"gpt-4o-mini",mode:"hybrid",thr:80},JSON.parse(localStorage.getItem(AI_KEY))||{})}catch(e){return{url:"https://api.openai.com/v1",key:"",model:"gpt-4o-mini",mode:"hybrid",thr:80}}})();
+function aiSave(){try{localStorage.setItem(AI_KEY,JSON.stringify(AIC))}catch(e){}}
+const aiReady=()=>!!(AIC.url&&AIC.key&&AIC.model);
+function aiEndpoint(){let u=AIC.url.trim().replace(/\/+$/,"");return /\/chat\/completions$/.test(u)?u:u+"/chat/completions"}
+function aiSettings(){
+ modal(`<div class="mh">拍照识别设置</div><div class="mt">本地先读标签文字；读不准时才调用下面的视觉模型（需联网，按次计费）。接口须兼容 OpenAI 的 chat/completions 且支持图片输入。</div>
+ <div class="opt">模式：<select id="aim" onchange="AIC.mode=this.value;aiSave()"><option value="hybrid" ${AIC.mode=="hybrid"?"selected":""}>混合（推荐）</option><option value="local" ${AIC.mode=="local"?"selected":""}>只本地</option><option value="api" ${AIC.mode=="api"?"selected":""}>只用 API</option></select></div>
+ <input class="sq" id="aiu" style="border:1px solid #e3d8c8;margin:4px 0" placeholder="接口地址，如 https://api.openai.com/v1" value="${esc(AIC.url)}" oninput="AIC.url=this.value.trim();aiSave()">
+ <input class="sq" id="aik" type="password" autocomplete="off" style="border:1px solid #e3d8c8;margin:4px 0" placeholder="API 密钥（只保存在本机）" value="${esc(AIC.key)}" oninput="AIC.key=this.value.trim();aiSave()">
+ <input class="sq" id="aid" style="border:1px solid #e3d8c8;margin:4px 0" placeholder="模型名，如 gpt-4o-mini" value="${esc(AIC.model)}" oninput="AIC.model=this.value.trim();aiSave()">
+ <div class="mt" id="ait"></div>
+ <div class="mb2"><button class="g" onclick="aiTest()">测试连接</button><button onclick="closeModal()">完成</button></div>`)}
+async function aiTest(){const t=$("ait");t.textContent="测试中…";try{const r=await aiCall([{role:"user",content:"只回复 OK 两个字母"}],20);t.innerHTML='<span style="color:#3a8a4a">连接成功：'+esc(String(r).slice(0,40))+"</span>"}catch(e){t.innerHTML='<span style="color:#c0392b">失败：'+esc(e.message)+"</span>"}}
+async function aiCall(messages,maxTok){
+ if(!aiReady())throw new Error("还没填写接口地址 / 密钥 / 模型");
+ const body={model:AIC.model,messages,max_tokens:maxTok||800,temperature:0};
+ let r,txt;
+ if(NATIVE){r=await fetch("api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:aiEndpoint(),key:AIC.key,body})})}
+ else{r=await fetch(aiEndpoint(),{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+AIC.key},body:JSON.stringify(body)})}
+ txt=await r.text();let j;try{j=JSON.parse(txt)}catch(e){throw new Error("返回内容不是 JSON（HTTP "+r.status+"）")}
+ if(!r.ok||j.error)throw new Error((j.error&&(j.error.message||j.error))||("HTTP "+r.status));
+ const c=j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content;if(!c)throw new Error("模型没有返回内容");return c}
+/* 图片压缩到 1280 像素 JPEG */
+function aiShrink(file,max){return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{const s=Math.min(1,max/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*s);cv.height=Math.round(im.height*s);cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);cv.toBlob(b=>b?res({blob:b,url:cv.toDataURL("image/jpeg",.85),w:cv.width,h:cv.height}):rej(new Error("压缩失败")),"image/jpeg",.9)};im.onerror=()=>rej(new Error("无法读取图片"));im.src=u})}
+async function aiOcr(blob){if(!NATIVE)return null;try{const r=await fetch("api/ocr",{method:"POST",body:blob});if(!r.ok)return null;const j=await r.json();return j.lines||[]}catch(e){return null}}
+/* 候选库：官方图片索引 + 品名库 + 本单已有品项 */
+function aiPool(cat){const x=picIdx(),f=x&&cat?picCatFilter(cat):null,out=[],seen=new Set();
+ if(x)x.list.forEach(o=>{if(f&&!f(o))return;const k=skey(o.n);if(seen.has(k))return;seen.add(k);out.push({n:o.n,k,core:o.core,t:o.t,off:1})});
+ return out}
+function aiLocalMatch(lines,pool){
+ const toks=lines.map(l=>({k:skey(l.t),c:l.c==null?1:l.c})).filter(t=>t.k.length>=3);
+ const big=toks.map(t=>t.k).join(" ");const res=[];
+ pool.forEach(p=>{const nm=p.core||p.k;if(nm.length<3)return;let s=0;
+  if(toks.some(t=>t.k===nm||t.k===p.k))s=100;
+  else if(big.includes(" "+nm+" ")||(" "+big+" ").includes(" "+nm+" "))s=88;
+  else{const ws=nm.split(" ");if(ws.length>1&&ws.every(w=>big.split(" ").includes(w)))s=82;else if(nm.length>=5&&toks.some(t=>lev(t.k,nm)<=1))s=72}
+  if(s)res.push({p,s})});
+ return res.sort((a,b)=>b.s-a.s||b.p.k.length-a.p.k.length)}
+function aiParse(txt){const m=String(txt).match(/\[[\s\S]*\]/);if(!m)return[];try{const a=JSON.parse(m[0]);return Array.isArray(a)?a:[]}catch(e){return[]}}
+async function aiVision(dataUrl,pool,lines){
+ const names=pool.slice(0,400).map(p=>p.n).join("\n"),hint=lines&&lines.length?"\n照片里本地读到的文字（可能不准）："+lines.map(l=>l.t).join(" | "):"";
+ const prompt=`你是商品识别助手。照片里是 Saphirus（阿根廷香氛品牌）的商品，同款瓶身只有标签文字不同，请优先读标签上的名称。
+请只从下面的候选清单里挑选，不要编造。对照片里每个能看清的商品输出一个 JSON 数组，每项形如 {"name":"候选清单里的原样名称","qty":看得出的数量或1,"conf":0到100的把握}。看不清或不在清单里的不要输出。只输出 JSON 数组，不要其它文字。
+候选清单：
+${names}${hint}`;
+ const msg=[{role:"user",content:[{type:"text",text:prompt},{type:"image_url",image_url:{url:dataUrl}}]}];
+ const out=aiParse(await aiCall(msg,900)),by=new Map(pool.map(p=>[skey(p.n),p]));
+ return out.map(o=>{const p=by.get(skey(String(o.name||"")));return p?{p,s:Math.max(1,Math.min(100,+o.conf||70)),qty:Math.max(1,parseInt(o.qty)||1),ai:1}:null}).filter(Boolean)}
+let AIR=null;
+async function aiPickPhoto(ci,inp){const f=inp.files&&inp.files[0];inp.value="";if(!f)return;
+ const o=cur(),c=o.cats[ci];AIR={ci,items:[],busy:1,msg:"识别中…",src:""};aiPanel();
+ try{await picFetchIdx();const pool=aiPool(c);if(!pool.length&&!aiReady())throw new Error("官方图片目录还没下载，请先联网打开一次");
+  const sm=await aiShrink(f,1280);AIR.src=sm.url;aiPanel();
+  let hits=[],lines=null;
+  if(AIC.mode!="api"){AIR.msg="本地读取标签文字…";aiPanel();lines=await aiOcr(sm.blob);if(lines&&lines.length)hits=aiLocalMatch(lines,pool).filter(h=>h.s>=AIC.thr).map(h=>({...h,qty:1}))}
+  const need=AIC.mode=="api"||(AIC.mode=="hybrid"&&!hits.length);
+  if(need){if(!aiReady()){if(AIC.mode=="api")throw new Error("请先在「更多 → 拍照识别设置」里填写 API");AIR.note=lines==null?"本机没有文字识别能力，且未配置 API":"本地没读出商品名；配置 API 后可用视觉模型再试"}
+   else{AIR.msg="调用视觉模型…";aiPanel();try{hits=await aiVision(sm.url,pool,lines)}catch(e){AIR.note="视觉模型失败："+e.message}}}
+  const seen=new Set();AIR.items=hits.filter(h=>{if(seen.has(h.p.k))return false;seen.add(h.p.k);return true}).slice(0,24).map(h=>({...h,on:h.s>=AIC.thr,qty:h.qty||1}));
+  AIR.busy=0;AIR.msg="";aiPanel()}catch(e){AIR.busy=0;AIR.msg="";AIR.note=e.message;aiPanel()}}
+function aiPanel(){const r=AIR;if(!r)return;const c=cur().cats[r.ci];
+ const rows=r.items.map((h,i)=>`<label class="aiit"><input type="checkbox" ${h.on?"checked":""} onchange="AIR.items[${i}].on=this.checked;aiPanel()"><img src="${esc(picSrc(h.p.t))}" loading="lazy"><span class="ain"><b>${esc(h.p.n)}</b><small>${h.ai?"视觉模型":"标签文字"} · 把握 ${h.s}</small></span><span class="aiq"><button onclick="event.preventDefault();AIR.items[${i}].qty=Math.max(1,AIR.items[${i}].qty-1);aiPanel()">−</button><i>${h.qty}</i><button onclick="event.preventDefault();AIR.items[${i}].qty++;aiPanel()">+</button></span></label>`).join("");
+ const n=r.items.filter(h=>h.on).length;
+ modal(`<div class="mh">拍照识别 · 加入 ${esc(c.name||"该类")}</div>${r.src?`<img src="${esc(r.src)}" style="width:100%;max-height:22vh;object-fit:contain;border-radius:10px;margin:4px 0">`:""}
+ ${r.busy?`<div class="mt">⏳ ${esc(r.msg)}</div>`:`<div class="mt">${r.items.length?"识别出 "+r.items.length+" 个，请核对后加入（低把握的默认不勾选）":"没有识别出商品"}</div>${r.note?`<div class="mt" style="color:#c0392b">${esc(r.note)}</div>`:""}`}
+ <div class="aiold">${rows}</div>
+ <div class="mb2" style="flex-wrap:wrap"><button class="g" onclick="closeModal()">取消</button><button class="g" onclick="aiSettings()">设置</button>${r.busy?"":`<button onclick="aiApply()" ${n?"":"disabled"}>加入 ${n} 项</button>`}</div>`)}
+function aiApply(){const r=AIR;if(!r)return;const sel=r.items.filter(h=>h.on);if(!sel.length)return;let add=0,mer=0;
+ mut(o=>{const c=o.cats[r.ci];sel.forEach(h=>{const k=skey(h.p.n),ex=c.items.find(it=>skey(it.n)==k);
+  if(ex){ex.q+=h.qty;mer++}else{const it={n:h.p.n,q:h.qty,p:null};c.items.push(it);add++;PICS[picKey(it.n,c,it)]={u:h.p.t}}})});
+ sel.forEach(h=>{addVocab(h.p.n);bumpUse(h.p.n)});picSave();save();closeModal();AIR=null;renderEdit();toast("已加入 "+add+" 项"+(mer?"，合并 "+mer+" 项":"")+"（图片已自动设置）",undo)}
 
 /* ================= 海报 ================= */
 function rr(x,c,X,y,w,h,r){x.beginPath();x.roundRect(X,y,w,h,r);x.fillStyle=c;x.fill()}
