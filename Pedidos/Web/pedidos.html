@@ -1184,7 +1184,9 @@ function shopPick(q,list,cat){if(!list||!list.length)return null;const k=skey(q)
  const sc=x=>{const kk=skey(x.n),core=kk.split(" ").slice(1).join(" ");let s=Math.max(matchScore(kk,k),core?matchScore(core,k):0);if(!s)return 0;
   if(f&&f({cs:x.c.split("|").map(norm)}))s+=15;return s};
  const r=list.map(x=>({x,s:sc(x)})).filter(r=>r.s>=65).sort((a,b)=>b.s-a.s);return r.length?r[0]:null}
-async function aiResolve(it,cat){if(!it.fresh||it.shopTried)return it;it.shopTried=1;
+const SAPH_BRAND=/saphirus|ambar|shiny|red\s*on|touch/i;
+function otherBrand(it){const b=String(it.brand||"").trim();return !!b&&!SAPH_BRAND.test(b)}   /* 模型明确说是别家品牌 → 不必搜 Saphirus */
+async function aiResolve(it,cat){if(!it.fresh||it.shopTried)return it;it.shopTried=1;if(otherBrand(it)){it.skipShop=1;return it}
  const list=await shopSearch(it.p.n),hit=shopPick(it.p.n,list,cat);
  if(list===null){it.shopErr=1;return it}
  if(hit){it.p={n:hit.x.n,k:skey(hit.x.n),t:hit.x.t,off:1};it.fresh=0;it.shop=1;it.s=Math.max(it.s,hit.s>=100?90:75);it.on=it.on||it.s>=AIC.thr}
