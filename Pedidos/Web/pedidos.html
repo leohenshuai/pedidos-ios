@@ -106,6 +106,7 @@ html[data-theme=dark] .addimg{border-color:#5a4d44;color:#d9b98a}
 .ab-l{display:block;text-align:center;padding:12px;border-radius:12px;background:#f1eee9;font-size:16px}
 html[data-theme=dark] .pxb{border-color:#5a4d44}html[data-theme=dark] .pxc,html[data-theme=dark] .ab-l{background:rgba(255,255,255,.08);color:var(--ink);border-color:rgba(255,255,255,.12)}
 textarea.nm{width:100%;height:40px;resize:none;border:0;border-bottom:1px dashed #d8cfc0;background:none;font-size:16px;line-height:1.25;padding:0 0 2px;color:#3a2e2a;font-family:inherit;overflow:hidden;border-radius:0}
+textarea.nm::placeholder{white-space:normal;font-size:14px;color:#b9ad9d}
 textarea.nm:focus{outline:none;border-bottom:2px solid var(--c);background:#fffbe9}
 .ctr{display:flex;align-items:center;gap:4px}
 .ctr button{width:40px;height:40px;border:0;border-radius:10px;background:var(--c);color:#fff;font-size:21px;flex:none;padding:0}
@@ -502,7 +503,7 @@ const LANG={
  es:{p1:s=>s?"PEDIDO A":"PEDIDO",big:"ORDEN",p2:s=>"ORDEN DE COMPRA",date:"Fecha",total:n=>"TOTAL GENERAL: "+n+" unidades",head:s=>s?"PEDIDO A "+s:"PEDIDO",amount:"Importe estimado"},
  zh:{p1:s=>s?"订货给":"",big:"订货单",p2:s=>s?"订 货 单":"",date:"日期",total:n=>"合计："+n+" 件",head:s=>s?"订货单 · "+s:"订货单",amount:"预计金额"}};
 const NATIVE=!!window.__NATIVE__;
-const APP_VERSION="2.6 · 2026-11-04";
+const APP_VERSION="2.7 · 2026-11-04";
 let S=null,Q="",QC=-1,PQ="",HQ="",HF="all",HR=[],draft={},SG={},SERVER=false,REV=0,tt=null,MI=null,MT=null,DCB=null,PCV=null,pushT=null,pending=false,pushing=false,dirty=false;
 const $=id=>document.getElementById(id);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
@@ -699,9 +700,9 @@ function renderEdit(){
   const hidden=c.items.filter(x=>x.q==0).length;
   const sum=c.items.reduce((a,b)=>a+b.q,0),am=amtC(c);
   const cards=idx.map(i=>{const it=c.items[i],isDup=dm[norm(it.n)]>1;
-   return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><button class="dl" title="删除" onclick="delItem(${ci},${i})">×</button><div class="nmr">${picBtn(ci,i,it.n)}<textarea class="nm" placeholder="商品名（可留空，只用图片）" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea></div>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onfocus="this.select()" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="empty2"><div class="ei">🔍</div><b>${c.items.length?"还没有订货的品项":"这个种类还没有品项"}</b><small>点上方搜索框，输入品名开始订货${hidden?"（已收录 "+hidden+" 项）":""}<br>搜不到的新品名，可直接“＋ 新增”</small></div>`);
+   return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><button class="dl" title="删除" onclick="delItem(${ci},${i})">×</button><div class="nmr">${picBtn(ci,i,it.n)}<textarea class="nm" placeholder="商品名（可空）" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea></div>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onfocus="this.select()" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="empty2"><div class="ei">🔍</div><b>${c.items.length?"还没有订货的品项":"这个种类还没有品项"}</b><small>点上方搜索框，输入品名开始订货${hidden?"（已收录 "+hidden+" 项）":""}<br>搜不到的新品名，可直接“＋ 新增”</small></div>`);
   const d=draft[ci]||{n:"",q:3};
-  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" placeholder="种类名（可留空）" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)"><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${sum}件${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="${c.items.length?`arm(this,()=>delCat(${ci}),'删?')`:`delCat(${ci})`}">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div><div class="addrow"><button class="addimg" onclick="addBlank(${ci})">＋ 图片商品（不写名字）</button><label class="addimg cam">📷 拍照识别<input type="file" accept="image/*" style="display:none" onchange="aiPickPhoto(${ci},this)"></label></div>
+  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" placeholder="种类名（可留空）" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)"><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${sum}件${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="${c.items.length?`arm(this,()=>delCat(${ci}),'删?')`:`delCat(${ci})`}">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div><button class="addimg" onclick="addImgMenu(${ci})">📷 添加图片商品</button>
   </section>`;
  });
  $("cbox").innerHTML=(o.cats.length&&(nq||SF))?candPanel(o,QC,nq,exact):"";if(!o.cats.length)h=`<div class="card"><div class="hint">这个订单还没有种类，请先在下方新增一个种类。</div></div>`+h;
@@ -768,6 +769,11 @@ function cat(ci,k,v){mut(o=>{o.cats[ci][k]=k=="name"?v.trim().toUpperCase():v.tr
 function recolor(ci){mut(o=>{const c=o.cats[ci],used=new Set(o.cats.filter((_,j)=>j!=ci).map(x=>x.color));let k=COLORS.indexOf(c.color),nc=null;for(let n=1;n<=COLORS.length;n++){const x=COLORS[(k+n)%COLORS.length];if(!used.has(x)){nc=x;break}}c.color=nc||extraColor(used)})}
 function delCat(ci){FX("warn");const n=cur().cats[ci].name;QC=-1;mut(o=>{o.cats.splice(ci,1)});toast("已删除种类："+n,undo)}
 function addCat(){const n=$("ncn").value.trim();FX("add");mut(o=>{o.cats.push({name:n.toUpperCase(),sub:"",color:pickColor(o),items:[]})});closeNC();scrollTo(0,document.body.scrollHeight)}
+function addImgMenu(ci){const c=cur().cats[ci];
+ modal(`<div class="mh">添加图片商品 · ${esc(c.name||"该类")}</div><div class="mt">不用写名字，只用图片也可以。</div>
+ <div class="ab" style="margin-top:6px"><label class="ab-l" style="background:var(--c,#c0562f);color:#fff"><span>📷 拍照识别（自动识别名称和图片）</span><input type="file" accept="image/*" style="display:none" onchange="closeModal();aiPickPhoto(${ci},this)"></label>
+ <button class="g" onclick="closeModal();addBlank(${ci})">🖼 手动选图（官方图或我的图片）</button>
+ <button class="g" onclick="closeModal()">取消</button></div>`)}
 function addBlank(ci){FX("add");const id=uid();mut(o=>{o.cats[ci].items.push({id,n:"",q:1,p:null})});const n=cur().cats[ci].items.length-1;setTimeout(()=>picModal(ci,n),60)}
 function clearQty(){FX("warn");bkSnap("pre-clear");mut(o=>o.cats.forEach(c=>c.items.forEach(i=>i.q=0)));toast("所有数量已清零",undo)}
 
@@ -1031,8 +1037,6 @@ function catApply(){
 function moreMenu(){
  modal(`<div class="mh">更多</div><div class="ab" style="margin-top:6px">
   <button onclick="closeModal();importModal()">📋 批量导入（粘贴文字清单）</button>
-  <button onclick="closeModal();picAuto()">🖼 一键匹配全部图片（只补没有图的）</button>
-  <button class="g" onclick="closeModal();picAuto(true)">🔄 重新匹配官方图（保留我的图片）</button>
   <button class="g" onclick="closeModal();aiSettings()">📷 拍照识别设置（API）</button>
   <button class="g" onclick="closeModal()">关闭</button></div>`)}
 
@@ -1106,7 +1110,7 @@ async function picAuto(force){const o=cur();if(!o)return;toast("匹配中…");a
  o.cats.forEach((c,ci)=>c.items.forEach((it,i)=>{if(!it.n)return;const k=picKey(it.n,c,it),p=PICS[k];if(p&&(!force||p.d)){skip++;return}
   const r=picCands(it.n,c,1)[0];if(r&&r.s>=85){PICS[k]={u:r.o.t};ok++}else if(!p)miss.push([ci,i,it.n])}));
  picSave();renderEdit();
- modal(`<div class="mh">图片匹配完成</div><div class="mt">新匹配 ${ok} 个${skip?"，已有图片跳过 "+skip+" 个":""}${miss.length?"，未匹配 "+miss.length+" 个（只在本类别里找）。点名字可手动选图：":"。"}</div>${miss.length?`<div class="ab" style="max-height:40vh;overflow:auto">${miss.map(m=>`<button class="g" onclick="picModal(${m[0]},${m[1]})">${esc(m[2])}</button>`).join("")}</div>`:""}<div class="mb2"><button onclick="closeModal()">好</button></div>`)}
+ modal(`<div class="mh">图片匹配完成</div><div class="mt">新匹配 ${ok} 个${skip?"，已有图片跳过 "+skip+" 个":""}${miss.length?"，未匹配 "+miss.length+" 个（只在本类别里找）。点名字可手动选图：":"。"}</div>${miss.length?`<div class="ab" style="max-height:40vh;overflow:auto">${miss.map(m=>`<button class="g" onclick="picModal(${m[0]},${m[1]})">${esc(m[2])}</button>`).join("")}</div>`:""}<div class="mb2" style="flex-wrap:wrap">${force?"":`<button class="g" onclick="closeModal();picAuto(true)">🔄 覆盖重配官方图</button>`}<button onclick="closeModal()">好</button></div><div class="mt" style="font-size:12px">「覆盖重配」只换官方图，你自己的图片不会动。</div>`)}
 /* 海报/表格用：预载图片 */
 const IMGC={};
 function picLoad(u){if(!u)return Promise.resolve(null);if(IMGC[u])return IMGC[u];return IMGC[u]=new Promise(r=>{const im=new Image();if(!/^(data:|api\/)/.test(u))im.crossOrigin="anonymous";im.onload=()=>r(im);im.onerror=()=>{delete IMGC[u];r(null)};im.src=u})}
