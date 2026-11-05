@@ -516,8 +516,10 @@ const today=()=>{const d=new Date(),p=n=>String(n).padStart(2,"0");return p(d.ge
 const fmt=n=>(Math.round(n*100)/100).toLocaleString(undefined,{maximumFractionDigits:2});
 const UNITS=["件","箱","个","打","包","瓶","盒","套","kg"];
 const unitOf=(o,it)=>String((it&&it.u)||o.unit||"").trim();
+const UES={"件":["unidad","unidades"],"箱":["caja","cajas"],"个":["unidad","unidades"],"打":["docena","docenas"],"包":["paquete","paquetes"],"瓶":["botella","botellas"],"盒":["estuche","estuches"],"套":["set","sets"],"kg":["kg","kg"]};
+function unitTr(u,lang,n){if(lang!="es"||!u)return u;const e=UES[u];return e?(n==1?e[0]:e[1]):u}
 function unitSums(o,items){const m=new Map();items.forEach(it=>{if(it.q>0){const u=unitOf(o,it);m.set(u,(m.get(u)||0)+it.q)}});return m}
-function totTxt(o,lang){const m=unitSums(o,o.cats.flatMap(c=>c.items));return[...m].map(([u,n])=>n+" "+(u||(lang=="zh"?"件":"unidades"))).join(" + ")||"0"}
+function totTxt(o,lang){const m=unitSums(o,o.cats.flatMap(c=>c.items));return[...m].map(([u,n])=>n+" "+(u?unitTr(u,lang,n):(lang=="zh"?"件":"unidades"))).join(" + ")||"0"}
 const sumO=o=>o.cats.reduce((a,c)=>a+c.items.reduce((s,i)=>s+i.q,0),0);
 const amtC=c=>c.items.reduce((s,i)=>s+(i.p?i.q*i.p:0),0);
 const amtO=o=>o.cats.reduce((s,c)=>s+amtC(c),0);
@@ -917,7 +919,7 @@ function buildXlsx(o,IMG){IMG=IMG||new Map();
  const rows=[`<row r="1" ht="24" customHeight="1">${hdr.map((h,i)=>T(1,i,h,1)).join("")}</row>`];
  let r=1,totQ=0,totA=0;const merges=[],pics=[];
  cats.forEach(({c,items},ci)=>{const start=r+1;items.forEach((it,ii)=>{
-  r++;totQ+=it.q;let cells=(ii==0?T(r,0,c.name,catStyle[ci]):E(r,0,catStyle[ci]))+(hasImg?E(r,1,itStyle[ci]):"")+T(r,iN,it.n,itStyle[ci])+N(r,iQ,it.q,qtStyle[ci])+(hasU?T(r,iU,unitOf(o,it),itStyle[ci]):"");
+  r++;totQ+=it.q;let cells=(ii==0?T(r,0,c.name,catStyle[ci]):E(r,0,catStyle[ci]))+(hasImg?E(r,1,itStyle[ci]):"")+T(r,iN,it.n,itStyle[ci])+N(r,iQ,it.q,qtStyle[ci])+(hasU?T(r,iU,unitTr(unitOf(o,it),o.lang||"es",it.q),itStyle[ci]):"");
   if(price){if(it.p){cells+=N(r,iP,it.p,amStyle[ci])+F(r,iA,`${qL}${r}*${col[iP]}${r}`,Math.round(it.q*it.p*100)/100,amStyle[ci]);totA+=it.q*it.p}else cells+=E(r,iP,amStyle[ci])+E(r,iA,amStyle[ci])}
   const im=IMG.get(it);if(im)pics.push({r,im});
   rows.push(`<row r="${r}"${hasImg?' ht="54" customHeight="1"':''}>${cells}</row>`)});if(r>start)merges.push(`A${start}:A${r}`)});
@@ -963,10 +965,10 @@ function sheetPreview(){
  const bgs=cl=>o.dk?"background:#"+shd(cl,.3)+";color:#f1e8de":"background:#"+tint(cl,.86)+";color:#3a2e2a";
  let body="";
  d.cats.forEach(({c,items})=>items.forEach((it,ii)=>{const st=bgs(c.color),u=picUrl(picOf(it.n,c,it));
-  body+=`<tr>${ii==0?`<td class="c" rowspan="${items.length}" style="${st}">${esc(c.name)}</td>`:""}${hasI?`<td class="im" style="${st}">${u?`<img src="${esc(u)}">`:""}</td>`:""}<td class="n" style="${st}">${esc(it.n)}</td><td class="q" style="${st}">${it.q}</td>`+(hasU?`<td class="q" style="${st}">${esc(unitOf(o,it))}</td>`:"")+(price?`<td class="r" style="${st}">${it.p?fmt(it.p):""}</td><td class="r" style="${st}">${it.p?fmt(it.q*it.p):""}</td>`:"")+`</tr>`}));
+  body+=`<tr>${ii==0?`<td class="c" rowspan="${items.length}" style="${st}">${esc(c.name)}</td>`:""}${hasI?`<td class="im" style="${st}">${u?`<img src="${esc(u)}">`:""}</td>`:""}<td class="n" style="${st}">${esc(it.n)}</td><td class="q" style="${st}">${it.q}</td>`+(hasU?`<td class="q" style="${st}">${esc(unitTr(unitOf(o,it),o.lang||"es",it.q))}</td>`:"")+(price?`<td class="r" style="${st}">${it.p?fmt(it.p):""}</td><td class="r" style="${st}">${it.p?fmt(it.q*it.p):""}</td>`:"")+`</tr>`}));
  body+=`<tr class="tot"><td>${X.t}</td>${hasI?"<td></td>":""}<td></td><td class="q">${d.q}</td>`+(hasU?"<td></td>":"")+(price?`<td></td><td class="r">${d.a?fmt(d.a):""}</td>`:"")+`</tr>`;
  modal(`<div class="mh">表格预览</div>
- <div class="mt">共 ${d.n} 行 · 合计 ${totTxt(o,"zh")}${price&&d.a?" · "+esc(o.cur)+fmt(d.a):""}。数量为 0 的品项已隐藏；下面就是 Excel 里的内容。</div>
+ <div class="mt">共 ${d.n} 行 · 合计 ${totTxt(o,o.lang||"es")}${price&&d.a?" · "+esc(o.cur)+fmt(d.a):""}。数量为 0 的品项已隐藏；下面就是 Excel 里的内容。</div>
  <div class="opt">语言：<select onchange="mut(x=>{x.lang=this.value},'',true);sheetPreview()"><option value="es" ${o.lang!="zh"?"selected":""}>Español</option><option value="zh" ${o.lang=="zh"?"selected":""}>中文</option></select><span style="color:#999;font-size:12px">（只改表头和合计文字）</span></div>
  <div class="opt">底色：<select onchange="mut(x=>{x.dk=this.value=='1'?1:0},'',true);sheetPreview()"><option value="0" ${!o.dk?"selected":""}>浅色</option><option value="1" ${o.dk?"selected":""}>深色</option></select><span style="color:#999;font-size:12px">（只影响导出的表格，与软件外观无关）</span></div>
  <div class="xp"><table><thead><tr>${head.map((h,i)=>`<th class="${i>0?'q':''}">${esc(h)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>
@@ -1309,7 +1311,7 @@ async function drawPoster(){
   c.items.forEach((it,i)=>{
    const col=i%2,r=Math.floor(i/2),cx=P+CP+col*(COLW+44),cy=y+12+86+r*RH;
    x.strokeStyle=LINE;x.setLineDash([2,6]);x.lineWidth=2;x.lineCap="round";x.beginPath();x.moveTo(cx,cy+RH-4);x.lineTo(cx+COLW,cy+RH-4);x.stroke();x.setLineDash([]);
-   x.font="bold 26px "+SF;const q=String(it.q)+(unitOf(o,it)?" "+unitOf(o,it):""),pw=Math.max(54,x.measureText(q).width+30);
+   x.font="bold 26px "+SF;const q=String(it.q)+(unitOf(o,it)?" "+unitTr(unitOf(o,it),o.lang||"es",it.q):""),pw=Math.max(54,x.measureText(q).width+30);
    const im=IM.get(it),tw=im?TH+12:0;
    if(im){const ty=cy+(RH-4-TH)/2,sc=Math.min(TH/im.width,TH/im.height);x.save();x.beginPath();x.roundRect(cx,ty,TH,TH,10);x.clip();x.fillStyle="#fff";x.fillRect(cx,ty,TH,TH);x.drawImage(im,cx+(TH-im.width*sc)/2,ty+(TH-im.height*sc)/2,im.width*sc,im.height*sc);x.restore();x.strokeStyle=LINE;x.lineWidth=1;x.setLineDash([]);x.beginPath();x.roundRect(cx,ty,TH,TH,10);x.stroke()}
    x.fillStyle=TX;x.textAlign="left";const t=fit(x,it.n,"28px "+SF,COLW-pw-16-tw,18);x.fillText(t,cx+tw,cy+RH/2+6);
@@ -1423,7 +1425,7 @@ try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{if
 applyTheme();
 /* ---------- 分享文字 ---------- */
 function orderText(o){const d=sheetData(o),X=XL[o.lang||"es"];const L=[];L.push((o.sup||X.sheet)+" · "+(o.dt||""));
- d.cats.forEach(({c,items})=>{L.push("");L.push(c.name||"");items.forEach(it=>L.push("• "+(it.n||"（图片商品）")+" x"+it.q+(unitOf(o,it)?" "+unitOf(o,it):"")+(o.price&&it.p?"  "+o.cur+fmt(it.q*it.p):"")))});
+ d.cats.forEach(({c,items})=>{L.push("");L.push(c.name||"");items.forEach(it=>L.push("• "+(it.n||"（图片商品）")+" x"+it.q+(unitOf(o,it)?" "+unitTr(unitOf(o,it),o.lang||"es",it.q):"")+(o.price&&it.p?"  "+o.cur+fmt(it.q*it.p):"")))});
  L.push("");L.push(X.t+": "+totTxt(o,o.lang||"es")+(o.price&&d.a?"  "+o.cur+fmt(d.a):""));return L.join("\n")}
 function shareText(){const o=cur();if(!o)return;if(!sheetData(o).n){toast("没有数量大于 0 的品项");return}const t=orderText(o);
  if(NATIVE){try{window.webkit.messageHandlers.native.postMessage({type:"shareText",text:t});closeModal();return}catch(e){}}
