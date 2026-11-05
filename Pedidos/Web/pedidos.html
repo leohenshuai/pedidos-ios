@@ -463,7 +463,7 @@ html[data-theme=dark] .vr button{background:rgba(255,255,255,.1)}
  </div>
  <div class="meta2">
   <div class="seg" id="eSt"></div>
-  <select id="eSort" onchange="setf('sort',this.value);renderEdit()"><option value="manual">排序：手动</option><option value="az">排序：A → Z</option><option value="qty">排序：数量多→少</option></select>
+  <select id="eSort" onchange="setf('sort',this.value);renderEdit()"><option value="manual">排序：手动</option><option value="az">排序：A → Z</option><option value="qty">排序：数量多→少</option><option value="new">排序：最近添加</option></select>
   <div class="ptog"><button id="ePr" onclick="togglePrice()">&#36; 单价</button><input id="eCur" maxlength="4" oninput="setf('cur',this.value||'$');renderEdit()" title="货币符号"></div>
  </div>
  <div class="picbar" style="display:flex;gap:8px"><button class="g" onclick="picAuto()">🖼 一键匹配全部图片</button><button class="g" id="eUnit" style="flex:none;width:auto;padding:11px 16px" onclick="unitPick(-1)">📏 单位：件</button></div>
@@ -552,7 +552,7 @@ function fix(s){
  s.vocab=Array.isArray(s.vocab)?s.vocab.filter(v=>typeof v=="string"&&v.trim()):null;
  s.del=(s.del&&typeof s.del=="object")?s.del:{};
  s.orders.forEach(o=>{o.id=o.id||uid();o.upd=o.upd||0;o.sup=o.sup||"";o.dt=o.dt||"";
-  o.status=STAT[o.status]?o.status:"draft";o.sort=["manual","az","qty"].includes(o.sort)?o.sort:"manual";
+  o.status=STAT[o.status]?o.status:"draft";o.sort=["manual","az","qty","new"].includes(o.sort)?o.sort:"manual";
   o.unit=String(o.unit||"").trim().slice(0,8);o.price=!!o.price;o.dk=o.dk?1:0;o.cur=o.cur||"$";o.lang=o.lang=="zh"?"zh":"es";o.theme=(o.theme>=0&&o.theme<THEMES.length)?(o.theme|0):0;
   o.cats=(o.cats||[]).map((c,i)=>({name:c.name||"",sub:c.sub||"",color:c.color||COLORS[i%COLORS.length],items:(c.items||[]).map(it=>Array.isArray(it)?{n:String(it[0]),q:parseInt(it[1])||0,p:null}:{n:String(it.n||""),id:it.id||(it.n?undefined:uid()),q:Math.max(0,parseInt(it.q)||0),u:String(it.u||"").trim().slice(0,8),p:(it.p==null||it.p==="")?null:Math.max(0,parseFloat(it.p)||0)})}))});
  if(!s.vocab){const m=new Map();s.orders.forEach(o=>o.cats.forEach(c=>c.items.forEach(i=>{const k=norm(i.n);if(k&&!m.has(k))m.set(k,i.n)})));s.vocab=[...m.values()]}
@@ -686,6 +686,7 @@ function liveCase(el,mode){
 function sorted(o,c){const idx=c.items.map((_,i)=>i);
  if(o.sort=="az")idx.sort((a,b)=>norm(c.items[a].n).localeCompare(norm(c.items[b].n)));
  else if(o.sort=="qty")idx.sort((a,b)=>c.items[b].q-c.items[a].q||a-b);
+ else if(o.sort=="new")idx.reverse();
  return idx}
 function dupMap(c){const m={};c.items.forEach(it=>{const k=norm(it.n);if(k)m[k]=(m[k]||0)+1});return m}
 function setIn(id,v){const e=$(id);if(document.activeElement!==e)e.value=v}
