@@ -81,6 +81,9 @@ input.cs{display:block;width:100%;font-size:16px;color:#999;border:0;background:
 .ic .dl{position:absolute;top:0;right:0;width:34px;height:34px;border:0;background:none;color:#c9a9a6;font-size:17px;padding:0;z-index:1}
 .ic textarea.nm{padding-right:26px}
 .ic.zero{opacity:.45}
+.ic .ub{align-self:flex-start;height:26px;border:0;border-radius:13px;background:#f1eee9;color:#a89a8e;font-size:13px;padding:0 10px;margin:0}
+.ic .ub.on{color:#3a2e2a;font-weight:700}
+.uchips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}.uchips button{border:1px solid #e3d8c8;background:#fff;border-radius:18px;padding:8px 14px;font-size:16px;color:#3a2e2a}.uchips button.on{background:#3a2e2a;color:#fff;border-color:#3a2e2a}
 .ic.dup{border-color:#e9a23b;background:#fff8e8}
 .dupb{font-size:11px;color:#c07d10;margin-top:-2px}
 .picbar{margin:6px 12px}.picbar button{width:100%;border:0;border-radius:14px;padding:11px;font-size:15px;background:#f1eee9;color:#3a2e2a}
@@ -463,7 +466,7 @@ html[data-theme=dark] .vr button{background:rgba(255,255,255,.1)}
   <select id="eSort" onchange="setf('sort',this.value);renderEdit()"><option value="manual">排序：手动</option><option value="az">排序：A → Z</option><option value="qty">排序：数量多→少</option></select>
   <div class="ptog"><button id="ePr" onclick="togglePrice()">&#36; 单价</button><input id="eCur" maxlength="4" oninput="setf('cur',this.value||'$');renderEdit()" title="货币符号"></div>
  </div>
- <div class="picbar"><button class="g" onclick="picAuto()">🖼 一键匹配全部图片</button></div>
+ <div class="picbar" style="display:flex;gap:8px"><button class="g" onclick="picAuto()">🖼 一键匹配全部图片</button><button class="g" id="eUnit" style="flex:none;width:auto;padding:11px 16px" onclick="unitPick(-1)">📏 单位：件</button></div>
  <div id="list"></div>
  <div class="row3"><button id="ncb" class="pill" onclick="openNC()">＋ 新增种类</button><div id="ncw" class="ncw" hidden><input id="ncn" placeholder="种类名（可留空，只用图片）" autocapitalize="characters" oninput="liveCase(this,'upper')" onkeydown="if(event.key=='Enter')addCat();if(event.key=='Escape')closeNC()"><button class="ok" onclick="addCat()">添加</button><button class="cx" onclick="closeNC()">取消</button></div></div>
  <div class="row3"><button id="clrBtn" class="tiny" onclick="arm(this,clearQty,'再点一次确认清零')">全部数量清零</button></div>
@@ -500,10 +503,10 @@ const KEY="pedidos_v2",KEY1="pedidos_v1",OLD="saphirus_pedido_editor_v1";
 const STAT={draft:["草稿","#999"],sent:["已发送","#e9a23b"],recv:["已收货","#3aa655"]};
 const THEMES=[["经典","#fbf4ea","#3a2e2a","#f0c987"],["海蓝","#eef3f8","#1d3557","#ffd166"],["墨绿","#eef5ee","#1f4d3a","#f0d27a"],["酒红","#f8eeee","#6d2230","#f3c98b"],["黑白","#f4f4f4","#111111","#dddddd"]];
 const LANG={
- es:{p1:s=>s?"PEDIDO A":"PEDIDO",big:"ORDEN",p2:s=>"ORDEN DE COMPRA",date:"Fecha",total:n=>"TOTAL GENERAL: "+n+" unidades",head:s=>s?"PEDIDO A "+s:"PEDIDO",amount:"Importe estimado"},
- zh:{p1:s=>s?"订货给":"",big:"订货单",p2:s=>s?"订 货 单":"",date:"日期",total:n=>"合计："+n+" 件",head:s=>s?"订货单 · "+s:"订货单",amount:"预计金额"}};
+ es:{p1:s=>s?"PEDIDO A":"PEDIDO",big:"ORDEN",p2:s=>"ORDEN DE COMPRA",date:"Fecha",total:n=>"TOTAL GENERAL: "+n,head:s=>s?"PEDIDO A "+s:"PEDIDO",amount:"Importe estimado"},
+ zh:{p1:s=>s?"订货给":"",big:"订货单",p2:s=>s?"订 货 单":"",date:"日期",total:n=>"合计："+n,head:s=>s?"订货单 · "+s:"订货单",amount:"预计金额"}};
 const NATIVE=!!window.__NATIVE__;
-const APP_VERSION="2.7 · 2026-11-04";
+const APP_VERSION="2.8 · 2026-11-04";
 let S=null,Q="",QC=-1,PQ="",HQ="",HF="all",HR=[],draft={},SG={},SERVER=false,REV=0,tt=null,MI=null,MT=null,DCB=null,PCV=null,pushT=null,pending=false,pushing=false,dirty=false;
 const $=id=>document.getElementById(id);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
@@ -511,6 +514,10 @@ const norm=s=>String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerC
 const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
 const today=()=>{const d=new Date(),p=n=>String(n).padStart(2,"0");return p(d.getDate())+"/"+p(d.getMonth()+1)+"/"+d.getFullYear()};
 const fmt=n=>(Math.round(n*100)/100).toLocaleString(undefined,{maximumFractionDigits:2});
+const UNITS=["件","箱","个","打","包","瓶","盒","套","kg"];
+const unitOf=(o,it)=>String((it&&it.u)||o.unit||"").trim();
+function unitSums(o,items){const m=new Map();items.forEach(it=>{if(it.q>0){const u=unitOf(o,it);m.set(u,(m.get(u)||0)+it.q)}});return m}
+function totTxt(o,lang){const m=unitSums(o,o.cats.flatMap(c=>c.items));return[...m].map(([u,n])=>n+" "+(u||(lang=="zh"?"件":"unidades"))).join(" + ")||"0"}
 const sumO=o=>o.cats.reduce((a,c)=>a+c.items.reduce((s,i)=>s+i.q,0),0);
 const amtC=c=>c.items.reduce((s,i)=>s+(i.p?i.q*i.p:0),0);
 const amtO=o=>o.cats.reduce((s,c)=>s+amtC(c),0);
@@ -544,8 +551,8 @@ function fix(s){
  s.del=(s.del&&typeof s.del=="object")?s.del:{};
  s.orders.forEach(o=>{o.id=o.id||uid();o.upd=o.upd||0;o.sup=o.sup||"";o.dt=o.dt||"";
   o.status=STAT[o.status]?o.status:"draft";o.sort=["manual","az","qty"].includes(o.sort)?o.sort:"manual";
-  o.price=!!o.price;o.dk=o.dk?1:0;o.cur=o.cur||"$";o.lang=o.lang=="zh"?"zh":"es";o.theme=(o.theme>=0&&o.theme<THEMES.length)?(o.theme|0):0;
-  o.cats=(o.cats||[]).map((c,i)=>({name:c.name||"",sub:c.sub||"",color:c.color||COLORS[i%COLORS.length],items:(c.items||[]).map(it=>Array.isArray(it)?{n:String(it[0]),q:parseInt(it[1])||0,p:null}:{n:String(it.n||""),id:it.id||(it.n?undefined:uid()),q:Math.max(0,parseInt(it.q)||0),p:(it.p==null||it.p==="")?null:Math.max(0,parseFloat(it.p)||0)})}))});
+  o.unit=String(o.unit||"").trim().slice(0,8);o.price=!!o.price;o.dk=o.dk?1:0;o.cur=o.cur||"$";o.lang=o.lang=="zh"?"zh":"es";o.theme=(o.theme>=0&&o.theme<THEMES.length)?(o.theme|0):0;
+  o.cats=(o.cats||[]).map((c,i)=>({name:c.name||"",sub:c.sub||"",color:c.color||COLORS[i%COLORS.length],items:(c.items||[]).map(it=>Array.isArray(it)?{n:String(it[0]),q:parseInt(it[1])||0,p:null}:{n:String(it.n||""),id:it.id||(it.n?undefined:uid()),q:Math.max(0,parseInt(it.q)||0),u:String(it.u||"").trim().slice(0,8),p:(it.p==null||it.p==="")?null:Math.max(0,parseFloat(it.p)||0)})}))});
  if(!s.vocab){const m=new Map();s.orders.forEach(o=>o.cats.forEach(c=>c.items.forEach(i=>{const k=norm(i.n);if(k&&!m.has(k))m.set(k,i.n)})));s.vocab=[...m.values()]}
 
  if(!s.uses||typeof s.uses!="object"||Array.isArray(s.uses)){const u={};s.orders.forEach(o=>o.cats.forEach(cc=>cc.items.forEach(i=>{const k=norm(i.n).replace(/\s*&\s*/g," y ").replace(/\s+/g," ").trim();if(!k)return;const e=u[k]||(u[k]=[0,0]);e[0]++;e[1]=Math.max(e[1],o.upd||0)})));s.uses=u}
@@ -646,7 +653,7 @@ function renderHome(){if(typeof bkHint=="function")bkHint();
  }
  const list=os.filter(o=>HF=="all"||o.status==HF);
  $("olist").innerHTML=`<div class="g2">`+list.map(o=>{const c=(o.cats[0]||{}).color||COLORS[0],st=STAT[o.status];
-  return `<div class="oc" style="--c:${c}" onclick="open_('${o.id}')"><div class="oct">${esc(o.sup||"未命名订单")}</div><div class="ocm"><span class="st" style="background:${st[1]}" onclick="event.stopPropagation();cycleSt('${o.id}')">${st[0]}</span> ${esc(o.dt)}</div><div class="ocs"><b>${sumO(o)}</b> 件 · ${o.cats.length} 类 ${cnt(o)} 项${o.price&&amtO(o)?"<br>"+esc(o.cur)+fmt(amtO(o)):""}</div><div class="oca"><button onclick="event.stopPropagation();dup('${o.id}')">再订一单</button><button class="del" onclick="event.stopPropagation();arm(this,()=>delOrder('${o.id}'),'确认删除?')">删除</button></div></div>`}).join("")
+  return `<div class="oc" style="--c:${c}" onclick="open_('${o.id}')"><div class="oct">${esc(o.sup||"未命名订单")}</div><div class="ocm"><span class="st" style="background:${st[1]}" onclick="event.stopPropagation();cycleSt('${o.id}')">${st[0]}</span> ${esc(o.dt)}</div><div class="ocs"><b>${unitSums(o,o.cats.flatMap(c=>c.items)).size>1?totTxt(o,"zh"):sumO(o)}</b> ${unitSums(o,o.cats.flatMap(c=>c.items)).size>1?"":(o.unit||"件")} · ${o.cats.length} 类 ${cnt(o)} 项${o.price&&amtO(o)?"<br>"+esc(o.cur)+fmt(amtO(o)):""}</div><div class="oca"><button onclick="event.stopPropagation();dup('${o.id}')">再订一单</button><button class="del" onclick="event.stopPropagation();arm(this,()=>delOrder('${o.id}'),'确认删除?')">删除</button></div></div>`}).join("")
   +`<button class="newo" onclick="newOrder()"><span class="np">＋</span><span class="nl">新建订单</span></button>`+(list.length?"":`<div class="empty">这个状态下没有订单</div>`)+`</div>`;
 }
 function openHit(i){const h=HR[i];if(!h)return;PQ=h.it.n;open_(h.o.id)}
@@ -700,16 +707,16 @@ function renderEdit(){
   const hidden=c.items.filter(x=>x.q==0).length;
   const sum=c.items.reduce((a,b)=>a+b.q,0),am=amtC(c);
   const cards=idx.map(i=>{const it=c.items[i],isDup=dm[norm(it.n)]>1;
-   return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><button class="dl" title="删除" onclick="delItem(${ci},${i})">×</button><div class="nmr">${picBtn(ci,i,it.n)}<textarea class="nm" placeholder="商品名（可空）" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea></div>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onfocus="this.select()" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="empty2"><div class="ei">🔍</div><b>${c.items.length?"还没有订货的品项":"这个种类还没有品项"}</b><small>点上方搜索框，输入品名开始订货${hidden?"（已收录 "+hidden+" 项）":""}<br>搜不到的新品名，可直接“＋ 新增”</small></div>`);
+   return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><button class="dl" title="删除" onclick="delItem(${ci},${i})">×</button><div class="nmr">${picBtn(ci,i,it.n)}<textarea class="nm" placeholder="商品名（可空）" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea></div>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<button class="ub ${it.u?'on':''}" title="更换单位" onclick="unitPick(${ci},${i})">单位：${esc(unitOf(o,it)||"件")} ▾</button><div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onfocus="this.select()" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="empty2"><div class="ei">🔍</div><b>${c.items.length?"还没有订货的品项":"这个种类还没有品项"}</b><small>点上方搜索框，输入品名开始订货${hidden?"（已收录 "+hidden+" 项）":""}<br>搜不到的新品名，可直接“＋ 新增”</small></div>`);
   const d=draft[ci]||{n:"",q:3};
-  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" placeholder="种类名（可留空）" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)"><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${sum}件${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="${c.items.length?`arm(this,()=>delCat(${ci}),'删?')`:`delCat(${ci})`}">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div><button class="addimg" onclick="addImgMenu(${ci})">📷 添加图片商品</button>
+  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" placeholder="种类名（可留空）" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)"><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${totTxt({...o,cats:[c]},"zh")}${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="${c.items.length?`arm(this,()=>delCat(${ci}),'删?')`:`delCat(${ci})`}">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div><button class="addimg" onclick="addImgMenu(${ci})">📷 添加图片商品</button>
   </section>`;
  });
  $("cbox").innerHTML=(o.cats.length&&(nq||SF))?candPanel(o,QC,nq,exact):"";if(!o.cats.length)h=`<div class="card"><div class="hint">这个订单还没有种类，请先在下方新增一个种类。</div></div>`+h;
  $("list").innerHTML=h;
  {const hq=o.cats.some(c=>c.items.some(i=>i.q>0));$("clrBtn").style.display=hq?"":"none"}
- $("eTotal").textContent="共 "+sumO(o)+" 件"+(o.price&&amtO(o)?" · "+o.cur+fmt(amtO(o)):"");
- setIn("eSup",o.sup);setIn("eDt",o.dt);setIn("eCur",o.cur);$("eSort").value=o.sort;
+ $("eTotal").textContent="共 "+totTxt(o,"zh")+(o.price&&amtO(o)?"":"")+(o.price&&amtO(o)?" · "+o.cur+fmt(amtO(o)):"");
+ $("eUnit").textContent="📏 单位："+(o.unit||"件");setIn("eSup",o.sup);setIn("eDt",o.dt);setIn("eCur",o.cur);$("eSort").value=o.sort;
  $("ePr").className=o.price?"on":"";
  segRender("eSt",Object.entries(STAT).map(([k,v])=>`<button class="${o.status==k?'on':''}" style="--c:${v[1]}" onclick="setSt('${k}')">${v[0]}</button>`).join(""),o.id);
  syncUndo();
@@ -756,6 +763,16 @@ function onSearch(v){if(!v.trim())JUST0.clear();Q=v;renderEdit()}
 function setQC(i){JUST0.clear();QC=i;renderEdit()}
 const dr=ci=>draft[ci]||(draft[ci]={n:"",q:3});
 const JUST0=new Set();
+function unitPick(ci,i){const o=cur();if(!o)return;const it=ci>=0?o.cats[ci].items[i]:null,now=it?(it.u||""):(o.unit||"");
+ const chips=(it?[["","跟随订单（"+(o.unit||"件")+"）"]]:[["","默认（件）"]]).concat(UNITS.map(u=>[u,u])).map(([v,t])=>`<button class="${v===now?"on":""}" onclick="unitSet(${ci},${i===undefined?-1:i},${JSON.stringify(v).replace(/"/g,"&quot;")})">${esc(t)}</button>`).join("");
+ const ex=!it&&o.cats.some(c=>c.items.some(x=>x.u));
+ modal(`<div class="mh">${it?"更换这个商品的单位":"订单默认单位"}</div><div class="mt">${it?esc(it.n||"图片商品")+" · 只改这一个商品":"本单没有单独设置的商品，都按这个单位显示。海报、表格、文字清单同步。"}</div>
+ <div class="uchips">${chips}</div>
+ <div class="opt" style="display:flex;gap:8px"><input id="uCus" maxlength="8" placeholder="自定义单位，如 袋 / caja" style="flex:1;min-width:0;padding:10px;border:1px solid #e3d8c8;border-radius:10px;font-size:16px;font-family:inherit"><button onclick="unitSet(${ci},${i===undefined?-1:i},$('uCus').value.trim())">确定</button></div>
+ ${ex?`<div class="opt"><button class="g" onclick="unitClear()">清除所有商品的单独单位（统一跟随订单）</button></div>`:""}
+ <div class="mb2"><button class="g" onclick="closeModal()">取消</button></div>`)}
+function unitSet(ci,i,v){v=String(v||"").trim().slice(0,8);closeModal();mut(o=>{if(ci>=0)o.cats[ci].items[i].u=v;else o.unit=v})}
+function unitClear(){closeModal();mut(o=>o.cats.forEach(c=>c.items.forEach(x=>{x.u=""})));toast("已统一跟随订单单位")}
 function adj(ci,i,d){FX("tick");qBlur();const o0=cur();const it0=o0.cats[ci].items[i];if(it0.q>0&&it0.q+d<=0)JUST0.add(o0.id+":"+ci+":"+i);mut(o=>{const it=o.cats[ci].items[i];it.q=Math.max(0,it.q+d)},"q:"+ci+":"+i)}
 function setq(ci,i,v){FX("tick");SF=false;const o0=cur();const it0=o0.cats[ci].items[i];const nv=Math.max(0,parseInt(v)||0);if(it0.q>0&&nv==0)JUST0.add(o0.id+":"+ci+":"+i);mut(o=>{o.cats[ci].items[i].q=nv})}
 function setp(ci,i,v){mut(o=>{o.cats[ci].items[i].p=v===""?null:Math.max(0,parseFloat(v)||0)})}
@@ -869,9 +886,9 @@ function zipStore(files){ // 无压缩 zip，足够 xlsx 使用
 const xe=s=>String(s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 const shd=(hex,k)=>{const n=parseInt(hex.slice(1),16),m=v=>Math.round(v*k).toString(16).padStart(2,"0");return(m(n>>16&255)+m(n>>8&255)+m(n&255)).toUpperCase()};
 const tint=(hex,k)=>{const n=parseInt(hex.slice(1),16),m=v=>Math.round(v+(255-v)*k).toString(16).padStart(2,"0");return(m(n>>16&255)+m(n>>8&255)+m(n&255)).toUpperCase()};
-const XL={es:{cat:"Categoría",it:"Producto",q:"Cantidad",p:"Precio",a:"Importe",t:"TOTAL",sheet:"Pedido",img:"Imagen"},zh:{cat:"类别",it:"品名",q:"数量",p:"单价",a:"小计",t:"合计",sheet:"订货单",img:"图片"}};
+const XL={es:{cat:"Categoría",it:"Producto",q:"Cantidad",u:"Unidad",p:"Precio",a:"Importe",t:"TOTAL",sheet:"Pedido",img:"Imagen"},zh:{cat:"类别",it:"品名",q:"数量",u:"单位",p:"单价",a:"小计",t:"合计",sheet:"订货单",img:"图片"}};
 function buildXlsx(o,IMG){IMG=IMG||new Map();
- const X=XL[o.lang||"es"],price=!!o.price,ncol=price?5:3,col="ABCDEF",DKM=!!o.dk,rowC=c=>DKM?shd(c,.3):tint(c,.86);
+ const X=XL[o.lang||"es"],price=!!o.price,ncol=price?5:3,col="ABCDEFG",DKM=!!o.dk,rowC=c=>DKM?shd(c,.3):tint(c,.86);
  const cats=o.cats.map(c=>({c,items:sorted(o,c).map(i=>c.items[i]).filter(i=>i.q>0)})).filter(x=>x.items.length);
  // 样式表：每个种类一个浅色底
  const fills=['<fill><patternFill patternType="none"/></fill>','<fill><patternFill patternType="gray125"/></fill>','<fill><patternFill patternType="solid"><fgColor rgb="FF3A2E2A"/><bgColor indexed="64"/></patternFill></fill>','<fill><patternFill patternType="solid"><fgColor rgb="FFF0C987"/><bgColor indexed="64"/></patternFill></fill>'];
@@ -896,19 +913,19 @@ function buildXlsx(o,IMG){IMG=IMG||new Map();
  const N=(r,c,v,st)=>`<c r="${col[c]}${r}" s="${st}"><v>${v}</v></c>`;
  const F=(r,c,f,v,st)=>`<c r="${col[c]}${r}" s="${st}"><f>${f}</f><v>${v}</v></c>`;
  const E=(r,c,st)=>`<c r="${col[c]}${r}" s="${st}"/>`;
- const hasImg=IMG.size>0,iN=hasImg?2:1,iQ=iN+1,iP=iQ+1,iA=iQ+2,qL=col[iQ],hdr=[X.cat].concat(hasImg?[X.img]:[]).concat([X.it,X.q]).concat(price?[X.p,X.a]:[]);
+ const hasImg=IMG.size>0,hasU=cats.some(x=>x.items.some(it=>unitOf(o,it))),iN=hasImg?2:1,iQ=iN+1,iU=iQ+1,iP=iQ+(hasU?2:1),iA=iP+1,qL=col[iQ],hdr=[X.cat].concat(hasImg?[X.img]:[]).concat([X.it,X.q]).concat(hasU?[X.u]:[]).concat(price?[X.p,X.a]:[]);
  const rows=[`<row r="1" ht="24" customHeight="1">${hdr.map((h,i)=>T(1,i,h,1)).join("")}</row>`];
  let r=1,totQ=0,totA=0;const merges=[],pics=[];
  cats.forEach(({c,items},ci)=>{const start=r+1;items.forEach((it,ii)=>{
-  r++;totQ+=it.q;let cells=(ii==0?T(r,0,c.name,catStyle[ci]):E(r,0,catStyle[ci]))+(hasImg?E(r,1,itStyle[ci]):"")+T(r,iN,it.n,itStyle[ci])+N(r,iQ,it.q,qtStyle[ci]);
+  r++;totQ+=it.q;let cells=(ii==0?T(r,0,c.name,catStyle[ci]):E(r,0,catStyle[ci]))+(hasImg?E(r,1,itStyle[ci]):"")+T(r,iN,it.n,itStyle[ci])+N(r,iQ,it.q,qtStyle[ci])+(hasU?T(r,iU,unitOf(o,it),itStyle[ci]):"");
   if(price){if(it.p){cells+=N(r,iP,it.p,amStyle[ci])+F(r,iA,`${qL}${r}*${col[iP]}${r}`,Math.round(it.q*it.p*100)/100,amStyle[ci]);totA+=it.q*it.p}else cells+=E(r,iP,amStyle[ci])+E(r,iA,amStyle[ci])}
   const im=IMG.get(it);if(im)pics.push({r,im});
   rows.push(`<row r="${r}"${hasImg?' ht="54" customHeight="1"':''}>${cells}</row>`)});if(r>start)merges.push(`A${start}:A${r}`)});
  const last=r,tr=r+1;
- let tc=T(tr,0,X.t,5)+(hasImg?E(tr,1,5):"")+E(tr,iN,5)+F(tr,iQ,`SUM(${qL}2:${qL}${last})`,totQ,6);
+ let tc=T(tr,0,X.t,5)+(hasImg?E(tr,1,5):"")+E(tr,iN,5)+F(tr,iQ,`SUM(${qL}2:${qL}${last})`,totQ,6)+(hasU?E(tr,iU,5):"");
  if(price)tc+=E(tr,iP,5)+F(tr,iA,`SUM(${col[iA]}2:${col[iA]}${last})`,Math.round(totA*100)/100,7);
  rows.push(`<row r="${tr}" ht="22" customHeight="1">${tc}</row>`);
- const widths=[Math.min(28,Math.max(12,...cats.map(x=>x.c.name.length*1.3+4))),Math.min(48,Math.max(16,...cats.flatMap(x=>x.items.map(i=>i.n.length*1.25+4)))),12].concat(price?[12,14]:[]);if(hasImg)widths.splice(1,0,13);
+ const widths=[Math.min(28,Math.max(12,...cats.map(x=>x.c.name.length*1.3+4))),Math.min(48,Math.max(16,...cats.flatMap(x=>x.items.map(i=>i.n.length*1.25+4)))),12].concat(hasU?[9]:[]).concat(price?[12,14]:[]);if(hasImg)widths.splice(1,0,13);
  const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetViews><sheetView workbookViewId="0" tabSelected="1"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="16"/><cols>${widths.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${Math.round(w*10)/10}" customWidth="1"/>`).join("")}</cols><sheetData>${rows.join("")}</sheetData>${merges.length?`<mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${m}"/>`).join("")}</mergeCells>`:""}<pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/>${hasImg?'<drawing r:id="rId1"/>':""}</worksheet>`;
  const sn=(((o.sup||"").trim()||X.sheet).replace(/[\[\]:*?\/\\]/g," ").trim()||X.sheet).slice(0,31);
  const head='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
@@ -942,14 +959,14 @@ function sheetPreview(){
  const o=cur(),X=XL[o.lang||"es"],d=sheetData(o),price=!!o.price;
  if(!d.n){closeModal();toast("没有数量大于 0 的品项");return}
  const hasI=d.cats.some(x=>x.items.some(it=>picUrl(picOf(it.n,x.c,it))));
- const head=[X.cat].concat(hasI?[X.img]:[]).concat([X.it,X.q]).concat(price?[X.p,X.a]:[]);
+ const hasU=d.cats.some(x=>x.items.some(it=>unitOf(o,it))),head=[X.cat].concat(hasI?[X.img]:[]).concat([X.it,X.q]).concat(hasU?[X.u]:[]).concat(price?[X.p,X.a]:[]);
  const bgs=cl=>o.dk?"background:#"+shd(cl,.3)+";color:#f1e8de":"background:#"+tint(cl,.86)+";color:#3a2e2a";
  let body="";
  d.cats.forEach(({c,items})=>items.forEach((it,ii)=>{const st=bgs(c.color),u=picUrl(picOf(it.n,c,it));
-  body+=`<tr>${ii==0?`<td class="c" rowspan="${items.length}" style="${st}">${esc(c.name)}</td>`:""}${hasI?`<td class="im" style="${st}">${u?`<img src="${esc(u)}">`:""}</td>`:""}<td class="n" style="${st}">${esc(it.n)}</td><td class="q" style="${st}">${it.q}</td>`+(price?`<td class="r" style="${st}">${it.p?fmt(it.p):""}</td><td class="r" style="${st}">${it.p?fmt(it.q*it.p):""}</td>`:"")+`</tr>`}));
- body+=`<tr class="tot"><td>${X.t}</td>${hasI?"<td></td>":""}<td></td><td class="q">${d.q}</td>`+(price?`<td></td><td class="r">${d.a?fmt(d.a):""}</td>`:"")+`</tr>`;
+  body+=`<tr>${ii==0?`<td class="c" rowspan="${items.length}" style="${st}">${esc(c.name)}</td>`:""}${hasI?`<td class="im" style="${st}">${u?`<img src="${esc(u)}">`:""}</td>`:""}<td class="n" style="${st}">${esc(it.n)}</td><td class="q" style="${st}">${it.q}</td>`+(hasU?`<td class="q" style="${st}">${esc(unitOf(o,it))}</td>`:"")+(price?`<td class="r" style="${st}">${it.p?fmt(it.p):""}</td><td class="r" style="${st}">${it.p?fmt(it.q*it.p):""}</td>`:"")+`</tr>`}));
+ body+=`<tr class="tot"><td>${X.t}</td>${hasI?"<td></td>":""}<td></td><td class="q">${d.q}</td>`+(hasU?"<td></td>":"")+(price?`<td></td><td class="r">${d.a?fmt(d.a):""}</td>`:"")+`</tr>`;
  modal(`<div class="mh">表格预览</div>
- <div class="mt">共 ${d.n} 行 · 合计 ${d.q} 件${price&&d.a?" · "+esc(o.cur)+fmt(d.a):""}。数量为 0 的品项已隐藏；下面就是 Excel 里的内容。</div>
+ <div class="mt">共 ${d.n} 行 · 合计 ${totTxt(o,"zh")}${price&&d.a?" · "+esc(o.cur)+fmt(d.a):""}。数量为 0 的品项已隐藏；下面就是 Excel 里的内容。</div>
  <div class="opt">语言：<select onchange="mut(x=>{x.lang=this.value},'',true);sheetPreview()"><option value="es" ${o.lang!="zh"?"selected":""}>Español</option><option value="zh" ${o.lang=="zh"?"selected":""}>中文</option></select><span style="color:#999;font-size:12px">（只改表头和合计文字）</span></div>
  <div class="opt">底色：<select onchange="mut(x=>{x.dk=this.value=='1'?1:0},'',true);sheetPreview()"><option value="0" ${!o.dk?"selected":""}>浅色</option><option value="1" ${o.dk?"selected":""}>深色</option></select><span style="color:#999;font-size:12px">（只影响导出的表格，与软件外观无关）</span></div>
  <div class="xp"><table><thead><tr>${head.map((h,i)=>`<th class="${i>0?'q':''}">${esc(h)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>
@@ -1292,7 +1309,7 @@ async function drawPoster(){
   c.items.forEach((it,i)=>{
    const col=i%2,r=Math.floor(i/2),cx=P+CP+col*(COLW+44),cy=y+12+86+r*RH;
    x.strokeStyle=LINE;x.setLineDash([2,6]);x.lineWidth=2;x.lineCap="round";x.beginPath();x.moveTo(cx,cy+RH-4);x.lineTo(cx+COLW,cy+RH-4);x.stroke();x.setLineDash([]);
-   x.font="bold 26px "+SF;const q=String(it.q),pw=Math.max(54,x.measureText(q).width+30);
+   x.font="bold 26px "+SF;const q=String(it.q)+(unitOf(o,it)?" "+unitOf(o,it):""),pw=Math.max(54,x.measureText(q).width+30);
    const im=IM.get(it),tw=im?TH+12:0;
    if(im){const ty=cy+(RH-4-TH)/2,sc=Math.min(TH/im.width,TH/im.height);x.save();x.beginPath();x.roundRect(cx,ty,TH,TH,10);x.clip();x.fillStyle="#fff";x.fillRect(cx,ty,TH,TH);x.drawImage(im,cx+(TH-im.width*sc)/2,ty+(TH-im.height*sc)/2,im.width*sc,im.height*sc);x.restore();x.strokeStyle=LINE;x.lineWidth=1;x.setLineDash([]);x.beginPath();x.roundRect(cx,ty,TH,TH,10);x.stroke()}
    x.fillStyle=TX;x.textAlign="left";const t=fit(x,it.n,"28px "+SF,COLW-pw-16-tw,18);x.fillText(t,cx+tw,cy+RH/2+6);
@@ -1300,7 +1317,7 @@ async function drawPoster(){
   });
   x.textAlign="left";y+=h+28;
  });
- rr(x,GD,P,y,IW,90,24);x.fillStyle=TOTT;x.font="bold 38px "+SF;x.textAlign="center";x.fillText(L.total(sumO(o)),W/2,y+58);y+=90;
+ rr(x,GD,P,y,IW,90,24);x.fillStyle=TOTT;x.font="bold 38px "+SF;x.textAlign="center";x.fillText(L.total(totTxt(o,o.lang||"es")),W/2,y+58);y+=90;
  if(showAmt){y+=20;x.font="30px "+SF;x.fillStyle=TX;x.fillText(L.amount+": "+o.cur+fmt(amtO(o)),W/2,y+46)}
  PCV=cv;const url=cv.toDataURL("image/png");$("pimg").src=url;$("dl").href=url;
  $("dl").download="pedido_"+((o.sup||"orden").replace(/[^\w\u4e00-\u9fa5-]+/g,"_"))+"_"+(o.dt||"").replace(/\//g,"-")+".png";
@@ -1406,8 +1423,8 @@ try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{if
 applyTheme();
 /* ---------- 分享文字 ---------- */
 function orderText(o){const d=sheetData(o),X=XL[o.lang||"es"];const L=[];L.push((o.sup||X.sheet)+" · "+(o.dt||""));
- d.cats.forEach(({c,items})=>{L.push("");L.push(c.name||"");items.forEach(it=>L.push("• "+(it.n||"（图片商品）")+" x"+it.q+(o.price&&it.p?"  "+o.cur+fmt(it.q*it.p):"")))});
- L.push("");L.push(X.t+": "+d.q+(o.price&&d.a?"  "+o.cur+fmt(d.a):""));return L.join("\n")}
+ d.cats.forEach(({c,items})=>{L.push("");L.push(c.name||"");items.forEach(it=>L.push("• "+(it.n||"（图片商品）")+" x"+it.q+(unitOf(o,it)?" "+unitOf(o,it):"")+(o.price&&it.p?"  "+o.cur+fmt(it.q*it.p):"")))});
+ L.push("");L.push(X.t+": "+totTxt(o,o.lang||"es")+(o.price&&d.a?"  "+o.cur+fmt(d.a):""));return L.join("\n")}
 function shareText(){const o=cur();if(!o)return;if(!sheetData(o).n){toast("没有数量大于 0 的品项");return}const t=orderText(o);
  if(NATIVE){try{window.webkit.messageHandlers.native.postMessage({type:"shareText",text:t});closeModal();return}catch(e){}}
  if(navigator.share){navigator.share({text:t}).then(()=>closeModal()).catch(()=>{});return}
