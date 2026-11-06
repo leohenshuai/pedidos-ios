@@ -71,7 +71,9 @@ button:disabled{opacity:.35}
 section{margin:12px;background:#fff;border-radius:16px;overflow:hidden;border-top:8px solid var(--c);box-shadow:0 2px 10px #0001}
 .sh{display:flex;align-items:center;gap:6px;padding:8px 10px 0}
 .sh input.cn{font-size:19px;font-weight:700;color:var(--c);border:0;background:none;flex:1;letter-spacing:1px;min-width:0;font-family:inherit;padding:8px 0}
-.sh .cnt{font-size:12px;color:#888;white-space:nowrap}
+.sh .cnt{font-size:12px;color:#888;white-space:normal;text-align:right;line-height:1.25;max-width:34%;flex:0 1 auto}
+section>.cnt{display:block;font-size:12px;color:#888;padding:2px 14px 0;white-space:normal}
+.sh .x{padding:10px 11px}
 .dot{width:24px;height:24px;border-radius:50%;border:0;background:var(--c);flex:none}
 .x{border:0;background:#f1eee9;border-radius:9px;color:#a33;font-size:14px;padding:10px 12px;flex:none;min-height:38px}
 .x.arm{background:#d9534f;color:#fff}
@@ -712,7 +714,7 @@ function renderEdit(){
   const cards=idx.map(i=>{const it=c.items[i],isDup=dm[norm(it.n)]>1;
    return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><button class="dl" title="删除" onclick="delItem(${ci},${i})">×</button><div class="nmr">${picBtn(ci,i,it.n)}<textarea class="nm" placeholder="商品名（可空）" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea></div>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<button class="ub ${it.u?'on':''}" title="更换单位" onclick="unitPick(${ci},${i})">单位：${esc(unitOf(o,it)||"件")} ▾</button><div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onfocus="this.select()" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="empty2"><div class="ei">🔍</div><b>${c.items.length?"还没有订货的品项":"这个种类还没有品项"}</b><small>点上方搜索框，输入品名开始订货${hidden?"（已收录 "+hidden+" 项）":""}<br>搜不到的新品名，可直接“＋ 新增”</small></div>`);
   const d=draft[ci]||{n:"",q:3};
-  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" placeholder="种类名（可留空）" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)"><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${totTxt({...o,cats:[c]},"zh")}${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><button class="x" onclick="${c.items.length?`arm(this,()=>delCat(${ci}),'删?')`:`delCat(${ci})`}">删</button></div><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div><button class="addimg" onclick="addImgMenu(${ci})">📷 添加图片商品</button>
+  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" placeholder="种类名（可留空）" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)">${c.items.length?`<button class="x" onclick="arm(this,()=>clearCatItems(${ci}),'清空?')">清空</button>`:""}<button class="x" onclick="${c.items.length?`arm(this,()=>delCat(${ci}),'删?')`:`delCat(${ci})`}">删</button></div><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${totTxt({...o,cats:[c]},"zh")}${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div><button class="addimg" onclick="addImgMenu(${ci})">📷 添加图片商品</button>
   </section>`;
  });
  $("cbox").innerHTML=(o.cats.length&&(nq||SF))?candPanel(o,QC,nq,exact):"";if(!o.cats.length)h=`<div class="card"><div class="hint">这个订单还没有种类，请先在下方新增一个种类。</div></div>`+h;
@@ -795,6 +797,7 @@ function addImgMenu(ci){const c=cur().cats[ci];
  <button class="g" onclick="closeModal();addBlank(${ci})">🖼 手动选图（官方图或我的图片）</button>
  <button class="g" onclick="closeModal()">取消</button></div>`)}
 function addBlank(ci){FX("add");const id=uid();mut(o=>{o.cats[ci].items.push({id,n:"",q:1,p:null})});const n=cur().cats[ci].items.length-1;setTimeout(()=>picModal(ci,n),60)}
+function clearCatItems(ci){FX("warn");bkSnap("pre-clearcat");const c=cur().cats[ci],n=c.items.length,nm=c.name||"该种类";mut(o=>{o.cats[ci].items=[]});toast("已清空 "+nm+" 的 "+n+" 个商品（种类保留）",undo)}
 function clearQty(){FX("warn");bkSnap("pre-clear");mut(o=>o.cats.forEach(c=>c.items.forEach(i=>i.q=0)));toast("所有数量已清零",undo)}
 
 /* 添加: 重名提醒 + 近似拼写提醒 */
