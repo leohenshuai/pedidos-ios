@@ -791,9 +791,13 @@ function cat(ci,k,v){mut(o=>{o.cats[ci][k]=k=="name"?v.trim().toUpperCase():v.tr
 function recolor(ci){mut(o=>{const c=o.cats[ci],used=new Set(o.cats.filter((_,j)=>j!=ci).map(x=>x.color));let k=COLORS.indexOf(c.color),nc=null;for(let n=1;n<=COLORS.length;n++){const x=COLORS[(k+n)%COLORS.length];if(!used.has(x)){nc=x;break}}c.color=nc||extraColor(used)})}
 function delCat(ci){FX("warn");const n=cur().cats[ci].name;QC=-1;mut(o=>{o.cats.splice(ci,1)});toast("已删除种类："+n,undo)}
 function addCat(){const n=$("ncn").value.trim();FX("add");mut(o=>{o.cats.push({name:n.toUpperCase(),sub:"",color:pickColor(o),items:[]})});closeNC();scrollTo(0,document.body.scrollHeight)}
+/* 原生拍照/相册：绕开 WebView 文件选择器（拍照后网页进程被系统杀掉会黑屏） */
+let NPCB=null;
+function nativePick(cb){NPCB=cb;try{webkit.messageHandlers.native.postMessage({type:"pickImage"})}catch(e){toast("⚠ 无法打开相机")}}
+window.__nativeImg=async function(url){const cb=NPCB;NPCB=null;if(!cb||!url)return;try{const b=await (await fetch(url)).blob();cb(new File([b],"photo.jpg",{type:"image/jpeg"}))}catch(e){toast("⚠ 读取照片失败")}};
 function addImgMenu(ci){const c=cur().cats[ci];
  modal(`<div class="mh">添加图片商品 · ${esc(c.name||"该类")}</div><div class="mt">不用写名字，只用图片也可以。</div>
- <div class="ab" style="margin-top:6px"><label class="ab-l" style="background:var(--c,#c0562f);color:#fff"><span>📷 拍照识别（自动识别名称和图片）</span><input type="file" accept="image/*" style="display:none" onchange="closeModal();aiPickPhoto(${ci},this)"></label>
+ <div class="ab" style="margin-top:6px">${NATIVE?`<button style="background:var(--c,#c0562f);color:#fff" onclick="closeModal();nativePick(f=>aiPickPhoto(${ci},{files:[f],value:''}))">📷 拍照识别（自动识别名称和图片）</button>`:`<label class="ab-l" style="background:var(--c,#c0562f);color:#fff"><span>📷 拍照识别（自动识别名称和图片）</span><input type="file" accept="image/*" style="display:none" onchange="closeModal();aiPickPhoto(${ci},this)"></label>`}
  <button class="g" onclick="closeModal();addBlank(${ci})">🖼 手动选图（官方图或我的图片）</button>
  <button class="g" onclick="closeModal()">取消</button></div>`)}
 function addBlank(ci){FX("add");const id=uid();mut(o=>{o.cats[ci].items.push({id,n:"",q:1,p:null})});const n=cur().cats[ci].items.length-1;setTimeout(()=>picModal(ci,n),60)}
@@ -1109,7 +1113,7 @@ function picBtn(ci,i,n){const c=cur().cats[ci],u=picUrl(picOf(n,c,c.items[i]));
 function picModal(ci,i){const o=cur(),c=o&&o.cats[ci],it=c&&c.items[i];if(!it)return;PM={ci,i,n:it.n,k:picKey(it.n,c,it),all:false};const p=PICS[PM.k],u=picUrl(p);
  modal(`<div class="mh">商品图片 · ${esc(it.n||"无名称商品")}</div><div class="mt">类别：${esc(c.name||"未命名")}（图片按类别记录，不会和别的类别同名商品混用）</div>${u?`<div style="text-align:center;margin:6px 0"><img src="${esc(u)}" style="max-width:60%;border-radius:12px"></div>`:""}
  <div class="ab" style="margin-top:6px"><button onclick="picMatchUI()">🔎 从官方匹配图片</button>
- <label class="ab-l"><span>📷 使用我的图片（相册/文件）</span><input type="file" accept="image/*" style="display:none" onchange="picOwn(this)"></label>
+ ${NATIVE?`<button onclick="nativePick(f=>picOwn({files:[f],value:''}))">📷 使用我的图片（拍照/相册）</button>`:`<label class="ab-l"><span>📷 使用我的图片（相册/文件）</span><input type="file" accept="image/*" style="display:none" onchange="picOwn(this)"></label>`}
  ${p?`<button class="g" onclick="picDel()">移除图片</button>`:""}<button class="g" onclick="closeModal()">关闭</button></div>`)}
 async function picMatchUI(){const c=cur().cats[PM.ci];
  modal(`<div class="mh">官方图片 · ${esc(PM.n||"无名称商品")}</div><input class="sq" id="pq" style="border:1px solid #e3d8c8;margin:0 0 6px" placeholder="换个关键词搜索官方商品" oninput="picSearch(this.value)"><div class="mt" id="pinfo">加载官方目录…</div><div id="pl" class="pgrid"></div><div class="mb2"><button class="g" onclick="picModal(PM.ci,PM.i)">返回</button><button class="g" id="pall" onclick="PM.all=!PM.all;picSearch($('pq').value)">搜全部类别</button></div>`);

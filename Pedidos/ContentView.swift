@@ -3,6 +3,7 @@ import WebKit
 import UIKit
 import AudioToolbox
 import Vision
+import PhotosUI
 
 struct ContentView: View {
     var body: some View {
@@ -329,7 +330,7 @@ struct WebContainer: UIViewRepresentable {
     }
     func updateUIView(_ uiView: WKWebView, context: Context) {}
 
-    final class Coordinator: NSObject, WKScriptMessageHandler, WKUIDelegate {
+    final class Coordinator: NSObject, WKScriptMessageHandler, WKUIDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, PHPickerViewControllerDelegate {
         weak var web: WKWebView?
 
         // 拍照后系统内存吃紧会杀掉网页进程 → 黑屏；被杀后自动重新加载页面
@@ -342,6 +343,47 @@ struct WebContainer: UIViewRepresentable {
             NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
                 self?.checkUpdate(manual: false)
             }
+        }
+
+        // ---------- 原生拍照 / 相册（缩图后以 dataURL 回传，避免网页进程吃大图） ----------
+        func presentPicker() {
+            guard let top = topVC() else { return }
+            let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                sheet.addAction(UIAlertAction(title: "拍照", style: .default) { _ in
+                    let p = UIImagePickerController(); p.sourceType = .camera; p.delegate = self
+                    self.topVC()?.present(p, animated: true)
+                })
+            }
+            sheet.addAction(UIAlertAction(title: "照片图库", style: .default) { _ in
+                var c = PHPickerConfiguration(); c.filter = .images; c.selectionLimit = 1
+                let p = PHPickerViewController(configuration: c); p.delegate = self
+                self.topVC()?.present(p, animated: true)
+            })
+            sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
+            sheet.popoverPresentationController?.sourceView = top.view
+            sheet.popoverPresentationController?.sourceRect = CGRect(x: top.view.bounds.midX, y: top.view.bounds.maxY - 40, width: 1, height: 1)
+            top.present(sheet, animated: true)
+        }
+        func deliver(_ img: UIImage?) {
+            guard let img = img else { return }
+            let m: CGFloat = 1600, s = min(1, m / max(img.size.width, img.size.height))
+            let sz = CGSize(width: img.size.width * s, height: img.size.height * s)
+            let fmt = UIGraphicsImageRendererFormat(); fmt.scale = 1
+            let out = UIGraphicsImageRenderer(size: sz, format: fmt).image { _ in img.draw(in: CGRect(origin: .zero, size: sz)) }
+            guard let jpg = out.jpegData(compressionQuality: 0.85) else { return }
+            let js = "window.__nativeImg('data:image/jpeg;base64," + jpg.base64EncodedString() + "')"
+            DispatchQueue.main.async { self.web?.evaluateJavaScript(js, completionHandler: nil) }
+        }
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+            let img = info[.originalImage] as? UIImage
+            picker.dismiss(animated: true) { self.deliver(img) }
+        }
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) { picker.dismiss(animated: true) }
+        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+            picker.dismiss(animated: true)
+            guard let r = results.first, r.itemProvider.canLoadObject(ofClass: UIImage.self) else { return }
+            r.itemProvider.loadObject(ofClass: UIImage.self) { o, _ in self.deliver(o as? UIImage) }
         }
 
         // ---------- 版本检查（GitHub 最新 Release，标签 build-N，N 即 IPA 的 CFBundleVersion） ----------
@@ -450,6 +492,10 @@ struct WebContainer: UIViewRepresentable {
                     let style: UIUserInterfaceStyle = mode == "dark" ? .dark : (mode == "light" ? .light : .unspecified)
                     UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.forEach { $0.overrideUserInterfaceStyle = style }
                 }
+                return
+            }
+            if type == "pickImage" {
+                DispatchQueue.main.async { self.presentPicker() }
                 return
             }
             if type == "shareText", let text = d["text"] as? String {
