@@ -518,10 +518,10 @@ const today=()=>{const d=new Date(),p=n=>String(n).padStart(2,"0");return p(d.ge
 const fmt=n=>(Math.round(n*100)/100).toLocaleString(undefined,{maximumFractionDigits:2});
 const UNITS=["件","箱","个","打","包","瓶","盒","套","kg"];
 const unitOf=(o,it)=>String((it&&it.u)||o.unit||"").trim();
-const UES={"件":["unidad","unidades"],"箱":["caja","cajas"],"个":["unidad","unidades"],"打":["docena","docenas"],"包":["paquete","paquetes"],"瓶":["botella","botellas"],"盒":["estuche","estuches"],"套":["set","sets"],"kg":["kg","kg"]};
+const UES={"件":["un.","un."],"箱":["cj.","cj."],"个":["un.","un."],"打":["doc.","doc."],"包":["paq.","paq."],"瓶":["bot.","bot."],"盒":["est.","est."],"套":["set","set"],"kg":["kg","kg"]};
 function unitTr(u,lang,n){if(lang!="es"||!u)return u;const e=UES[u];return e?(n==1?e[0]:e[1]):u}
 function unitSums(o,items){const m=new Map();items.forEach(it=>{if(it.q>0){const u=unitOf(o,it);m.set(u,(m.get(u)||0)+it.q)}});return m}
-function totTxt(o,lang){const m=unitSums(o,o.cats.flatMap(c=>c.items));return[...m].map(([u,n])=>n+" "+(u?unitTr(u,lang,n):(lang=="zh"?"件":"unidades"))).join(" + ")||"0"}
+function totTxt(o,lang){const m=unitSums(o,o.cats.flatMap(c=>c.items));return[...m].map(([u,n])=>n+" "+(u?unitTr(u,lang,n):(lang=="zh"?"件":"un."))).join(" + ")||"0"}
 const sumO=o=>o.cats.reduce((a,c)=>a+c.items.reduce((s,i)=>s+i.q,0),0);
 const amtC=c=>c.items.reduce((s,i)=>s+(i.p?i.q*i.p:0),0);
 const amtO=o=>o.cats.reduce((s,c)=>s+amtC(c),0);

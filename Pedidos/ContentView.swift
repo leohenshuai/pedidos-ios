@@ -332,6 +332,11 @@ struct WebContainer: UIViewRepresentable {
     final class Coordinator: NSObject, WKScriptMessageHandler, WKUIDelegate {
         weak var web: WKWebView?
 
+        // 拍照后系统内存吃紧会杀掉网页进程 → 黑屏；被杀后自动重新加载页面
+        func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+            webView.load(URLRequest(url: URL(string: "app://local/pedidos.html")!))
+        }
+
         override init() {
             super.init()
             NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
