@@ -1156,13 +1156,21 @@ function picSearch(q){const c=cur().cats[PM.ci],f=PM.all?null:picCatFilter(c);le
 /* 网上搜图：品名 + 所属商品源的提示词（香烟加 cigarrillos），列出多张让用户选 */
 function picWebQ(n){const c=cur().cats[PM.ci],sc=srcNameOf(n)||"";const hint=/香烟/.test(sc)?"cigarrillos":/saphirus/i.test(sc)?"Saphirus":"";
  return [hint,n,!sc&&c&&c.name&&!/^general$/i.test(c.name)?c.name:""].filter(Boolean).join(" ")}
+const AIQC={};
+async function aiImgQuery(n,ctx){const k=skey(n)+"|"+(ctx||"");if(AIQC[k])return AIQC[k];if(!aiReady()||!n)return null;
+ try{const t=await aiCall([{role:"user",content:`为下面这个商品写一条图片搜索关键词，用来在网上（阿根廷零售网站，如 Rappi、超市网店）找到这个商品本身的包装照片。
+商品：${n}${ctx?"\n所属：「"+ctx+"」":""}
+要求：用西班牙语/商品原文；包含品牌和关键规格；去掉对搜图无用的内部代码（如 KS、RCB、SOF 这类缩写可改成 atado/box 等常见说法）；不超过 8 个词。只输出关键词本身，不要引号和解释。`}],60);
+  const q=String(t||"").split("\n")[0].replace(/^["'「“]+|["'」”]+$/g,"").trim();if(q&&q.length<=90){AIQC[k]=q;return q}}catch(e){}return null}
 let PWL=[];
-async function picWebUI(q){q=String(q||"").trim()||picWebQ(PM.n);
+async function picWebUI(q){q=String(q||"").trim();let byAi=false;
+ if(!q&&aiReady()){modal(`<div class="mh">网上搜图 · ${esc(PM.n||"无名称商品")}</div><div class="mt">⏳ AI 生成搜索词…</div>`);const a=await aiImgQuery(PM.n,srcNameOf(PM.n)||(cur().cats[PM.ci]||{}).name);if(a){q=a;byAi=true}}
+ q=q||picWebQ(PM.n);
  modal(`<div class="mh">网上搜图 · ${esc(PM.n||"无名称商品")}</div><input class="sq" id="pwq" style="border:1px solid #e3d8c8;margin:0 0 6px" value="${esc(q)}" placeholder="换个关键词" onkeydown="if(event.key=='Enter')picWebUI(this.value)"><div class="mt" id="pwinfo">⏳ 搜索中…</div><div id="pwl" class="pgrid"></div><div class="mb2"><button class="g" onclick="picModal(PM.ci,PM.i)">返回</button><button class="g" onclick="picWebUI($('pwq').value)">重新搜索</button></div>`);
  const arr=await webImgSearch(q);if(!$("pwl"))return;
  if(arr===null){$("pwinfo").innerHTML='<span style="color:#c0392b">网上搜图失败，请检查网络后重试</span>';return}
  PWL=arr.filter(x=>x.t||x.u).filter(x=>!x.w||!x.h||(x.w/x.h>0.4&&x.w/x.h<2.5)).slice(0,30);
- $("pwinfo").textContent=PWL.length?"找到 "+PWL.length+" 张，点一张设为商品图片（会下载保存到本机）":"没找到，换个关键词试试";
+ $("pwinfo").textContent=(byAi?"🤖 AI 搜索词 · ":"")+(PWL.length?"找到 "+PWL.length+" 张，点一张设为商品图片（会下载保存到本机）":"没找到，换个关键词试试");
  $("pwl").innerHTML=PWL.map((x,i)=>`<button class="pxc" onclick="picWebPick(${i})"><img src="${esc(x.t||x.u)}" loading="lazy" onerror="this.parentNode.remove()"><small>${esc((x.s||"").replace(/^www\./,"").slice(0,24))}${x.w?" · "+x.w+"×"+x.h:""}</small></button>`).join("")}
 async function picWebPick(i){const x=PWL[i];if(!x)return;toast("下载图片…");let d=await webImgData(x.u);if(!d&&x.t)d=await webImgData(x.t);
  if(!d){toast("⚠ 这张下载失败，换一张试试");return}PICS[PM.k]={d};if(picSave()){closeModal();renderEdit();toast("已设置图片")}}
@@ -1290,11 +1298,18 @@ function webImgRank(arr,brand,name){const bw=skey(brand||"").split(" ").filter(w
   let sc=hit*3;bw.forEach(w=>{if(t.includes(w))sc+=2});
   if(RETAIL.test(x.s||"")||RETAIL.test(x.u))sc+=3;if(x.w>=500&&x.h>=500)sc+=2;else if(x.w&&x.w<250)sc-=3;
   const ar=x.w&&x.h?x.w/x.h:1;if(ar>0.45&&ar<2.2)sc+=1;else sc-=3;return{x,sc}}).filter(r=>r.sc>=5).sort((a,b)=>b.sc-a.sc)}
-async function webImgFor(it){const nm=it.p.n,q=[it.brand&&!skey(nm).includes(skey(it.brand))?it.brand:"",nm,it.kind||""].join(" ").replace(/\s+/g," ").trim();
- const arr=await webImgSearch(q);if(arr===null)return{err:1};const r=webImgRank(arr,it.brand,nm);return{list:r.slice(0,8),best:r[0]||null,q}}
+async function webImgFor(it){const nm=it.p.n,q0=[it.brand&&!skey(nm).includes(skey(it.brand))?it.brand:"",nm,it.kind||""].join(" ").replace(/\s+/g," ").trim(),q=(it.p.loc||!it.brand?await aiImgQuery(nm,it.p.loc||it.kind||""):null)||q0;it.webQ=q;
+ const arr=await webImgSearch(q);if(arr===null)return{err:1};const r=webImgRank(arr,it.brand,nm);return{list:r.length?r.slice(0,8):arr.slice(0,8).map(x=>({x})),best:r[0]||(arr[0]?{x:arr[0]}:null),q,loose:!r.length}}
 async function webImgData(u){try{const r=await fetch("api/fetchimg?u="+encodeURIComponent(u));if(!r.ok)return null;const b=await r.blob();return await new Promise(res=>{const f=new FileReader();f.onload=()=>res(String(f.result));f.readAsDataURL(b)})}catch(e){return null}}
 async function aiFindWeb(it){if((!it.fresh&&!(it.p&&!it.p.t&&!it.p.img))||it.webTried||!NATIVE)return it;it.webTried=1;const r=await webImgFor(it);
  if(r.err){it.webErr=1;return it}if(r.best){it.web=r.best.x;it.webAlt=r.list.map(z=>z.x)}else it.webMiss=1;return it}
+let AIMP=-1;
+async function aiMorePics(i){const h=AIR.items[i];if(!h)return;AIMP=i;const q=h.webQ||(await aiImgQuery(h.p.n,h.p.loc||""))||h.p.n;
+ modal(`<div class="mh">选图 · ${esc(h.p.n)}</div><input class="sq" id="pwq" style="border:1px solid #e3d8c8;margin:0 0 6px" value="${esc(q)}" onkeydown="if(event.key=='Enter')aiMoreGo(this.value)"><div class="mt" id="pwinfo">⏳ 搜索中…</div><div id="pwl" class="pgrid"></div><div class="mb2"><button class="g" onclick="aiPanel()">返回</button><button class="g" onclick="aiMoreGo($('pwq').value)">重新搜索</button></div>`);aiMoreGo(q)}
+async function aiMoreGo(q){const arr=await webImgSearch(q);if(!$("pwl"))return;if(arr===null){$("pwinfo").textContent="网上搜图失败";return}
+ PWL=arr.filter(x=>x.t||x.u).slice(0,30);$("pwinfo").textContent="点一张作为这个商品的图片";
+ $("pwl").innerHTML=PWL.map((x,j)=>`<button class="pxc" onclick="aiMorePick(${j})"><img src="${esc(x.t||x.u)}" loading="lazy" onerror="this.parentNode.remove()"><small>${esc((x.s||"").replace(/^www\./,"").slice(0,24))}</small></button>`).join("")}
+function aiMorePick(j){const h=AIR.items[AIMP],x=PWL[j];if(!h||!x)return;h.web=x;h.webData=null;h.webAlt=[x,...(h.webAlt||[]).filter(z=>z.u!=x.u)];h.on=true;aiPanel()}
 function aiNextWeb(i){const h=AIR.items[i];if(!h||!h.webAlt||h.webAlt.length<2)return;const k=h.webAlt.findIndex(z=>z.u==(h.web&&h.web.u));h.web=h.webAlt[(k+1)%h.webAlt.length];aiPanel()}
 let AIR=null;
 /* ================= AI 文字搜索：按描述/问题找商品，再去官网与网上找图 ================= */
@@ -1351,7 +1366,7 @@ async function aiAddText(i){const t=AIR.chips[i];if(!t)return;AIR.chips.splice(i
  await aiResolve(it,catAt(cur(),AIR.ci));it.s=it.shop?it.s:100;if(it.fresh){AIR.msg="去网上找商品图…";aiPanel();await aiFindWeb(it)}AIR.busy=0;AIR.msg="";AIR.items=AIR.items.filter((h,j,a)=>a.findIndex(y=>y.p.k==h.p.k)==j);aiPanel()}
 function aiThumb(h){return h.p.img?h.p.img:h.p.t?picSrc(h.p.t):(h.web?h.web.t:(AIR.photo||""))}
 function aiPanel(){const r=AIR;if(!r)return;const c=r.ci>=0&&cur().cats[r.ci]?cur().cats[r.ci]:{...NOCAT,name:"自动分类"};
- const rows=r.items.map((h,i)=>`<label class="aiit"><input type="checkbox" ${h.on?"checked":""} onchange="AIR.items[${i}].on=this.checked;aiPanel()"><img src="${esc(aiThumb(h))}" loading="lazy"><span class="ain"><b>${esc(h.p.n)}</b>${h.info?`<small style="opacity:.85">${esc(h.info)}</small>`:""}<small>${h.fresh?(h.web?"🌐 网上找到图 · 将新建商品"+((h.webAlt||[]).length>1?"（<u onclick=\"event.preventDefault();aiNextWeb("+i+")\">换一张</u>）":""):(h.webErr||h.shopErr?"⚠ 联网搜索失败 · 将新建商品，图用你的照片":"⚠ 网上没找到图 · 将新建商品，图用你的照片")):(h.shop?"✅ 官网搜到 · 把握 ":(h.p.loc?"📂 本地"+h.p.loc+(h.web?" · 🌐 网上找到图":""):(h.ai?(AIR.q?"AI 推荐":"视觉模型"):(AIR.q?"官方目录":"标签文字")))+" · 把握 ")+(h.fresh?"":Math.min(100,h.s))}</small></span><span class="aiq"><button onclick="event.preventDefault();AIR.items[${i}].qty=Math.max(1,AIR.items[${i}].qty-1);aiPanel()">−</button><i>${h.qty}</i><button onclick="event.preventDefault();AIR.items[${i}].qty++;aiPanel()">+</button></span></label>`).join("");
+ const rows=r.items.map((h,i)=>`<label class="aiit"><input type="checkbox" ${h.on?"checked":""} onchange="AIR.items[${i}].on=this.checked;aiPanel()"><img src="${esc(aiThumb(h))}" loading="lazy"><span class="ain"><b>${esc(h.p.n)}</b>${h.info?`<small style="opacity:.85">${esc(h.info)}</small>`:""}<small>${h.fresh?(h.web?"🌐 网上找到图 · 将新建商品"+((h.webAlt||[]).length>1?"（<u onclick=\"event.preventDefault();aiNextWeb("+i+")\">换一张</u> · <u onclick=\"event.preventDefault();aiMorePics("+i+")\">更多</u>）":""):(h.webErr||h.shopErr?"⚠ 联网搜索失败 · 将新建商品，图用你的照片":"⚠ 网上没找到图 · 将新建商品，图用你的照片")):(h.shop?"✅ 官网搜到 · 把握 ":(h.p.loc?"📂 本地"+h.p.loc+(h.web?" · 🌐 网上找到图（<u onclick=\"event.preventDefault();aiMorePics("+i+")\">选图</u>）":""):(h.ai?(AIR.q?"AI 推荐":"视觉模型"):(AIR.q?"官方目录":"标签文字")))+" · 把握 ")+(h.fresh?"":Math.min(100,h.s))}</small></span><span class="aiq"><button onclick="event.preventDefault();AIR.items[${i}].qty=Math.max(1,AIR.items[${i}].qty-1);aiPanel()">−</button><i>${h.qty}</i><button onclick="event.preventDefault();AIR.items[${i}].qty++;aiPanel()">+</button></span></label>`).join("");
  const chips=(r.chips||[]).map((t,i)=>`<button class="aichip" onclick="aiAddText(${i})">＋ ${esc(t)}</button>`).join("");
  const n=r.items.filter(h=>h.on).length,nf=r.items.filter(h=>h.on&&h.fresh).length;
  modal(`<div class="mh">${r.title||"拍照识别"} · 加入 ${esc(c.name||"该类")}</div>${r.q?`<div class="mt">问题：${esc(r.q)}</div>`:""}${r.src?`<img src="${esc(r.src)}" style="width:100%;max-height:22vh;object-fit:contain;border-radius:10px;margin:4px 0">`:""}
