@@ -532,11 +532,16 @@ const isTyping=()=>{const a=document.activeElement;return a&&/INPUT|TEXTAREA|SEL
 function tcName(s){s=String(s).replace(/\s+/g," ").trim();if(!s)return s;
  if(s===s.toUpperCase()&&s!==s.toLowerCase()){const small=new Set(["y","de","del","la","el","en","con","e","o","a","las","los"]);return s.toLowerCase().split(" ").map((w,i)=>(i&&small.has(w))?w:w.charAt(0).toUpperCase()+w.slice(1)).join(" ")}
  return s.charAt(0).toUpperCase()+s.slice(1)}
-function vocabFind(n){const k=norm(n);return S.vocab.find(v=>norm(v)==k)||null}
-function fixName(s){s=tcName(s);return s?(vocabFind(s)||s):s}
-function addVocab(n){const k=norm(n);if(!k)return;if(!vocabFind(n))S.vocab.push(n)}
+function vocAll(){const out=[],seen=new Set();if(typeof SRCS!="undefined")SRCS.list.forEach(x=>{const d=srcData(x.id);if(d)Object.values(d.cats).forEach(l=>l.forEach(it=>{const k=norm(it[0]);if(!seen.has(k)){seen.add(k);out.push(it[0])}}))});(S.vocab||[]).forEach(v=>{const k=norm(v);if(!seen.has(k)){seen.add(k);out.push(v)}});return out}
+function vocabFind(n){const k=norm(n);return vocAll().find(v=>norm(v)==k)||null}
+function fixName(s){s=tcName(s);if(!s)return s;const k=skey(s);if(typeof SRCS!="undefined"){for(const x of SRCS.list){const d=srcData(x.id);if(!d)continue;for(const l of Object.values(d.cats))for(const it of l)if(skey(it[0])==k)return it[0]}}return vocabFind(s)||s}
+/* 品名库去重：和 Saphirus 源重复（忽略大小写/重音/空格）的以 Saphirus 源为准，从品名库移除；品名库内部同名也只留一条 */
+function vocDedupe(){if(!S||!S.vocab)return 0;const ss=vocSrcSet(),seen=new Set(),before=S.vocab.length;
+ S.vocab=S.vocab.filter(v=>{const k=skey(v);if(!k||ss.has(k)||seen.has(k))return false;seen.add(k);return true});
+ const n=before-S.vocab.length;if(n){try{localStorage.setItem("pedidos_vocab_bak",JSON.stringify({t:Date.now(),n}))}catch(e){}}return n}
+function addVocab(n){const k=norm(n);if(!k)return;if(!vocabFind(n))S.vocab.push(n)}   /* vocabFind 已含 Saphirus 源：源里有的不再写进品名库 */
 function lev(a,b){const m=a.length,n=b.length;if(Math.abs(m-n)>2)return 9;let p=[...Array(n+1).keys()];for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]==b[j-1]?0:1));p=c}return p[n]}
-function fuzzy(n,lim){const k=norm(n);if(k.length<4)return[];const r=[];S.vocab.forEach(v=>{const kv=norm(v);if(kv==k)return;const d=lev(k,kv);if(d<=(k.length<=5?1:2))r.push([d,v])});r.sort((a,b)=>a[0]-b[0]);return r.slice(0,lim||3).map(x=>x[1])}
+function fuzzy(n,lim){const k=norm(n);if(k.length<4)return[];const r=[];vocAll().forEach(v=>{const kv=norm(v);if(kv==k)return;const d=lev(k,kv);if(d<=(k.length<=5?1:2))r.push([d,v])});r.sort((a,b)=>a[0]-b[0]);return r.slice(0,lim||3).map(x=>x[1])}
 
 /* ---------- 示例 / 空白 ---------- */
 function sample(){
@@ -592,10 +597,10 @@ async function poll(){
 }
 function rerender(){if(MOPEN||isTyping())return;route(true)}
 async function boot(){
- S=loadLocal();route();
+ S=loadLocal();{const n=vocDedupe();if(n){lsSave();setTimeout(()=>toast("品名库与 Saphirus 源重复的 "+n+" 条已去重（以 Saphirus 源为准）"),800)}}route();
  try{const r=await fetch("api/data",{cache:"no-store"});
   if(r.ok){const j=fix(await r.json());SERVER=true;
-   if(j.fresh){REV=0;push()}else{REV=j.rev||0;S=j;lsSave()}
+   if(j.fresh){REV=0;push()}else{REV=j.rev||0;S=j;if(vocDedupe()){lsSave();save()}else lsSave()}
    route();setInterval(poll,4000)}}catch(e){}
 }
 
@@ -731,7 +736,7 @@ function renderEdit(){
  syncUndo();
 }
 
-/* ================= 搜索订货：品名库 + 商品源 合并去重，常用优先，拼写容错 ================= */
+/* ================= 搜索订货：品名库 + Saphirus 源 合并去重，常用优先，拼写容错 ================= */
 let QCMAP={},JUMP=false,CAND=[],SF=false;
 function refreshCand(){const o=cur();if(!o||!$("cbox"))return;const nq=norm(Q),c=o.cats[QC];let exact=false;if(c)c.items.forEach(it=>{if(nq&&norm(it.n)==nq)exact=true});
  $("cbox").innerHTML=(o.cats.length&&c&&(nq||SF))?candPanel(o,QC,nq,exact):""}
@@ -747,7 +752,7 @@ function candidates(o,ci,nq){
  const q=skey(nq),c=o.cats[ci],key=catKeyFor(c),have=new Map();c.items.forEach(i=>have.set(skey(i.n),i));
  const M=new Map();
  const add=(n,src,price,hasCat)=>{const k=skey(n);if(!k)return;let e=M.get(k);if(!e){e={n,src:0,price:null,hasCat:false};M.set(k,e)}
-  if(src==1){e.src|=1;e.n=n}else{e.src|=2;if(!e.src||(e.src&1)==0)e.n=e.n||n}
+  if(src==1){e.src|=1;if(!(e.src&2))e.n=n}else{e.src|=2;e.n=n}
   if(price!=null&&hasCat){e.price=price;e.hasCat=true}else if(src==2&&hasCat===false&&!e.hasCat){}};
  S.vocab.forEach(v=>add(v,1));
  SRCS.list.forEach(s=>{const d=srcData(s.id);if(!d)return;Object.entries(d.cats).forEach(([k,l])=>l.forEach(it=>add(it[0],2,it[1]||null,k==key)))});
@@ -760,7 +765,7 @@ function candPanel(o,ci,nq,exact){
  CAND=candidates(o,ci,Q);const c=o.cats[ci];
  let h="";
  if(nq&&!exact&&!CAND.some(x=>skey(x.n)==skey(Q)))h+=`<button class="cnew" onclick="quick(${ci})">＋ 新增 “${esc(Q.trim())}” 到 ${esc(c.name||"未命名")}</button>`;
- h+=CAND.map((x,i)=>`<button class="cb" style="--c:${c.color}" onclick="candAdd(${i})"><b>${hl(x.n,Q)}</b><small>${x.ex?"本单·数量0":(x.src&2?"商品源":"品名库")}${x.price&&o.price?" · "+esc(o.cur)+fmt(x.price):""}</small></button>`).join("");
+ h+=CAND.map((x,i)=>`<button class="cb" style="--c:${c.color}" onclick="candAdd(${i})"><b>${hl(x.n,Q)}</b><small>${x.ex?"本单·数量0":(x.src&2?"Saphirus 源":"品名库")}${x.price&&o.price?" · "+esc(o.cur)+fmt(x.price):""}</small></button>`).join("");
  if(nq)h+=`<button class="cnew" style="background:#7a5cc7" onclick="qBlur();const t=Q;Q='';$('q').value='';aiAsk(${ci},t,${CAND.length?1:0})">🔎 ${CAND.length?"联网 / AI 搜索":"本地没有 · 联网 / AI 搜索"}“${esc(Q.trim())}”</button>`;
  if(!h)return nq?`<div class="cand"><div class="ct">没有匹配的品名</div></div>`:"";
  return `<div class="cand ${nq?"":"row"}"><div class="ct">${nq?"点一下加入 "+esc(c.name||"")+"（数量 1）":"常用 · 点一下加入 "+esc(c.name||"")+" →"}</div><div class="cw">${h}</div></div>`}
@@ -827,7 +832,7 @@ function quick(ci){qBlur();const n=fixName(Q);dr(ci).n=n;dr(ci).q=1;Q="";$("q").
 function sug(ci){const v=dr(ci).n,k=norm(v),box=$("sg"+ci);if(!box)return;
  if(!k){box.innerHTML="";return}
  const c=cur().cats[ci],have=new Set(c.items.map(i=>norm(i.n)));
- SG[ci]=S.vocab.filter(x=>{const kx=norm(x);return kx.includes(k)&&kx!=k&&!have.has(kx)}).sort((a,b)=>(norm(a).startsWith(k)?0:1)-(norm(b).startsWith(k)?0:1)||a.length-b.length).slice(0,6);
+ SG[ci]=vocAll().filter(x=>{const kx=norm(x);return kx.includes(k)&&kx!=k&&!have.has(kx)}).sort((a,b)=>(norm(a).startsWith(k)?0:1)-(norm(b).startsWith(k)?0:1)||a.length-b.length).slice(0,6);
  box.innerHTML=SG[ci].map((x,i)=>`<button onmousedown="event.preventDefault()" onclick="pickSug(${ci},${i})">${esc(x)}</button>`).join("")}
 function pickSug(ci,i){dr(ci).n=SG[ci][i];$("an"+ci).value=SG[ci][i];sug(ci);addItem(ci)}
 
@@ -997,7 +1002,7 @@ async function confirmSheet(){
  }else{closeModal();dlBlob(blob,name);toast("已生成表格："+name)}}
 
 /* ================= 官方目录导入 ================= */
-/* ================= 外挂商品源 ================= */
+/* ================= 外挂 Saphirus 源 ================= */
 const SRC_KEY="pedidos_sources_v1",SRC_DEF="https://raw.githubusercontent.com/leohenshuai/pedidos-ios/main/sources/saphirus.json";
 let SRCS=(()=>{try{const x=JSON.parse(localStorage.getItem(SRC_KEY));if(x&&Array.isArray(x.list)&&x.list.length)return x}catch(e){}return{list:[{id:"saphirus",name:"Saphirus",url:SRC_DEF}],cache:{},sel:"saphirus"}})();
 function srcSave(){try{localStorage.setItem(SRC_KEY,JSON.stringify(SRCS))}catch(e){}}
@@ -1011,14 +1016,14 @@ function srcUse(id){const s=SRCS.list.find(x=>x.id===id)||SRCS.list[0];SRCS.sel=
 function srcPick(id){srcUse(id);CSEL={};catRender();srcAuto()}
 async function srcAuto(){const s=srcCur();try{const old=(srcData(s.id)||{}).date,d=await srcFetch(s);if(SRCS.sel===s.id&&$("cl")){if(d.date!==old)CSEL={};OFFICIAL=d;catRender()}}catch(e){if($("cinfo")&&!srcData(s.id))$("cinfo").innerHTML+=`<br><span style="color:#c0392b">获取失败：${esc(e.message)}（请检查网络或网址）</span>`}}
 function srcModal(){
- modal(`<div class="mh">商品源管理</div><div class="mt">商品源是一个网址，内容为 JSON：<code>{"src":"名称","date":"日期","cats":{"AROMA":[["品名",价格,0]],...}}</code>（每项 [名称, 参考价, 是否60ml(0/1)]）。可添加多个来源，在官方目录导入里切换。</div><div id="sl"></div>
+ modal(`<div class="mh">Saphirus 源管理</div><div class="mt">Saphirus 源是一个网址，内容为 JSON：<code>{"src":"名称","date":"日期","cats":{"AROMA":[["品名",价格,0]],...}}</code>（每项 [名称, 参考价, 是否60ml(0/1)]）。可添加多个来源，在官方目录导入里切换。</div><div id="sl"></div>
  <div style="margin:8px 0"><input class="sq" id="sn" style="border:1px solid #e3d8c8;margin:0 0 6px" placeholder="名称，如 其他供应商"><input class="sq" id="su" style="border:1px solid #e3d8c8;margin:0 0 6px" placeholder="https://…/xxx.json"></div>
  <div class="mb2"><button class="g" onclick="closeModal()">关闭</button><button onclick="srcAdd()">添加并获取</button></div>`);srcList()}
 function srcRows(){return SRCS.list.map(s=>{const d=srcData(s.id);return `<div class="srow ${SRCS.sel===s.id?"sel":""}"><span style="flex:1;min-width:0" onclick="srcSel('${s.id}')"><b>${esc(s.name)}</b><br><small style="color:#999;word-break:break-all">${d?srcCount(d)+" 项 · "+esc(d.date||""):"未获取"}</small></span><button onclick="srcUpd('${s.id}')">更新</button>${s.id==="saphirus"?"":`<button onclick="srcDel('${s.id}')" style="color:#c0392b">删除</button>`}</div>`}).join("")}
 function srcList(){const r=srcRows();if($("sl"))$("sl").innerHTML=r;if($("sl2"))$("sl2").innerHTML=r;if(typeof srcPageList=="function")srcPageList()}
 function srcSel(id){srcUse(id);srcList()}
 async function srcUpd(id){const s=SRCS.list.find(x=>x.id===id);toast("获取中…");try{const d=await srcFetch(s);toast("已更新："+srcCount(d)+" 项");if(SRCS.sel===id)OFFICIAL=d}catch(e){toast("失败："+e.message)}srcList()}
-function srcDel(id){if(!confirm("删除这个商品源？"))return;SRCS.list=SRCS.list.filter(x=>x.id!==id);delete SRCS.cache[id];if(SRCS.sel===id)SRCS.sel="saphirus";srcSave();srcList()}
+function srcDel(id){if(!confirm("删除这个 Saphirus 源？"))return;SRCS.list=SRCS.list.filter(x=>x.id!==id);delete SRCS.cache[id];if(SRCS.sel===id)SRCS.sel="saphirus";srcSave();srcList()}
 async function srcAdd(){const m=$("md").style.display=="flex",I=m?["sn","su"]:["pn","pu"];const n=$(I[0]).value.trim(),u=$(I[1]).value.trim();if(!n||!/^https?:\/\//i.test(u)){toast("请填写名称和 http(s) 网址");return}
  const s={id:"s"+Date.now().toString(36),name:n,url:u};toast("获取中…");try{await srcFetch(s);SRCS.list.push(s);srcSave();toast("已添加："+n);$(I[0]).value=$(I[1]).value=""}catch(e){toast("失败："+e.message)}srcList()}
 function homeCat(){const L=S.orders.filter(o=>!o.del);if(!L.length){toast("请先新建一个订单");return}
@@ -1183,12 +1188,12 @@ function aiPool(cat){const x=picIdx(),f=x&&cat?picCatFilter(cat):null,out=[],see
  localPool(cat).forEach(p=>{if(seen.has(p.k))return;seen.add(p.k);out.push(p)});
  if(x)x.list.forEach(o=>{if(f&&!f(o))return;const k=skey(o.n);if(seen.has(k)){const e=out.find(p=>p.k==k);if(e&&!e.t&&!e.img)e.t=o.t;return}seen.add(k);out.push({n:o.n,k,core:o.core,t:o.t,off:1})});
  return out}
-/* 本地：本单品项 > 商品源 > 品名库（带上已设置的图片） */
+/* 本地：本单品项 > Saphirus 源 > 品名库（带上已设置的图片） */
 function localPool(cat){const o=cur(),out=[],seen=new Set();
  const add=(n,src)=>{const k=skey(n);if(!k||seen.has(k))return;seen.add(k);const im=cat?picUrl(picOf(n,cat)):"";out.push({n,k,core:k,t:null,img:im||"",loc:src})};
  if(cat)cat.items.forEach(it=>it.n&&add(it.n,"本单"));
  if(o)o.cats.forEach(c=>c.items.forEach(it=>it.n&&add(it.n,"本单")));
- SRCS.list.forEach(sr=>{const d=srcData(sr.id);if(!d)return;Object.values(d.cats).forEach(l=>l.forEach(it=>add(it[0],"商品源")))});
+ SRCS.list.forEach(sr=>{const d=srcData(sr.id);if(!d)return;Object.values(d.cats).forEach(l=>l.forEach(it=>add(it[0],"Saphirus 源")))});
  (S.vocab||[]).forEach(v=>add(v,"品名库"));
  return out}
 /* 本地关键词搜索：每个词都要命中 */
@@ -1262,7 +1267,7 @@ function aiNextWeb(i){const h=AIR.items[i];if(!h||!h.webAlt||h.webAlt.length<2)r
 let AIR=null;
 /* ================= AI 文字搜索：按描述/问题找商品，再去官网与网上找图 ================= */
 function aiAskUI(ci){const c=cur().cats[ci];
- modal(`<div class="mh">搜索商品 · ${esc(c.name||"该类")}</div><div class="mt">先查本地（本单、商品源、品名库、官方目录），没有再联网 / AI。可以输入品名，也可以用一句话描述，比如「薰衣草味的喷雾」「适合卧室的扩香」「Saphirus 新出的香味」。${aiReady()?"":"未配置 API：只按关键词搜官网和官方目录。"}</div>
+ modal(`<div class="mh">搜索商品 · ${esc(c.name||"该类")}</div><div class="mt">先查本地（本单、Saphirus 源、品名库、官方目录），没有再联网 / AI。可以输入品名，也可以用一句话描述，比如「薰衣草味的喷雾」「适合卧室的扩香」「Saphirus 新出的香味」。${aiReady()?"":"未配置 API：只按关键词搜官网和官方目录。"}</div>
  <textarea id="aiq" rows="3" style="width:100%;box-sizing:border-box;margin:6px 0;font-size:16px;border-radius:10px;padding:8px"></textarea>
  <div class="mb2"><button class="g" onclick="closeModal()">取消</button><button onclick="aiAsk(${ci},$('aiq').value)">搜索</button></div>`);setTimeout(()=>{const t=$("aiq");t&&t.focus()},80)}
 async function aiAskModel(q,pool){const names=pool.slice(0,400).map(p=>p.n).join("\n");
@@ -1425,16 +1430,16 @@ function vocSrcSet(){const s=new Set();SRCS.list.forEach(x=>{const d=srcData(x.i
 function vocFilter(f){VF=f;vocPageList()}
 function vocPageList(){if(!$("vpl"))return;const k=norm($("sq2")?$("sq2").value:"");const ss=vocSrcSet();
  const tag=v=>ss.has(skey(v));let nS=0;S.vocab.forEach(v=>{if(tag(v))nS++});
- $("vf").innerHTML=[["all","全部 "+S.vocab.length],["src","商品源有 "+nS],["man","仅手动 "+(S.vocab.length-nS)]].map(([f,t])=>`<button class="${VF==f?'on':''}" onclick="vocFilter('${f}')">${t}</button>`).join("");
+ $("vf").innerHTML=[["all","全部 "+S.vocab.length],["src","Saphirus 源有 "+nS],["man","仅手动 "+(S.vocab.length-nS)]].map(([f,t])=>`<button class="${VF==f?'on':''}" onclick="vocFilter('${f}')">${t}</button>`).join("");
  const l=[...S.vocab].sort((a,b)=>norm(a).localeCompare(norm(b))).filter(v=>(!k||norm(v).includes(k))&&(VF=="all"||(VF=="src")==tag(v)));
  $("sCnt").textContent=S.vocab.length+" 条";
- $("vpl").innerHTML=l.slice(0,300).map(v=>`<div class="srow"><span style="flex:1">${esc(v)} <small style="color:${tag(v)?"#b07a3a":"#999"}">${tag(v)?"商品源":"手动"}</small></span><button style="color:#c0392b" onclick="vocPageDel(${S.vocab.indexOf(v)})">删除</button></div>`).join("")+(l.length>300?`<div class="hint" style="text-align:center;color:#aaa;padding:6px">还有 ${l.length-300} 条，搜索缩小范围</div>`:"")||`<div class="hint" style="padding:16px;text-align:center;color:#bbb">没有匹配</div>`}
+ $("vpl").innerHTML=l.slice(0,300).map(v=>`<div class="srow"><span style="flex:1">${esc(v)} <small style="color:${tag(v)?"#b07a3a":"#999"}">${tag(v)?"Saphirus 源":"手动"}</small></span><button style="color:#c0392b" onclick="vocPageDel(${S.vocab.indexOf(v)})">删除</button></div>`).join("")+(l.length>300?`<div class="hint" style="text-align:center;color:#aaa;padding:6px">还有 ${l.length-300} 条，搜索缩小范围</div>`:"")||`<div class="hint" style="padding:16px;text-align:center;color:#bbb">没有匹配</div>`}
 function vocPageAdd(){const e=$("vnew"),n=fixName(e.value);if(!n)return;if(vocabFind(n)){toast("已有这个品名");return}addVocab(n);save();e.value="";vocPageList();toast("已添加："+n)}
 function vocPageDel(i){const n=S.vocab[i];if(n==null)return;if(!confirm("从品名库删除「"+n+"」？\n（只影响输入提示，不改已有订单）"))return;S.vocab.splice(i,1);save();vocPageList();toast("已删除："+n)}
 function setPage(){const L=S.orders.filter(o=>!o.del).length,sc=srcCur();
- $("setp").innerHTML=`<div class="pt">商品源</div><div class="card">
- <button class="setb" onclick="srcModal()"><span>🏷</span><span style="flex:1">商品源管理</span><small style="color:#999">${SRCS.list.length} 个源</small></button>
- <button class="setb" onclick="homeCat()"><span>📥</span><span style="flex:1">从商品源导入到订单</span><small style="color:#999">${esc(sc.name)}</small></button></div>
+ $("setp").innerHTML=`<div class="pt">Saphirus 源</div><div class="card">
+ <button class="setb" onclick="srcModal()"><span>🏷</span><span style="flex:1">Saphirus 源管理</span><small style="color:#999">${SRCS.list.length} 个源</small></button>
+ <button class="setb" onclick="homeCat()"><span>📥</span><span style="flex:1">从 Saphirus 源导入到订单</span><small style="color:#999">${esc(sc.name)}</small></button></div>
  <div class="pt">外观与反馈</div><div class="card">
  <div class="setb" style="flex-wrap:wrap"><span>🌗</span><span style="flex:1">外观</span><div class="seg3" style="display:flex;gap:4px">${[["auto","跟随系统"],["light","浅色"],["dark","深色"]].map(([k,t])=>`<button class="${themePref()==k?"on":""}" onclick="setThemePref('${k}')">${t}</button>`).join("")}</div></div>
  <button class="setb" onclick="setFxPref('haptic',${PREF("haptic","1")!="1"})"><span>📳</span><span style="flex:1">触感反馈（振动）</span><small style="color:${PREF("haptic","1")=="1"?"#3aa655":"#999"}">${PREF("haptic","1")=="1"?"已开":"已关"}</small></button>
