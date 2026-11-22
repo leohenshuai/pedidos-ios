@@ -509,7 +509,7 @@ const LANG={
  zh:{p1:s=>s?"订货给":"",big:"订货单",p2:s=>s?"订 货 单":"",date:"日期",total:n=>"合计："+n,head:s=>s?"订货单 · "+s:"订货单",amount:"预计金额"}};
 const NATIVE=!!window.__NATIVE__;
 const APP_VERSION="2.8 · 2026-11-04";
-let S=null,Q="",QC=-1,PQ="",HQ="",HF="all",HR=[],draft={},SG={},SERVER=false,REV=0,tt=null,MI=null,MT=null,DCB=null,PCV=null,pushT=null,pending=false,pushing=false,dirty=false;
+let QAUTO=false,S=null,Q="",QC=-1,PQ="",HQ="",HF="all",HR=[],draft={},SG={},SERVER=false,REV=0,tt=null,MI=null,MT=null,DCB=null,PCV=null,pushT=null,pending=false,pushing=false,dirty=false;
 const $=id=>document.getElementById(id);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const norm=s=>String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
@@ -706,11 +706,11 @@ function setSt(k){mut(o=>{o.status=k})}
 function togglePrice(){mut(o=>{o.price=!o.price})}
 function renderEdit(){
  const o=cur();if(!o){goHome();return}
- if(o.cats.length&&(QC<0||QC>=o.cats.length))QC=Math.min(QCMAP[o.id]||0,o.cats.length-1);
+ if(QC>=o.cats.length||(QC<0&&!QAUTO)){const m=QCMAP[o.id];QC=m===undefined?(o.cats.length?0:-1):Math.min(m,o.cats.length-1)}QAUTO=false;
  if(JUMP){JUMP=false;const k=norm(Q);if(k){const j=o.cats.findIndex(c=>c.items.some(i=>norm(i.n)==k));if(j>=0)QC=j}}
- if(o.cats.length)QCMAP[o.id]=QC;
- $("qc").innerHTML=o.cats.length>1?o.cats.map((c,i)=>`<button class="${QC==i?'on':''}" style="--c:${c.color}" onclick="setQC(${i})">${esc(c.name||"未命名")}</button>`).join(""):"";
- $("q").placeholder=o.cats.length?"搜索品名来订货"+(o.cats.length>1?"（加入 "+(o.cats[QC].name||"该类")+"）":""):"请先在下方新增一个种类";
+ if(!o.cats.length)QC=-1;QCMAP[o.id]=QC;
+ $("qc").innerHTML=o.cats.length?`<button class="${QC<0?'on':''}" onclick="QAUTO=true;setQC(-1)">✨ 自动分类</button>`+o.cats.map((c,i)=>`<button class="${QC==i?'on':''}" style="--c:${c.color}" onclick="setQC(${i})">${esc(c.name||"未命名")}</button>`).join(""):"";
+ $("q").placeholder=QC<0?"搜索品名来订货（自动分类）":"搜索品名来订货（加入 "+(o.cats[QC].name||"该类")+"）";
  const nq=norm(Q);let h="",anyMatch=false,exact=false;
  o.cats.forEach((c,ci)=>{
   if(QC>=0&&ci!=QC)return;
@@ -726,7 +726,7 @@ function renderEdit(){
   h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" placeholder="种类名（可留空）" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)">${c.items.length?`<button class="x" onclick="arm(this,()=>clearCatItems(${ci}),'清空?')">清空</button>`:""}<button class="x" onclick="${c.items.length?`arm(this,()=>delCat(${ci}),'删?')`:`delCat(${ci})`}">删</button></div><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${totTxt({...o,cats:[c]},"zh")}${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div><button class="addimg" onclick="addImgMenu(${ci})">📷 添加图片商品</button>
   </section>`;
  });
- $("cbox").innerHTML=(o.cats.length&&(nq||SF))?candPanel(o,QC,nq,exact):"";if(!o.cats.length)h=`<div class="card"><div class="hint">这个订单还没有种类，请先在下方新增一个种类。</div></div>`+h;
+ $("cbox").innerHTML=(nq||SF)?candPanel(o,QC,nq,exact):"";if(!o.cats.length)h=`<div class="card"><div class="hint">这个订单还没有种类。可以直接在上方搜索加商品，会按商品源的分类自动建种类（如 AROMA、MARLBORO）；也可以在下方新增种类。</div></div>`+h;
  $("list").innerHTML=h;
  {const hq=o.cats.some(c=>c.items.some(i=>i.q>0));$("clrBtn").style.display=hq?"":"none"}
  $("eTotal").textContent="共 "+totTxt(o,"zh")+(o.price&&amtO(o)?"":"")+(o.price&&amtO(o)?" · "+o.cur+fmt(amtO(o)):"");
@@ -738,8 +738,15 @@ function renderEdit(){
 
 /* ================= 搜索订货：品名库 + Saphirus 源 合并去重，常用优先，拼写容错 ================= */
 let QCMAP={},JUMP=false,CAND=[],SF=false;
-function refreshCand(){const o=cur();if(!o||!$("cbox"))return;const nq=norm(Q),c=o.cats[QC];let exact=false;if(c)c.items.forEach(it=>{if(nq&&norm(it.n)==nq)exact=true});
- $("cbox").innerHTML=(o.cats.length&&c&&(nq||SF))?candPanel(o,QC,nq,exact):""}
+const NOCAT={name:"",sub:"",color:"#999",items:[]};
+function catAt(o,ci){return o&&ci>=0&&o.cats[ci]?o.cats[ci]:NOCAT}
+function srcCatOf(n){const k=skey(n||"");if(!k)return"";for(const x of SRCS.list){const d=srcData(x.id);if(!d)continue;for(const [c,l] of Object.entries(d.cats))if(l.some(it=>skey(it[0])==k))return c}return""}
+/* 在 mut 内调用：ci 有效就用它；否则按品名所属商品源分类找/建种类 */
+function ensureCat(o,ci,n){if(ci>=0&&o.cats[ci])return o.cats[ci];const key=srcCatOf(n)||"GENERAL";
+ let i=o.cats.findIndex(c=>norm(c.name)==norm(key));if(i<0&&OFF_TARGET[key])i=offTargetIdx(o,key);if(i>=0)return o.cats[i];
+ const c={name:key,sub:{AROMA:"Aromatizante",TEXTIL:"Perfume para telas",DIFUSORES:"Difusores"}[key]||"",color:pickColor(o),items:[]};o.cats.push(c);return c}
+function refreshCand(){const o=cur();if(!o||!$("cbox"))return;const nq=norm(Q),c=catAt(o,QC);let exact=false;c.items.forEach(it=>{if(nq&&norm(it.n)==nq)exact=true});
+ $("cbox").innerHTML=(nq||SF)?candPanel(o,QC,nq,exact):""}
 const skey=s=>norm(s).replace(/\s*&\s*/g," y ").replace(/\s+/g," ").trim();
 function bumpUse(n){const k=skey(n);if(!k)return;S.uses=S.uses||{};const u=S.uses[k]||(S.uses[k]=[0,0]);u[0]++;u[1]=Date.now()}
 function useScore(n){const u=(S.uses||{})[skey(n)];if(!u)return 0;const d=(Date.now()-u[1])/864e5;return u[0]+Math.max(0,3-d/10)}
@@ -749,7 +756,7 @@ function matchScore(name,q){const n=skey(name);if(!q)return 1;if(n==q)return 100
  if(q.length>=4){const m=q.length>=7?2:1;if(lev(q,n)<=m||ws.some(w=>lev(q,w)<=m))return 25}
  return 0}
 function candidates(o,ci,nq){
- const q=skey(nq),c=o.cats[ci],key=catKeyFor(c),have=new Map();c.items.forEach(i=>have.set(skey(i.n),i));
+ const q=skey(nq),c=catAt(o,ci),key=catKeyFor(c),have=new Map();c.items.forEach(i=>have.set(skey(i.n),i));
  const M=new Map();
  const add=(n,src,price,hasCat)=>{const k=skey(n);if(!k)return;let e=M.get(k);if(!e){e={n,src:0,price:null,hasCat:false};M.set(k,e)}
   if(src==1){e.src|=1;if(!(e.src&2))e.n=n}else{e.src|=2;e.n=n}
@@ -762,16 +769,16 @@ function candidates(o,ci,nq){
  return out.slice(0,q?18:12)}
 function hl(n,nq){const q=norm(nq);if(!q)return esc(n);const i=norm(n).indexOf(q);if(i<0||norm(n).length!=n.length)return esc(n);return esc(n.slice(0,i))+"<mark>"+esc(n.slice(i,i+q.length))+"</mark>"+esc(n.slice(i+q.length))}
 function candPanel(o,ci,nq,exact){
- CAND=candidates(o,ci,Q);const c=o.cats[ci];
+ CAND=candidates(o,ci,Q);const c=catAt(o,ci),cn=ci<0?"（自动分类）":(c.name||"未命名");
  let h="";
- if(nq&&!exact&&!CAND.some(x=>skey(x.n)==skey(Q)))h+=`<button class="cnew" onclick="quick(${ci})">＋ 新增 “${esc(Q.trim())}” 到 ${esc(c.name||"未命名")}</button>`;
+ if(nq&&!exact&&!CAND.some(x=>skey(x.n)==skey(Q)))h+=`<button class="cnew" onclick="quick(${ci})">＋ 新增 “${esc(Q.trim())}” 到 ${esc(cn)}</button>`;
  h+=CAND.map((x,i)=>`<button class="cb" style="--c:${c.color}" onclick="candAdd(${i})"><b>${hl(x.n,Q)}</b><small>${x.ex?"本单·数量0":(x.src&2?(srcNameOf(x.n)||"商品源"):"品名库")}${x.price&&o.price?" · "+esc(o.cur)+fmt(x.price):""}</small></button>`).join("");
  if(nq)h+=`<button class="cnew" style="background:#7a5cc7" onclick="qBlur();const t=Q;Q='';$('q').value='';aiAsk(${ci},t,${CAND.length?1:0})">🔎 ${CAND.length?"跳过本地，联网 / AI 搜索":"本地没有 · 联网 / AI 搜索"}“${esc(Q.trim())}”</button>`;
  if(!h)return nq?`<div class="cand"><div class="ct">搜索范围</div>${ssrcChips()}<div class="ct">没有匹配的品名</div></div>`:"";
- return `<div class="cand ${nq?"":"row"}">${nq?`<div class="ct">搜索范围</div>`+ssrcChips():""}<div class="ct">${nq?"点一下加入 "+esc(c.name||"")+"（数量 1）":"常用 · 点一下加入 "+esc(c.name||"")+" →"}</div><div class="cw">${h}</div></div>`}
+ return `<div class="cand ${nq?"":"row"}">${nq?`<div class="ct">搜索范围</div>`+ssrcChips():""}<div class="ct">${nq?"点一下加入 "+esc(ci<0?cn:(c.name||""))+"（数量 1）":"常用 · 点一下加入 "+esc(ci<0?cn:(c.name||""))+" →"}</div><div class="cw">${h}</div></div>`}
 function qBlur(){SF=false;const q=$("q");if(q&&document.activeElement===q)q.blur()}
 function candAdd(i){const x=CAND[i],o=cur();if(!x||!o)return;qBlur();const ci=QC,k=skey(x.n);
- mut(o=>{const c=o.cats[ci],ex=c.items.find(it=>skey(it.n)==k);
+ mut(o=>{const c=ensureCat(o,ci,x.n),ex=c.items.find(it=>skey(it.n)==k);
   if(ex){ex.q=Math.max(1,ex.q+1)}else c.items.push({n:x.n,q:1,p:o.price&&x.price&&x.hasCat?x.price:null})});
  FX("add");addVocab(x.n);bumpUse(x.n);save();Q="";$("q").value="";JUST0.clear();renderEdit();toast("已加入："+x.n)}
 let SSRC=(()=>{try{return localStorage.getItem("pedidos_ssrc")||""}catch(e){return""}})();
@@ -833,7 +840,7 @@ function addItem(ci,force){
    if(a.startsWith("use:")){d.n=a.slice(4);addItem(ci,"ok")}else if(a=="keep")addItem(ci,"ok")});return}}
  mut(o=>{o.cats[ci].items.push({n,q,p:null})});addVocab(n);bumpUse(n);draft[ci]={n:"",q:d.q};save();renderEdit();
 }
-function quick(ci){qBlur();const n=fixName(Q);dr(ci).n=n;dr(ci).q=1;Q="";$("q").value="";addItem(ci)}
+function quick(ci){qBlur();const n=fixName(Q);if(!n)return;if(!(ci>=0&&cur().cats[ci])){let idx=-1;mut(o=>{const c=ensureCat(o,-1,n);idx=o.cats.indexOf(c)});ci=idx}dr(ci).n=n;dr(ci).q=1;Q="";$("q").value="";addItem(ci)}
 function sug(ci){const v=dr(ci).n,k=norm(v),box=$("sg"+ci);if(!box)return;
  if(!k){box.innerHTML="";return}
  const c=cur().cats[ci],have=new Set(c.items.map(i=>norm(i.n)));
@@ -1284,7 +1291,7 @@ async function aiFindWeb(it){if((!it.fresh&&!(it.p&&!it.p.t&&!it.p.img))||it.web
 function aiNextWeb(i){const h=AIR.items[i];if(!h||!h.webAlt||h.webAlt.length<2)return;const k=h.webAlt.findIndex(z=>z.u==(h.web&&h.web.u));h.web=h.webAlt[(k+1)%h.webAlt.length];aiPanel()}
 let AIR=null;
 /* ================= AI 文字搜索：按描述/问题找商品，再去官网与网上找图 ================= */
-function aiAskUI(ci){const c=cur().cats[ci];
+function aiAskUI(ci){const c=catAt(cur(),ci);
  modal(`<div class="mh">搜索商品 · ${esc(c.name||"该类")}</div><div class="mt">先查本地（本单、Saphirus 源、香烟源、品名库、官方目录），没有再联网 / AI。可以输入品名，也可以用一句话描述，比如「薰衣草味的喷雾」「适合卧室的扩香」「Saphirus 新出的香味」。${aiReady()?"":"未配置 API：只按关键词搜官网和官方目录。"}</div>
  <textarea id="aiq" rows="3" style="width:100%;box-sizing:border-box;margin:6px 0;font-size:16px;border-radius:10px;padding:8px"></textarea>
  <div class="mb2"><button class="g" onclick="closeModal()">取消</button><button onclick="aiAsk(${ci},$('aiq').value)">搜索</button></div>`);setTimeout(()=>{const t=$("aiq");t&&t.focus()},80)}
@@ -1299,7 +1306,7 @@ ${names}`;
   if(p)return{...base,p};
   return{...base,p:{n:tcName(nm),k:skey(nm),t:null,off:0},fresh:1,brand:String(o.brand||"").trim(),kind:String(o.kind||"").trim(),sq:String(o.query||"").trim()}}).filter(Boolean)}
 async function aiAsk(ci,q,online){q=String(q||"").trim();if(!q){toast("请输入要找的商品");return}
- const c=cur().cats[ci];AIR={ci,items:[],busy:1,msg:"先查本地…",src:"",photo:"",chips:[],title:"AI 搜索",q};aiPanel();
+ const c=catAt(cur(),ci);AIR={ci,items:[],busy:1,msg:"先查本地…",src:"",photo:"",chips:[],title:"AI 搜索",q};aiPanel();
  try{await picFetchIdx();const pool=aiPool(c);let hits=[],note="";
   if(!online){const lh=localSearch(q,c).filter(r=>r.s>=60);
    if(lh.length){AIR.items=lh.map(r=>({p:r.p,s:r.s,qty:1,on:r.s>=85,lc:1}));AIR.local=1;AIR.busy=0;AIR.msg="";AIR.note="";aiPanel();return}}
@@ -1317,7 +1324,7 @@ async function aiAsk(ci,q,online){q=String(q||"").trim();if(!q){toast("请输入
   if(AIR.items.some(h=>h.fresh||(!h.p.t&&!h.p.img))){AIR.msg="去网上找商品图…";aiPanel();await Promise.all(AIR.items.map(h=>aiFindWeb(h)))}
   AIR.busy=0;AIR.msg="";aiPanel()}catch(e){AIR.busy=0;AIR.msg="";AIR.note=e.message;aiPanel()}}
 async function aiPickPhoto(ci,inp){const f=inp.files&&inp.files[0];inp.value="";if(!f)return;
- const o=cur(),c=o.cats[ci];AIR={ci,items:[],busy:1,msg:"识别中…",src:"",photo:"",chips:[]};aiPanel();
+ const o=cur(),c=catAt(o,ci);AIR={ci,items:[],busy:1,msg:"识别中…",src:"",photo:"",chips:[]};aiPanel();
  try{await picFetchIdx();const pool=aiPool(c);
   const sm=await aiShrink(f,1280);AIR.src=sm.url;aiPanel();
   try{AIR.photo=(await aiShrink(f,520)).url}catch(e){}
@@ -1334,9 +1341,9 @@ async function aiPickPhoto(ci,inp){const f=inp.files&&inp.files[0];inp.value="";
   AIR.busy=0;AIR.msg="";aiPanel()}catch(e){AIR.busy=0;AIR.msg="";AIR.note=e.message;aiPanel()}}
 async function aiAddText(i){const t=AIR.chips[i];if(!t)return;AIR.chips.splice(i,1);const k=skey(t);if(AIR.items.some(h=>h.p.k==k))return aiPanel();
  const it={p:{n:tcName(t),k,t:null,off:0},s:100,qty:1,on:true,fresh:1,txt:1};AIR.items.push(it);AIR.busy=1;AIR.msg="去官网搜索「"+t+"」…";aiPanel();
- await aiResolve(it,cur().cats[AIR.ci]);it.s=it.shop?it.s:100;if(it.fresh){AIR.msg="去网上找商品图…";aiPanel();await aiFindWeb(it)}AIR.busy=0;AIR.msg="";AIR.items=AIR.items.filter((h,j,a)=>a.findIndex(y=>y.p.k==h.p.k)==j);aiPanel()}
+ await aiResolve(it,catAt(cur(),AIR.ci));it.s=it.shop?it.s:100;if(it.fresh){AIR.msg="去网上找商品图…";aiPanel();await aiFindWeb(it)}AIR.busy=0;AIR.msg="";AIR.items=AIR.items.filter((h,j,a)=>a.findIndex(y=>y.p.k==h.p.k)==j);aiPanel()}
 function aiThumb(h){return h.p.img?h.p.img:h.p.t?picSrc(h.p.t):(h.web?h.web.t:(AIR.photo||""))}
-function aiPanel(){const r=AIR;if(!r)return;const c=cur().cats[r.ci];
+function aiPanel(){const r=AIR;if(!r)return;const c=r.ci>=0&&cur().cats[r.ci]?cur().cats[r.ci]:{...NOCAT,name:"自动分类"};
  const rows=r.items.map((h,i)=>`<label class="aiit"><input type="checkbox" ${h.on?"checked":""} onchange="AIR.items[${i}].on=this.checked;aiPanel()"><img src="${esc(aiThumb(h))}" loading="lazy"><span class="ain"><b>${esc(h.p.n)}</b>${h.info?`<small style="opacity:.85">${esc(h.info)}</small>`:""}<small>${h.fresh?(h.web?"🌐 网上找到图 · 将新建商品"+((h.webAlt||[]).length>1?"（<u onclick=\"event.preventDefault();aiNextWeb("+i+")\">换一张</u>）":""):(h.webErr||h.shopErr?"⚠ 联网搜索失败 · 将新建商品，图用你的照片":"⚠ 网上没找到图 · 将新建商品，图用你的照片")):(h.shop?"✅ 官网搜到 · 把握 ":(h.p.loc?"📂 本地"+h.p.loc+(h.web?" · 🌐 网上找到图":""):(h.ai?(AIR.q?"AI 推荐":"视觉模型"):(AIR.q?"官方目录":"标签文字")))+" · 把握 ")+(h.fresh?"":Math.min(100,h.s))}</small></span><span class="aiq"><button onclick="event.preventDefault();AIR.items[${i}].qty=Math.max(1,AIR.items[${i}].qty-1);aiPanel()">−</button><i>${h.qty}</i><button onclick="event.preventDefault();AIR.items[${i}].qty++;aiPanel()">+</button></span></label>`).join("");
  const chips=(r.chips||[]).map((t,i)=>`<button class="aichip" onclick="aiAddText(${i})">＋ ${esc(t)}</button>`).join("");
  const n=r.items.filter(h=>h.on).length,nf=r.items.filter(h=>h.on&&h.fresh).length;
@@ -1347,10 +1354,10 @@ function aiPanel(){const r=AIR;if(!r)return;const c=cur().cats[r.ci];
  ${!r.busy&&r.q&&r.local?`<button class="g" style="width:100%;margin-top:6px" onclick="aiAsk(${r.ci},AIR.q,1)">🌐 本地结果不对？联网搜索</button>`:""}${!r.busy&&r.photo&&!r.q?`<div class="ab" style="margin-top:6px"><button class="g" onclick="aiUsePhoto()">🖼 不用识别，直接用这张图新建商品</button><button class="g" onclick="const ci=AIR.ci;closeModal();AIR=null;addBlank(ci)">🔎 从官方图片里选</button></div>`:""}
  <div class="mb2" style="flex-wrap:wrap"><button class="g" onclick="closeModal()">取消</button><button class="g" onclick="aiSettings()">设置</button>${r.busy?"":`<button onclick="aiApply()" ${n?"":"disabled"}>加入 ${n} 项${nf?"（新建 "+nf+"）":""}</button>`}</div>`)}
 function aiUsePhoto(){const r=AIR;if(!r||!r.photo)return;const id=uid();
- mut(o=>{const c=o.cats[r.ci],it={id,n:"",q:1,p:null};c.items.push(it);PICS[picKey("",c,it)]={d:r.photo}});picSave();closeModal();AIR=null;renderEdit();toast("已用这张图新建商品，可以再补名字")}
+ mut(o=>{const c=ensureCat(o,r.ci,""),it={id,n:"",q:1,p:null};c.items.push(it);PICS[picKey("",c,it)]={d:r.photo}});picSave();closeModal();AIR=null;renderEdit();toast("已用这张图新建商品，可以再补名字")}
 async function aiApply(){const r=AIR;if(!r)return;const sel=r.items.filter(h=>h.on);if(!sel.length)return;let add=0,mer=0;const nNew=sel.filter(h=>h.fresh).length;
  for(const h of sel){if(h.web&&!h.webData&&(h.fresh||(!h.p.t&&!h.p.img))){h.webData=await webImgData(h.web.u)}}
- mut(o=>{const c=o.cats[r.ci];sel.forEach(h=>{const nm=h.fresh?fixName(h.p.n):h.p.n,k=skey(nm),ex=c.items.find(it=>skey(it.n)==k);
+ mut(o=>{sel.forEach(h=>{const nm=h.fresh?fixName(h.p.n):h.p.n,c=ensureCat(o,r.ci,nm),k=skey(nm),ex=c.items.find(it=>skey(it.n)==k);
   if(ex){ex.q+=h.qty;mer++}else{const it={n:nm,q:h.qty,p:null};c.items.push(it);add++;
    if(!h.fresh){if(h.p.t)PICS[picKey(it.n,c,it)]={u:h.p.t};else if(h.webData&&!h.p.img)PICS[picKey(it.n,c,it)]={d:h.webData};else if(!h.p.img&&nNew+sel.length==1&&r.photo)PICS[picKey(it.n,c,it)]={d:r.photo}}else if(h.webData)PICS[picKey(it.n,c,it)]={d:h.webData};else if(nNew==1&&r.photo)PICS[picKey(it.n,c,it)]={d:r.photo}}})});
  sel.forEach(h=>{const nm=h.fresh?fixName(h.p.n):h.p.n;addVocab(nm);bumpUse(nm)});picSave();save();closeModal();AIR=null;renderEdit();toast("已加入 "+add+" 项"+(mer?"，合并 "+mer+" 项":"")+"（已设置图片）",undo)}
@@ -1533,9 +1540,9 @@ function copyOrderText(){const o=cur();if(!o)return;if(!sheetData(o).n){toast("�
  const upd=()=>{const a=document.activeElement,typing=a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
   const shrunk=(window.innerHeight-vv.height)>120;document.body.classList.toggle("kb",!!(typing&&shrunk))};
  vv.addEventListener("resize",upd);document.addEventListener("focusout",()=>setTimeout(upd,150))})();
-function qKey(e){if(e.key!="Enter")return;e.preventDefault();const o=cur();if(!o||!o.cats.length)return;
+function qKey(e){if(e.key!="Enter")return;e.preventDefault();const o=cur();if(!o)return;
  if(CAND&&CAND.length&&Q.trim()){candAdd(0);return}
- if(Q.trim()&&QC>=0){quick(QC)}}
+ if(Q.trim()){quick(QC)}}
 
 /* 种类标签：长按后左右拖动排序 */
 let QDRAG=0;
