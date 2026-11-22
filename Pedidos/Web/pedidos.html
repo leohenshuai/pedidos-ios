@@ -443,7 +443,7 @@ html[data-theme=dark] .vr button{background:rgba(255,255,255,.1)}
    <input id="sq2" class="sq" type="search" placeholder="搜索品名" oninput="vocPageList()"></div>
   <div class="pg">
    <div class="card"><div style="display:flex;gap:8px;align-items:center;padding:6px 0"><input class="sq" id="vnew" style="margin:0;flex:1;border:1px solid #e3d8c8" placeholder="手动添加品名" onkeydown="if(event.key=='Enter')vocPageAdd()"><button class="srow-b" onclick="vocPageAdd()">添加</button></div></div>
-   <div id="vf" class="qc" style="margin:8px 0"></div><div class="pt">所有订单里用过的品名会自动记下，用于输入提示和拼写纠正；删除只影响提示，不改已有订单。</div>
+   <div id="vf" class="qc" style="margin:8px 0"></div><div class="pt">包含所有商品源（只读）和手动品名。订单里新用的品名会自动记进「手动」；删除只影响提示，不改已有订单。</div>
    <div id="vpl" class="card"></div>
   </div>
  </div>
@@ -754,8 +754,8 @@ function candidates(o,ci,nq){
  const add=(n,src,price,hasCat)=>{const k=skey(n);if(!k)return;let e=M.get(k);if(!e){e={n,src:0,price:null,hasCat:false};M.set(k,e)}
   if(src==1){e.src|=1;if(!(e.src&2))e.n=n}else{e.src|=2;e.n=n}
   if(price!=null&&hasCat){e.price=price;e.hasCat=true}else if(src==2&&hasCat===false&&!e.hasCat){}};
- S.vocab.forEach(v=>add(v,1));
- SRCS.list.forEach(s=>{const d=srcData(s.id);if(!d)return;Object.entries(d.cats).forEach(([k,l])=>l.forEach(it=>add(it[0],2,it[1]||null,k==key)))});
+ if(srcOn("manual"))S.vocab.forEach(v=>add(v,1));
+ SRCS.list.forEach(s=>{if(!srcOn(s.id))return;const d=srcData(s.id);if(!d)return;Object.entries(d.cats).forEach(([k,l])=>l.forEach(it=>add(it[0],2,it[1]||null,k==key)))});
  const out=[];M.forEach((e,k)=>{const ex=have.get(k);if(ex&&ex.q>0)return;const sc=matchScore(e.n,q);if(!sc)return;
   out.push(Object.assign(e,{ex:!!ex,score:sc+(q?0:0)+Math.min(useScore(e.n),20)*(q?.6:3)+(e.hasCat?6:0)}))});
  out.sort((a,b)=>b.score-a.score||a.n.localeCompare(b.n));
@@ -767,13 +767,18 @@ function candPanel(o,ci,nq,exact){
  if(nq&&!exact&&!CAND.some(x=>skey(x.n)==skey(Q)))h+=`<button class="cnew" onclick="quick(${ci})">＋ 新增 “${esc(Q.trim())}” 到 ${esc(c.name||"未命名")}</button>`;
  h+=CAND.map((x,i)=>`<button class="cb" style="--c:${c.color}" onclick="candAdd(${i})"><b>${hl(x.n,Q)}</b><small>${x.ex?"本单·数量0":(x.src&2?(srcNameOf(x.n)||"商品源"):"品名库")}${x.price&&o.price?" · "+esc(o.cur)+fmt(x.price):""}</small></button>`).join("");
  if(nq)h+=`<button class="cnew" style="background:#7a5cc7" onclick="qBlur();const t=Q;Q='';$('q').value='';aiAsk(${ci},t,${CAND.length?1:0})">🔎 ${CAND.length?"联网 / AI 搜索":"本地没有 · 联网 / AI 搜索"}“${esc(Q.trim())}”</button>`;
- if(!h)return nq?`<div class="cand"><div class="ct">没有匹配的品名</div></div>`:"";
- return `<div class="cand ${nq?"":"row"}"><div class="ct">${nq?"点一下加入 "+esc(c.name||"")+"（数量 1）":"常用 · 点一下加入 "+esc(c.name||"")+" →"}</div><div class="cw">${h}</div></div>`}
+ if(!h)return nq?`<div class="cand"><div class="ct">搜索范围</div>${ssrcChips()}<div class="ct">没有匹配的品名</div></div>`:"";
+ return `<div class="cand ${nq?"":"row"}">${nq?`<div class="ct">搜索范围</div>`+ssrcChips():""}<div class="ct">${nq?"点一下加入 "+esc(c.name||"")+"（数量 1）":"常用 · 点一下加入 "+esc(c.name||"")+" →"}</div><div class="cw">${h}</div></div>`}
 function qBlur(){SF=false;const q=$("q");if(q&&document.activeElement===q)q.blur()}
 function candAdd(i){const x=CAND[i],o=cur();if(!x||!o)return;qBlur();const ci=QC,k=skey(x.n);
  mut(o=>{const c=o.cats[ci],ex=c.items.find(it=>skey(it.n)==k);
   if(ex){ex.q=Math.max(1,ex.q+1)}else c.items.push({n:x.n,q:1,p:o.price&&x.price&&x.hasCat?x.price:null})});
  FX("add");addVocab(x.n);bumpUse(x.n);save();Q="";$("q").value="";JUST0.clear();renderEdit();toast("已加入："+x.n)}
+let SSRC=(()=>{try{return localStorage.getItem("pedidos_ssrc")||""}catch(e){return""}})();
+function srcOn(id){return !SSRC||SSRC===id}
+function setSSRC(v){SSRC=v;try{localStorage.setItem("pedidos_ssrc",v)}catch(e){}renderEdit();const q=$("q");if(q)q.focus()}
+function ssrcChips(){const L=[["","全部"],...SRCS.list.map(x=>[x.id,x.name]),["manual","手动"]];if(SSRC&&!L.some(x=>x[0]===SSRC))SSRC="";
+ return `<div class="qc" style="margin:0 0 6px">${L.map(([v,t])=>`<button class="${SSRC===v?"on":""}" onclick="setSSRC('${v}')">${esc(t)}</button>`).join("")}</div>`}
 function onSearch(v){if(!v.trim())JUST0.clear();Q=v;renderEdit()}
 function setQC(i){JUST0.clear();QC=i;renderEdit()}
 const dr=ci=>draft[ci]||(draft[ci]={n:"",q:3});
@@ -1193,15 +1198,15 @@ async function aiOcr(blob){if(!NATIVE)return null;try{const r=await fetch("api/o
 /* 候选库：官方图片索引 + 品名库 + 本单已有品项 */
 function aiPool(cat){const x=picIdx(),f=x&&cat?picCatFilter(cat):null,out=[],seen=new Set();
  localPool(cat).forEach(p=>{if(seen.has(p.k))return;seen.add(p.k);out.push(p)});
- if(x)x.list.forEach(o=>{if(f&&!f(o))return;const k=skey(o.n);if(seen.has(k)){const e=out.find(p=>p.k==k);if(e&&!e.t&&!e.img)e.t=o.t;return}seen.add(k);out.push({n:o.n,k,core:o.core,t:o.t,off:1})});
+ if(x&&srcOn("saphirus"))x.list.forEach(o=>{if(f&&!f(o))return;const k=skey(o.n);if(seen.has(k)){const e=out.find(p=>p.k==k);if(e&&!e.t&&!e.img)e.t=o.t;return}seen.add(k);out.push({n:o.n,k,core:o.core,t:o.t,off:1})});
  return out}
 /* 本地：本单品项 > Saphirus 源 > 品名库（带上已设置的图片） */
 function localPool(cat){const o=cur(),out=[],seen=new Set();
  const add=(n,src)=>{const k=skey(n);if(!k||seen.has(k))return;seen.add(k);const im=cat?picUrl(picOf(n,cat)):"";out.push({n,k,core:k,t:null,img:im||"",loc:src})};
  if(cat)cat.items.forEach(it=>it.n&&add(it.n,"本单"));
  if(o)o.cats.forEach(c=>c.items.forEach(it=>it.n&&add(it.n,"本单")));
- SRCS.list.forEach(sr=>{const d=srcData(sr.id);if(!d)return;Object.values(d.cats).forEach(l=>l.forEach(it=>add(it[0],sr.name)))});
- (S.vocab||[]).forEach(v=>add(v,"品名库"));
+ SRCS.list.forEach(sr=>{if(!srcOn(sr.id))return;const d=srcData(sr.id);if(!d)return;Object.values(d.cats).forEach(l=>l.forEach(it=>add(it[0],sr.name)))});
+ if(srcOn("manual"))(S.vocab||[]).forEach(v=>add(v,"手动"));
  return out}
 /* 本地关键词搜索：每个词都要命中 */
 function localSearch(q,cat){const k=skey(q),ws=k.split(" ").filter(w=>w.length>=2);if(!k)return[];
@@ -1435,11 +1440,19 @@ function vocPage(){vocPageList()}
 let VF="all";
 function vocSrcSet(){const s=new Set();SRCS.list.forEach(x=>{const d=srcData(x.id);if(d)Object.values(d.cats).forEach(l=>l.forEach(it=>s.add(skey(it[0]))))});return s}
 function vocFilter(f){VF=f;vocPageList()}
-function vocPageList(){if(!$("vpl"))return;const k=norm($("sq2")?$("sq2").value:"");const ss=vocSrcSet();
- const tag=v=>ss.has(skey(v));let nS=0;S.vocab.forEach(v=>{if(tag(v))nS++});
- $("vf").innerHTML=[["all","全部 "+S.vocab.length],["src","商品源有 "+nS],["man","仅手动 "+(S.vocab.length-nS)]].map(([f,t])=>`<button class="${VF==f?'on':''}" onclick="vocFilter('${f}')">${t}</button>`).join("");
- const l=[...S.vocab].sort((a,b)=>norm(a).localeCompare(norm(b))).filter(v=>(!k||norm(v).includes(k))&&(VF=="all"||(VF=="src")==tag(v)));
- $("sCnt").textContent=S.vocab.length+" 条";
+function vocRows(){const out=[],seen=new Set();
+ SRCS.list.forEach(x=>{const d=srcData(x.id);if(!d)return;Object.entries(d.cats).forEach(([c,l])=>l.forEach(it=>{const kk=x.id+"|"+c+"|"+skey(it[0]);if(seen.has(kk))return;seen.add(kk);out.push({n:it[0],sid:x.id,sn:x.name,cat:c})}))});
+ S.vocab.forEach((v,i)=>out.push({n:v,sid:"manual",sn:"手动",vi:i}));return out}
+function vocPageList(){if(!$("vpl"))return;const k=norm($("sq2")?$("sq2").value:"");const all=vocRows();
+ const tabs=[["all","全部",all.length],...SRCS.list.map(x=>[x.id,x.name,all.filter(r=>r.sid===x.id).length]),["manual","手动",S.vocab.length]];
+ if(!tabs.some(t=>t[0]===VF))VF="all";
+ $("vf").innerHTML=tabs.map(([f,t,n])=>`<button class="${VF==f?'on':''}" onclick="vocFilter('${f}')">${esc(t)} ${n}</button>`).join("");
+ const rows=all.filter(r=>(VF=="all"||r.sid===VF)&&(!k||norm(r.n).includes(k)));
+ $("sCnt").textContent=all.length+" 条";
+ const grp=new Map();rows.forEach(r=>{const g=r.sid==="manual"?"手动":r.sn+" · "+r.cat;if(!grp.has(g))grp.set(g,[]);grp.get(g).push(r)});
+ let shown=0,html="";for(const [g,l] of grp){if(shown>=400)break;l.sort((a,b)=>norm(a.n).localeCompare(norm(b.n)));
+  html+=`<div class="pt" style="margin:10px 2px 4px">${esc(g)} <small style="color:#999">${l.length}</small></div>`+l.slice(0,400-shown).map(r=>`<div class="srow"><span style="flex:1">${esc(r.n)}</span>${r.sid==="manual"?`<button style="color:#c0392b" onclick="vocPageDel(${r.vi})">删除</button>`:""}</div>`).join("");shown+=l.length}
+ $("vpl").innerHTML=html+(rows.length>400?`<div class="hint" style="text-align:center;color:#aaa;padding:6px">还有 ${rows.length-400} 条，请用搜索缩小范围</div>`:"")+(rows.length?"":`<div class="hint" style="text-align:center;color:#aaa;padding:12px">没有匹配的品名</div>`);return;
  $("vpl").innerHTML=l.slice(0,300).map(v=>`<div class="srow"><span style="flex:1">${esc(v)} <small style="color:${tag(v)?"#b07a3a":"#999"}">${tag(v)?esc(srcNameOf(v)||"商品源"):"手动"}</small></span><button style="color:#c0392b" onclick="vocPageDel(${S.vocab.indexOf(v)})">删除</button></div>`).join("")+(l.length>300?`<div class="hint" style="text-align:center;color:#aaa;padding:6px">还有 ${l.length-300} 条，搜索缩小范围</div>`:"")||`<div class="hint" style="padding:16px;text-align:center;color:#bbb">没有匹配</div>`}
 function vocPageAdd(){const e=$("vnew"),n=fixName(e.value);if(!n)return;if(vocabFind(n)){toast("已有这个品名");return}addVocab(n);save();e.value="";vocPageList();toast("已添加："+n)}
 function vocPageDel(i){const n=S.vocab[i];if(n==null)return;if(!confirm("从品名库删除「"+n+"」？\n（只影响输入提示，不改已有订单）"))return;S.vocab.splice(i,1);save();vocPageList();toast("已删除："+n)}
