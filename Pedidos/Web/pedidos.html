@@ -723,7 +723,7 @@ function renderEdit(){
   const cards=idx.map(i=>{const it=c.items[i],isDup=dm[norm(it.n)]>1;
    return `<div class="ic ${it.q?'':'zero'} ${isDup?'dup':''}"><button class="dl" title="删除" onclick="delItem(${ci},${i})">×</button><div class="nmr">${picBtn(ci,i,it.n)}<textarea class="nm" placeholder="商品名（可空）" rows="2" autocapitalize="sentences" oninput="liveCase(this,'first')" onfocus="this.select()" onkeydown="if(event.key=='Enter'){event.preventDefault();this.blur()}" onchange="rename(${ci},${i},this.value)">${esc(it.n)}</textarea></div>${isDup?`<div class="dupb">⚠ 与本类别另一项重名</div>`:""}<button class="ub ${it.u?'on':''}" title="更换单位" onclick="unitPick(${ci},${i})">单位：${esc(unitOf(o,it)||"件")} ▾</button><div class="ctr"><button class="m" onclick="adj(${ci},${i},-1)">−</button><input type="number" inputmode="numeric" value="${it.q}" onfocus="this.select()" onchange="setq(${ci},${i},this.value)"><button onclick="adj(${ci},${i},1)">+</button></div>${o.price?`<div class="pr">${esc(o.cur)}<input type="number" inputmode="decimal" step="any" placeholder="单价" value="${it.p==null?'':it.p}" onchange="setp(${ci},${i},this.value)"><em>${it.p?esc(o.cur)+fmt(it.q*it.p):''}</em></div>`:""}</div>`}).join("")||(nq?"":`<div class="empty2"><div class="ei">🔍</div><b>${c.items.length?"还没有订货的品项":"这个种类还没有品项"}</b><small>点上方搜索框，输入品名开始订货${hidden?"（已收录 "+hidden+" 项）":""}<br>搜不到的新品名，可直接“＋ 新增”</small></div>`);
   const d=draft[ci]||{n:"",q:3};
-  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" placeholder="种类名（可留空）" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)">${c.items.length?`<button class="x" onclick="arm(this,()=>clearCatItems(${ci}),'清空?')">清空</button>`:""}<button class="x" onclick="${c.items.length?`arm(this,()=>delCat(${ci}),'删?')`:`delCat(${ci})`}">删</button></div><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${totTxt({...o,cats:[c]},"zh")}${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div><button class="addimg" onclick="addImgMenu(${ci})">📷 添加图片商品</button>
+  h+=`<section style="--c:${c.color}"><div class="sh"><button class="dot" title="换颜色" onclick="recolor(${ci})"></button><input class="cn" placeholder="种类名（可留空）" value="${esc(c.name)}" autocapitalize="characters" oninput="liveCase(this,'upper');catLive(${ci},'name',this.value)" onchange="cat(${ci},'name',this.value)" onblur="cat(${ci},'name',this.value)">${c.items.length?`<button class="x" onclick="arm(this,()=>clearCatItems(${ci}),'清空?')">清空</button>`:""}<button class="x" onclick="${c.items.length?`arm(this,()=>delCat(${ci}),'删?')`:`delCat(${ci})`}">删</button></div><span class="cnt">${c.items.filter(x=>x.q>0).length}/${c.items.length}项 · ${totTxt({...o,cats:[c]},"zh")}${o.price&&am?" · "+esc(o.cur)+fmt(am):""}</span><input class="cs" value="${esc(c.sub)}" placeholder="种类说明（可选）" oninput="catLive(${ci},'sub',this.value)" onchange="cat(${ci},'sub',this.value)" onblur="cat(${ci},'sub',this.value)"><div class="items">${cards}</div><div class="addrow">${NATIVE?`<button class="addimg" onclick="nativePick(f=>aiPickPhoto(${ci},{files:[f],value:''}))">📷 拍照或选图</button>`:`<label class="addimg" style="cursor:pointer">📷 拍照或选图<input type="file" accept="image/*" style="display:none" onchange="aiPickPhoto(${ci},this)"></label>`}<button class="addimg" onclick="aiAskUI(${ci})">🔎 文字搜索</button></div>
   </section>`;
  });
  $("cbox").innerHTML=(nq||SF)?candPanel(o,QC,nq,exact):"";if(!o.cats.length)h=`<div class="card"><div class="hint">这个订单还没有种类。可以直接在上方搜索加商品，会按商品源的分类自动建种类（如 AROMA、MARLBORO）；也可以在下方新增种类。</div></div>`+h;
@@ -1157,16 +1157,25 @@ function picSearch(q){const c=cur().cats[PM.ci],f=PM.all?null:picCatFilter(c);le
 function picWebQ(n){const c=cur().cats[PM.ci],sc=srcNameOf(n)||"";const hint=/香烟/.test(sc)?"cigarrillos":/saphirus/i.test(sc)?"Saphirus":"";
  return [hint,n,!sc&&c&&c.name&&!/^general$/i.test(c.name)?c.name:""].filter(Boolean).join(" ")}
 const AIQC={};
-async function aiImgQuery(n,ctx){const k=skey(n)+"|"+(ctx||"");if(AIQC[k])return AIQC[k];if(!aiReady()||!n)return null;
- try{const t=await aiCall([{role:"user",content:`为下面这个商品写一条图片搜索关键词，用来在网上（阿根廷零售网站，如 Rappi、超市网店）找到这个商品本身的包装照片。
+/* 返回多个搜图词候选（有 API 才用；按商品缓存） */
+async function aiImgQueries(n,ctx){const k=skey(n)+"|"+(ctx||"");if(AIQC[k])return AIQC[k];if(!aiReady()||!n)return[];
+ try{const t=await aiCall([{role:"user",content:`为下面这个商品写 5 条不同的图片搜索关键词，用来在网上（阿根廷零售网站，如 Rappi、超市网店）找到这个商品本身的包装照片。
 商品：${n}${ctx?"\n所属：「"+ctx+"」":""}
-要求：用西班牙语/商品原文；包含品牌和关键规格；去掉对搜图无用的内部代码（如 KS、RCB、SOF 这类缩写可改成 atado/box 等常见说法）；不超过 8 个词。只输出关键词本身，不要引号和解释。`}],60);
-  const q=String(t||"").split("\n")[0].replace(/^["'「“]+|["'」”]+$/g,"").trim();if(q&&q.length<=90){AIQC[k]=q;return q}}catch(e){}return null}
+要求：用西班牙语/商品原文；每条都包含品牌；从不同角度写（完整规格 / 常见叫法 / 加 Argentina / 加 atado、paquete、box 等包装词 / 只写品牌和系列）；KS、RCB、SOF 这类内部缩写换成常见说法；每条不超过 8 个词。
+输出 JSON 字符串数组，只输出数组。`}],200);
+  const m=String(t||"").match(/\[[\s\S]*\]/);let a=[];if(m){try{a=JSON.parse(m[0])}catch(e){}}
+  if(!a.length)a=String(t||"").split("\n");
+  a=[...new Set(a.map(x=>String(x).replace(/^[\s\-\d.)、]+|["'「“」”]+/g,"").trim()).filter(x=>x&&x.length<=90))].slice(0,5);
+  if(a.length)AIQC[k]=a;return a}catch(e){return[]}}
+async function aiImgQuery(n,ctx){const a=await aiImgQueries(n,ctx);return a[0]||null}
+function qChips(list,cur,fn){return list.length?`<div class="aichips" style="margin:0 0 6px">${list.map((x,i)=>`<button class="aichip ${x===cur?"on":""}" style="${x===cur?"outline:2px solid var(--c,#c0562f)":""}" onclick="${fn}(${i})">🤖 ${esc(x)}</button>`).join("")}</div>`:""}
 let PWL=[];
-async function picWebUI(q){q=String(q||"").trim();let byAi=false;
- if(!q&&aiReady()){modal(`<div class="mh">网上搜图 · ${esc(PM.n||"无名称商品")}</div><div class="mt">⏳ AI 生成搜索词…</div>`);const a=await aiImgQuery(PM.n,srcNameOf(PM.n)||(cur().cats[PM.ci]||{}).name);if(a){q=a;byAi=true}}
- q=q||picWebQ(PM.n);
- modal(`<div class="mh">网上搜图 · ${esc(PM.n||"无名称商品")}</div><input class="sq" id="pwq" style="border:1px solid #e3d8c8;margin:0 0 6px" value="${esc(q)}" placeholder="换个关键词" onkeydown="if(event.key=='Enter')picWebUI(this.value)"><div class="mt" id="pwinfo">⏳ 搜索中…</div><div id="pwl" class="pgrid"></div><div class="mb2"><button class="g" onclick="picModal(PM.ci,PM.i)">返回</button><button class="g" onclick="picWebUI($('pwq').value)">重新搜索</button></div>`);
+let PWQ=[];
+function picWebQi(i){picWebUI(PWQ[i])}
+async function picWebUI(q){q=String(q||"").trim();
+ if(PWQ.key!==PM.k){PWQ=[];PWQ.key=PM.k;if(aiReady()){modal(`<div class="mh">网上搜图 · ${esc(PM.n||"无名称商品")}</div><div class="mt">⏳ AI 生成搜索词候选…</div>`);const a=await aiImgQueries(PM.n,srcNameOf(PM.n)||(cur().cats[PM.ci]||{}).name);PWQ=a.slice();PWQ.key=PM.k}}
+ q=q||PWQ[0]||picWebQ(PM.n);const byAi=PWQ.includes(q);
+ modal(`<div class="mh">网上搜图 · ${esc(PM.n||"无名称商品")}</div>${PWQ.length?`<div class="mt">AI 搜索词候选（点一条换着搜）：</div>`+qChips(PWQ,q,"picWebQi"):""}<input class="sq" id="pwq" style="border:1px solid #e3d8c8;margin:0 0 6px" value="${esc(q)}" placeholder="换个关键词" onkeydown="if(event.key=='Enter')picWebUI(this.value)"><div class="mt" id="pwinfo">⏳ 搜索中…</div><div id="pwl" class="pgrid"></div><div class="mb2"><button class="g" onclick="picModal(PM.ci,PM.i)">返回</button><button class="g" onclick="picWebUI($('pwq').value)">重新搜索</button></div>`);
  const arr=await webImgSearch(q);if(!$("pwl"))return;
  if(arr===null){$("pwinfo").innerHTML='<span style="color:#c0392b">网上搜图失败，请检查网络后重试</span>';return}
  PWL=arr.filter(x=>x.t||x.u).filter(x=>!x.w||!x.h||(x.w/x.h>0.4&&x.w/x.h<2.5)).slice(0,30);
@@ -1304,8 +1313,9 @@ async function webImgData(u){try{const r=await fetch("api/fetchimg?u="+encodeURI
 async function aiFindWeb(it){if((!it.fresh&&!(it.p&&!it.p.t&&!it.p.img))||it.webTried||!NATIVE)return it;it.webTried=1;const r=await webImgFor(it);
  if(r.err){it.webErr=1;return it}if(r.best){it.web=r.best.x;it.webAlt=r.list.map(z=>z.x)}else it.webMiss=1;return it}
 let AIMP=-1;
-async function aiMorePics(i){const h=AIR.items[i];if(!h)return;AIMP=i;const q=h.webQ||(await aiImgQuery(h.p.n,h.p.loc||""))||h.p.n;
- modal(`<div class="mh">选图 · ${esc(h.p.n)}</div><input class="sq" id="pwq" style="border:1px solid #e3d8c8;margin:0 0 6px" value="${esc(q)}" onkeydown="if(event.key=='Enter')aiMoreGo(this.value)"><div class="mt" id="pwinfo">⏳ 搜索中…</div><div id="pwl" class="pgrid"></div><div class="mb2"><button class="g" onclick="aiPanel()">返回</button><button class="g" onclick="aiMoreGo($('pwq').value)">重新搜索</button></div>`);aiMoreGo(q)}
+let AMQ=[];function aiMoreQi(i){const q=AMQ[i];if(!q)return;$("pwq").value=q;document.querySelectorAll("#amq .aichip").forEach((b,j)=>b.style.outline=j==i?"2px solid var(--c,#c0562f)":"");aiMoreGo(q)}
+async function aiMorePics(i){const h=AIR.items[i];if(!h)return;AIMP=i;AMQ=await aiImgQueries(h.p.n,h.p.loc||h.kind||"");const q=h.webQ||AMQ[0]||h.p.n;
+ modal(`<div class="mh">选图 · ${esc(h.p.n)}</div>${AMQ.length?`<div class="mt">AI 搜索词候选（点一条换着搜）：</div><div id="amq">${qChips(AMQ,q,"aiMoreQi")}</div>`:""}<input class="sq" id="pwq" style="border:1px solid #e3d8c8;margin:0 0 6px" value="${esc(q)}" onkeydown="if(event.key=='Enter')aiMoreGo(this.value)"><div class="mt" id="pwinfo">⏳ 搜索中…</div><div id="pwl" class="pgrid"></div><div class="mb2"><button class="g" onclick="aiPanel()">返回</button><button class="g" onclick="aiMoreGo($('pwq').value)">重新搜索</button></div>`);aiMoreGo(q)}
 async function aiMoreGo(q){const arr=await webImgSearch(q);if(!$("pwl"))return;if(arr===null){$("pwinfo").textContent="网上搜图失败";return}
  PWL=arr.filter(x=>x.t||x.u).slice(0,30);$("pwinfo").textContent="点一张作为这个商品的图片";
  $("pwl").innerHTML=PWL.map((x,j)=>`<button class="pxc" onclick="aiMorePick(${j})"><img src="${esc(x.t||x.u)}" loading="lazy" onerror="this.parentNode.remove()"><small>${esc((x.s||"").replace(/^www\./,"").slice(0,24))}</small></button>`).join("")}
