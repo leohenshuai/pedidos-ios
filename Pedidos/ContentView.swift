@@ -228,7 +228,7 @@ final class SchemeHandler: NSObject, WKURLSchemeHandler {
                 get(c2.url!, ["Referer": "https://duckduckgo.com/"]) { d2 in
                     guard let d2 = d2, let o = (try? JSONSerialization.jsonObject(with: d2)) as? [String: Any],
                           let res = o["results"] as? [[String: Any]] else { send(502, Data("[]".utf8), json); return }
-                    let out: [[String: Any]] = res.prefix(16).compactMap { x in
+                    let out: [[String: Any]] = res.prefix(40).compactMap { x in
                         guard let u = x["image"] as? String, u.hasPrefix("http") else { return nil }
                         return ["u": u, "t": (x["thumbnail"] as? String) ?? u, "w": (x["width"] as? Int) ?? 0, "h": (x["height"] as? Int) ?? 0,
                                 "s": (x["source"] as? String) ?? "", "n": (x["title"] as? String) ?? ""]
