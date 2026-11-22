@@ -551,7 +551,7 @@ function sample(){
  mk("TEXTIL","Perfume para telas",1,[["Velocity",6],["Rocío",6],["Bamboo",3],["Papaya",6],["Limón Dulce y Vainilla",3],["Tropical",3],["Limón",3],["Capri Summer",6],["Bebé",3],["Coco",3],["Vainilla",3],["Flores Blancas",6],["Rosas",3],["Cony",6],["Golden Lady",3]]),
  mk("DIFUSORES","Difusores de varillas",2,[["Bubblegum",6],["Lola",3],["Magnolia y Fresias",4],["Limón",6],["Papaya",3],["Manzana Canela",3],["Coco",3],["Bamboo",3],["Rocío",4]])]};
 }
-function blank(){return {id:uid(),sup:"",dt:today(),upd:Date.now(),status:"draft",cats:[{name:"GENERAL",sub:"",color:COLORS[0],items:[]}]}}
+function blank(){return {id:uid(),sup:"",dt:today(),upd:Date.now(),status:"draft",cats:[]}}   /* 新订单不建种类：搜索加入时按商品源自动分类 */
 
 /* ---------- 存取 ---------- */
 function fix(s){
@@ -667,7 +667,7 @@ function renderHome(){if(typeof bkHint=="function")bkHint();
   +`<button class="newo" onclick="newOrder()"><span class="np">＋</span><span class="nl">新建订单</span></button>`+(list.length?"":`<div class="empty">这个状态下没有订单</div>`)+`</div>`;
 }
 function homeAsk(){const q=HQ.trim();if(!q)return;const os=[...S.orders].sort((a,b)=>b.upd-a.upd),d=os.find(o=>o.status=="draft");
- modal(`<div class="mh">加入哪个订单？</div><div class="mt">搜索「${esc(q)}」，结果加到选中的订单和种类。</div><div class="ab" style="margin-top:6px">${os.slice(0,8).map(o=>o.cats.map((c,ci)=>`<button class="${o===d&&ci==0?"":"g"}" onclick="homeAskGo('${o.id}',${ci})">${esc(o.sup||"未命名订单")} · ${esc(c.name||"未命名")} <small>${esc(o.dt)}</small></button>`).join("")).join("")}<button class="g" onclick="homeAskGo('',0)">＋ 新建订单</button><button class="g" onclick="closeModal()">取消</button></div>`)}
+ modal(`<div class="mh">加入哪个订单？</div><div class="mt">搜索「${esc(q)}」，结果加到选中的订单和种类。</div><div class="ab" style="margin-top:6px">${os.slice(0,8).map(o=>[`<button class="${o===d?"":"g"}" onclick="homeAskGo('${o.id}',-1)">${esc(o.sup||"未命名订单")} · ✨ 自动分类 <small>${esc(o.dt)}</small></button>`].concat(o.cats.map((c,ci)=>`<button class="g" onclick="homeAskGo('${o.id}',${ci})">${esc(o.sup||"未命名订单")} · ${esc(c.name||"未命名")} <small>${esc(o.dt)}</small></button>`)).join("")).join("")}<button class="g" onclick="homeAskGo('',-1)">＋ 新建订单</button><button class="g" onclick="closeModal()">取消</button></div>`)}
 function homeAskGo(id,ci){const q=HQ.trim();closeModal();if(!id){const o=blank();S.orders.push(o);save();id=o.id}HQ="";$("hq").value="";open_(id);setTimeout(()=>aiAsk(ci,q),120)}
 function openHit(i){const h=HR[i];if(!h)return;PQ=h.it.n;open_(h.o.id)}
 function cycleSt(id){const o=S.orders.find(x=>x.id==id);if(!o)return;const k=Object.keys(STAT);o.status=k[(k.indexOf(o.status)+1)%k.length];o.upd=Date.now();save();renderHome()}
