@@ -597,7 +597,7 @@ async function poll(){
 }
 function rerender(){if(MOPEN||isTyping())return;route(true)}
 async function boot(){
- S=loadLocal();{const n=vocDedupe();if(n){lsSave();setTimeout(()=>toast("品名库与 Saphirus 源重复的 "+n+" 条已去重（以 Saphirus 源为准）"),800)}}route();
+ S=loadLocal();{const n=vocDedupe();if(n){lsSave();setTimeout(()=>toast("品名库与商品源重复的 "+n+" 条已去重（以商品源写法为准）"),800)}}route();
  try{const r=await fetch("api/data",{cache:"no-store"});
   if(r.ok){const j=fix(await r.json());SERVER=true;
    if(j.fresh){REV=0;push()}else{REV=j.rev||0;S=j;if(vocDedupe()){lsSave();save()}else lsSave()}
@@ -765,7 +765,7 @@ function candPanel(o,ci,nq,exact){
  CAND=candidates(o,ci,Q);const c=o.cats[ci];
  let h="";
  if(nq&&!exact&&!CAND.some(x=>skey(x.n)==skey(Q)))h+=`<button class="cnew" onclick="quick(${ci})">＋ 新增 “${esc(Q.trim())}” 到 ${esc(c.name||"未命名")}</button>`;
- h+=CAND.map((x,i)=>`<button class="cb" style="--c:${c.color}" onclick="candAdd(${i})"><b>${hl(x.n,Q)}</b><small>${x.ex?"本单·数量0":(x.src&2?"Saphirus 源":"品名库")}${x.price&&o.price?" · "+esc(o.cur)+fmt(x.price):""}</small></button>`).join("");
+ h+=CAND.map((x,i)=>`<button class="cb" style="--c:${c.color}" onclick="candAdd(${i})"><b>${hl(x.n,Q)}</b><small>${x.ex?"本单·数量0":(x.src&2?(srcNameOf(x.n)||"商品源"):"品名库")}${x.price&&o.price?" · "+esc(o.cur)+fmt(x.price):""}</small></button>`).join("");
  if(nq)h+=`<button class="cnew" style="background:#7a5cc7" onclick="qBlur();const t=Q;Q='';$('q').value='';aiAsk(${ci},t,${CAND.length?1:0})">🔎 ${CAND.length?"联网 / AI 搜索":"本地没有 · 联网 / AI 搜索"}“${esc(Q.trim())}”</button>`;
  if(!h)return nq?`<div class="cand"><div class="ct">没有匹配的品名</div></div>`:"";
  return `<div class="cand ${nq?"":"row"}"><div class="ct">${nq?"点一下加入 "+esc(c.name||"")+"（数量 1）":"常用 · 点一下加入 "+esc(c.name||"")+" →"}</div><div class="cw">${h}</div></div>`}
@@ -1002,11 +1002,18 @@ async function confirmSheet(){
  }else{closeModal();dlBlob(blob,name);toast("已生成表格："+name)}}
 
 /* ================= 官方目录导入 ================= */
-/* ================= 外挂 Saphirus 源 ================= */
-const SRC_KEY="pedidos_sources_v1",SRC_DEF="https://raw.githubusercontent.com/leohenshuai/pedidos-ios/main/sources/saphirus.json";
-let SRCS=(()=>{try{const x=JSON.parse(localStorage.getItem(SRC_KEY));if(x&&Array.isArray(x.list)&&x.list.length)return x}catch(e){}return{list:[{id:"saphirus",name:"Saphirus",url:SRC_DEF}],cache:{},sel:"saphirus"}})();
+/* ================= 外挂商品源（Saphirus 源 / 香烟源 / 自定义） ================= */
+const SRC_KEY="pedidos_sources_v1",SRC_DEF="https://raw.githubusercontent.com/leohenshuai/pedidos-ios/main/sources/saphirus.json",CIG_DEF="https://raw.githubusercontent.com/leohenshuai/pedidos-ios/main/sources/cigarrillos.json";
+const CIG_BUILTIN={"src":"Cigarrillos Argentina (ARCA)","name":"香烟","date":"2026-11-13","cats":{"LUCKY STRIKE":[["Luckies Red SC 20",2250,0],["Lucky Strike 43/70",5250,0],["Lucky Strike Charged Box 12",3400,0],["Lucky Strike Charged Box 20",5650,0],["Lucky Strike Convertible Box 12",3400,0],["Lucky Strike Convertible Box 20",5650,0],["Lucky Strike Convertible KS 20",5250,0],["Lucky Strike Convertible XL",5650,0],["Lucky Strike Double Plus Box 12",3700,0],["Lucky Strike Double Plus Box 20",6200,0],["Lucky Strike Double Plus XL Box 20",6200,0],["Lucky Strike Eclipse Box 20",6200,0],["Lucky Strike Fresh Crisp Box 20",6200,0],["Lucky Strike Origen Convertible Box 10",2200,0],["Lucky Strike Origen Convertible SC 20",3650,0],["Lucky Strike Origen Convertibles Box 20",4050,0],["Lucky Strike Origen Red Box 10",2000,0],["Lucky Strike Origen Red Box 20",4050,0],["Lucky Strike Origen Red SC 20",3650,0],["Lucky Strike Original (Red) Box 12",3360,0],["Lucky Strike Paris Box 20",6750,0],["Lucky Strike Purple Mix Box 20",6200,0],["Lucky Strike Purple Mix XL Box 20",6200,0],["Lucky Strike Red (Original) Box 20",5650,0],["Lucky Strike Red (Original) KS 20",5250,0],["Lucky Strike Red Mix Box 12",3700,0],["Lucky Strike Red Mix Box 20",6200,0],["Lucky Strike Red Mix XL Box 20",6200,0],["Lucky Strike Silver SC 20",5250,0],["Lucky Strike Wild Mix Box 10",360,0],["Lucky Strike Wild Mix Box 20",6200,0]],"OTRAS MARCAS":[["357 Blue (Openbox)",118,0],["357 Red (Openbox)",118,0],["51 King Size",1750,0],["51 Suave",1750,0],["Black Infinity (Openbox)",120,0],["Bold Full Flavor",520,0],["Bold Mint Flavor",520,0],["Corona",650,0],["Dolar",1750,0],["Dollar",1750,0],["Eight King Size (Openbox)",125,0],["Go!",409,0],["Harmony Colorado KS 20",4650,0],["Harmony Dorados KS 20",4650,0],["JG Box 20",250,0],["Kiel",900,0],["Kiel Box",917,0],["Marbella Box 20",450,0],["Master Box",1017,0],["Master Filter",920,0],["Pablo Emilio",410,0],["Parliament (Blue) KS RCB 20",6750,0],["Parliament Superslims 100 Box 20 SSL",6750,0],["Rodeo Classic Limited Edition (Openbox)",125,0],["Rodeo Original Blend",37,0],["Six One",1750,0],["VIP King Size",920,0],["West Red FF Box",1217,0],["Winston Box 20",3490,0]],"MARLBORO":[["Marlboro (Red Fwd) KS Box 12",3700,0],["Marlboro Blue Titanium KS RCB 20",6750,0],["Marlboro Crafted (Silver Blue) KS 20",3650,0],["Marlboro Crafted 2.0 (Red) KS 20",3650,0],["Marlboro Crafted 2.0 (Red) KS Box 20",4050,0],["Marlboro Crafted 3.0 Purple KS Box 20",4050,0],["Marlboro Crafted Coral KS Box 20",4050,0],["Marlboro Crafted Forward KS Box 20",4050,0],["Marlboro Crafted Forward KS SOF 20",3650,0],["Marlboro Gold KS RCB 20",6200,0],["Marlboro Gold Titanium 100 Box 20 SSL",6750,0],["Marlboro KS SOF 20",5800,0],["Marlboro Purple Fusion 2 100 Box 20",6200,0],["Marlboro Red KS Box 20",6200,0],["Marlboro Red Titanium Edition KS Box 20",6200,0],["Marlboro Vista Blue Mnt 100 Box 20",6200,0],["Marlboro Vista Coral Fusion 2 100 Box 20",6200,0],["Marlboro Vista Limited Edition 100 Box 20",6200,0],["Marlboro Vista Purple Fusion 2 KS Box 12",3700,0]],"ROTHMANS":[["Rothmans Citrus (Click Sunset) SC 20",1650,0],["Rothmans Convertible Box 12",1280,0],["Rothmans Convertible Box 20",1650,0],["Rothmans Convertible- Lucky Origen",1650,0],["Rothmans International XL Purple Box 20",1650,0],["Rothmans Red - Lucky Origen",1650,0],["Rothmans Red 43/70 XL Box 20",5250,0],["Rothmans Red Box 12",1060,0],["Rothmans XL Convertible Box 20",1650,0],["Rothmans XL Convertible KS 20",1650,0],["Rothmans XL Red Box 20",1650,0],["Rothmans XL Red KS 20",1650,0]],"RED POINT":[["Red Point Blue",1000,0],["Red Point Box (10)",600,0],["Red Point Eco Filters Box 20",1107,0],["Red Point Filter",1000,0],["Red Point Filter Box",1200,0],["Red Point Green",1000,0],["Red Point ON Box",1217,0],["Red Point ON Box 10",600,0],["Red Point ON Duo Box 20",1217,0],["Red Point ON Six Box 10",600,0],["Red Point ON Six Box 20",1217,0]],"CHESTERFIELD":[["Chesterfield Blue Motion Box 20",5050,0],["Chesterfield Blue Motion KS Box 12",3010,0],["Chesterfield Blue Motion KS SOF 20",4650,0],["Chesterfield Purple Motion 1 KS SOF 20",4650,0],["Chesterfield Purple Motion 2 KS Box 20",5050,0],["Chesterfield Red 4.0 KS 20",4650,0],["Chesterfield Red 4.0 KS Box 10",2525,0],["Chesterfield Red 4.0 KS Box 12",3010,0],["Chesterfield Red 4.0 KS Box 20",5050,0]],"GOLDEN KING":[["Golden King Box Blue",500,0],["Golden King Box Click",550,0],["Golden King Box Exclusive",520,0],["Golden King Box Green",300,0],["Golden King Box Red",300,0],["Golden King Soft Blue",450,0],["Golden King Soft Green",450,0],["Golden King Soft Red",450,0],["Golden KIng Soft Uva",450,0]],"PHILIP MORRIS":[["Philip Morris (Red) KS Box 20",5650,0],["Philip Morris (Red) KS SOF 20",5250,0],["Philip Morris Blue Select KS SOF 20",2250,0],["Philip Morris Blue Spin KS Box 12",3400,0],["Philip Morris Blue Spin KS Box 20",5650,0],["Philip Morris Original KS Box 12",3360,0],["Philip Morris Random Spin KS Box 12",3400,0],["Philip Morris Red Select KS SOF 20",2250,0]],"CAMEL":[["Camel Blue Box 20",6200,0],["Camel Box 11",3700,0],["Camel Box 12",3700,0],["Camel Circle Box 20",6000,0],["Camel Filters Box 20",6200,0],["Camel KS 20",5800,0],["Camel Legend - The Original Story SC 20",3650,0],["Camel Legend Box 20 - The Original Story",4050,0]],"PIER":[["Pier Box 10",146,0],["Pier Box 20",250,0],["Pier Caps",970,0],["Pier Caps Purple",970,0],["Pier Green",730,0],["Pier Menthol Box 10",146,0],["Pier Menthol Box 20",250,0],["Pier Original",730,0]],"LIVERPOOL":[["Liverpool Blue Box 20",250,0],["Liverpool Blue Pop",970,0],["Liverpool Menthol Box 20",250,0],["Liverpool Red Box 20",250,0],["Liverpool Special Blue",730,0],["Liverpool Special Green",730,0],["Liverpool Special Red",730,0]],"MILENIO":[["Milenio Gold",700,0],["Milenio Icergy",750,0],["Milenio Menta",700,0],["Milenio Pink Wave Mintz",750,0],["Milenio Red",700,0],["Milenio Vid Icergy",750,0]],"DOLCHESTER":[["Dolchester Black",730,0],["Dolchester Box 10",146,0],["Dolchester Box 20",250,0],["Dolchester Deluxe Box 20",250,0],["Dolchester Golden Edition",730,0],["Dolchester Silver Edition",730,0]],"MELBOURNE":[["Melbourne Blue Aura",600,0],["Melbourne Full",600,0],["Melbourne Mild",600,0],["Melbourne Mint",600,0],["Melbourne Mintz Caps",750,0]],"V8":[["V8 Classic",37,0],["V8 Classic (Soft)",118,0],["V8 Finest",37,0],["V8 Finest (Soft)",118,0],["V8 Menthol (Soft)",118,0]],"BLACK KING":[["Black King Classic Red (Openbox)",120,0],["Black King Finest Blend (Openbox)",120,0],["Black King Menthol (Openbox)",120,0],["Black King Only For Queens (Openbox)",120,0]],"MILL":[["Mill Explosion",600,0],["Mill Mintz Verde",600,0],["Mill Red",600,0]],"DIESEL":[["Classic Silver Diesel Box 20",700,0],["Diesel Classic Box 20",700,0],["Diesel Menthol Box 20",700,0]],"MELBO":[["Melbo Classic Soft 20",660,0],["Melbo Menthol Soft 20",660,0],["Melbo Silver Soft 20",660,0]],"BOXER":[["Boxer Classic",905,0],["Boxer Light",905,0],["Boxer Menthol",905,0]],"CJ":[["CJ Convertible",420,0],["CJ Mentolado",410,0],["CJ Tradicional",410,0]]}};
+let SRCS=(()=>{try{const x=JSON.parse(localStorage.getItem(SRC_KEY));if(x&&Array.isArray(x.list)&&x.list.length)return x}catch(e){}return{list:[{id:"saphirus",name:"Saphirus 源",url:SRC_DEF}],cache:{},sel:"saphirus"}})();
+/* 迁移：旧数据补上香烟源；旧名「Saphirus」改「Saphirus 源」 */
+(()=>{let ch=false;const sp=SRCS.list.find(x=>x.id==="saphirus");if(sp&&sp.name==="Saphirus"){sp.name="Saphirus 源";ch=true}
+ if(!SRCS.list.some(x=>x.id==="cigarrillos")&&!SRCS.cigDel){SRCS.list.push({id:"cigarrillos",name:"香烟源",url:CIG_DEF});ch=true}
+ if(ch)try{localStorage.setItem(SRC_KEY,JSON.stringify(SRCS))}catch(e){}})();
 function srcSave(){try{localStorage.setItem(SRC_KEY,JSON.stringify(SRCS))}catch(e){}}
-function srcData(id){return SRCS.cache[id]||(id==="saphirus"?OFFICIAL_BUILTIN:null)}
+function srcData(id){return SRCS.cache[id]||(id==="saphirus"?OFFICIAL_BUILTIN:id==="cigarrillos"?CIG_BUILTIN:null)}
+/* 品名 → 所在商品源名称（第一个命中的源为准） */
+function srcNameOf(n){const k=skey(n);for(const x of SRCS.list){const d=srcData(x.id);if(d&&Object.values(d.cats).some(l=>l.some(it=>skey(it[0])==k)))return x.name}return ""}
 function srcValid(d){return !!(d&&typeof d==="object"&&d.cats&&typeof d.cats==="object"&&Object.values(d.cats).every(l=>Array.isArray(l)&&l.every(it=>Array.isArray(it)&&typeof it[0]==="string"&&it[0])))}
 function srcCount(d){return d?Object.values(d.cats).reduce((a,b)=>a+b.length,0):0}
 async function srcFetch(s){const r=await fetch(s.url+(s.url.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error("HTTP "+r.status);const d=await r.json();if(!srcValid(d))throw new Error("数据格式不对");SRCS.cache[s.id]=d;srcSave();return d}
@@ -1016,14 +1023,14 @@ function srcUse(id){const s=SRCS.list.find(x=>x.id===id)||SRCS.list[0];SRCS.sel=
 function srcPick(id){srcUse(id);CSEL={};catRender();srcAuto()}
 async function srcAuto(){const s=srcCur();try{const old=(srcData(s.id)||{}).date,d=await srcFetch(s);if(SRCS.sel===s.id&&$("cl")){if(d.date!==old)CSEL={};OFFICIAL=d;catRender()}}catch(e){if($("cinfo")&&!srcData(s.id))$("cinfo").innerHTML+=`<br><span style="color:#c0392b">获取失败：${esc(e.message)}（请检查网络或网址）</span>`}}
 function srcModal(){
- modal(`<div class="mh">Saphirus 源管理</div><div class="mt">Saphirus 源是一个网址，内容为 JSON：<code>{"src":"名称","date":"日期","cats":{"AROMA":[["品名",价格,0]],...}}</code>（每项 [名称, 参考价, 是否60ml(0/1)]）。可添加多个来源，在官方目录导入里切换。</div><div id="sl"></div>
+ modal(`<div class="mh">商品源管理</div><div class="mt">内置 Saphirus 源和香烟源（阿根廷 ARCA 官方香烟价目，按品牌分类）。商品源是一个网址，内容为 JSON：<code>{"src":"名称","date":"日期","cats":{"AROMA":[["品名",价格,0]],...}}</code>（每项 [名称, 参考价, 是否60ml(0/1)]）。可添加多个来源，在官方目录导入里切换。</div><div id="sl"></div>
  <div style="margin:8px 0"><input class="sq" id="sn" style="border:1px solid #e3d8c8;margin:0 0 6px" placeholder="名称，如 其他供应商"><input class="sq" id="su" style="border:1px solid #e3d8c8;margin:0 0 6px" placeholder="https://…/xxx.json"></div>
  <div class="mb2"><button class="g" onclick="closeModal()">关闭</button><button onclick="srcAdd()">添加并获取</button></div>`);srcList()}
 function srcRows(){return SRCS.list.map(s=>{const d=srcData(s.id);return `<div class="srow ${SRCS.sel===s.id?"sel":""}"><span style="flex:1;min-width:0" onclick="srcSel('${s.id}')"><b>${esc(s.name)}</b><br><small style="color:#999;word-break:break-all">${d?srcCount(d)+" 项 · "+esc(d.date||""):"未获取"}</small></span><button onclick="srcUpd('${s.id}')">更新</button>${s.id==="saphirus"?"":`<button onclick="srcDel('${s.id}')" style="color:#c0392b">删除</button>`}</div>`}).join("")}
 function srcList(){const r=srcRows();if($("sl"))$("sl").innerHTML=r;if($("sl2"))$("sl2").innerHTML=r;if(typeof srcPageList=="function")srcPageList()}
 function srcSel(id){srcUse(id);srcList()}
 async function srcUpd(id){const s=SRCS.list.find(x=>x.id===id);toast("获取中…");try{const d=await srcFetch(s);toast("已更新："+srcCount(d)+" 项");if(SRCS.sel===id)OFFICIAL=d}catch(e){toast("失败："+e.message)}srcList()}
-function srcDel(id){if(!confirm("删除这个 Saphirus 源？"))return;SRCS.list=SRCS.list.filter(x=>x.id!==id);delete SRCS.cache[id];if(SRCS.sel===id)SRCS.sel="saphirus";srcSave();srcList()}
+function srcDel(id){if(!confirm("删除这个商品源？"))return;SRCS.list=SRCS.list.filter(x=>x.id!==id);delete SRCS.cache[id];if(id==="cigarrillos")SRCS.cigDel=1;if(SRCS.sel===id)SRCS.sel="saphirus";srcSave();srcList()}
 async function srcAdd(){const m=$("md").style.display=="flex",I=m?["sn","su"]:["pn","pu"];const n=$(I[0]).value.trim(),u=$(I[1]).value.trim();if(!n||!/^https?:\/\//i.test(u)){toast("请填写名称和 http(s) 网址");return}
  const s={id:"s"+Date.now().toString(36),name:n,url:u};toast("获取中…");try{await srcFetch(s);SRCS.list.push(s);srcSave();toast("已添加："+n);$(I[0]).value=$(I[1]).value=""}catch(e){toast("失败："+e.message)}srcList()}
 function homeCat(){const L=S.orders.filter(o=>!o.del);if(!L.length){toast("请先新建一个订单");return}
@@ -1032,7 +1039,7 @@ function homeCat(){const L=S.orders.filter(o=>!o.del);if(!L.length){toast("请�
 function homeCatGo(id){closeModal();CATO=id;catModal()}
 let CQ="",CSEL={},CML=true;
 const OFF_TARGET={AROMA:["aroma","aerosol","aromatizante"],TEXTIL:["textil","textile","tela"],DIFUSORES:["difusor","difusores","dif"]};
-function offTargetIdx(o,key){const ks=OFF_TARGET[key];const i=o.cats.findIndex(c=>ks.some(k=>norm(c.name).includes(k)||norm(c.sub||"").includes(k)));return i}
+function offTargetIdx(o,key){const ks=OFF_TARGET[key]||[norm(key)];const i=o.cats.findIndex(c=>ks.some(k=>norm(c.name).includes(k)||norm(c.sub||"").includes(k)));return i}
 function catModal(){CQ="";CSEL={};CML=true;srcUse(SRCS.sel);catRender(true);srcAuto()}
 function catInfo(){return `来源 ${esc(OFFICIAL.src||srcCur().name)}（${esc(OFFICIAL.date||"")}），共 ${srcCount(OFFICIAL)} 个商品。勾选后导入，<b>数量默认 0</b>，订货时再改；数量为 0 的不会出现在海报和表格里。已在订单里的会标“已有”并跳过。`}
 function catKey(k,i){return k+"|"+i}
@@ -1049,9 +1056,9 @@ function catRender(first){
   rows.map(({it,i})=>{const ex=have.has(norm(it[0]));return `<label class="co ${ex?"have":""}"><input type="checkbox" ${CSEL[catKey(key,i)]&&!ex?"checked":""} ${ex?"disabled":""} onchange="CSEL['${catKey(key,i)}']=this.checked;catRender()"><span>${esc(it[0])}${it[2]?' <small>60ml</small>':''}</span>${ex?'<span class="tg">已有</span>':`<small>$${it[1]}</small>`}</label>`}).join("")+`</div>`;
  });
  if(first){
-  modal(`<div class="mh">官方目录导入</div><div style="display:flex;gap:6px;margin:4px 0"><select id="csrc" style="flex:1;padding:6px;border:1px solid #e3d8c8;border-radius:8px;font-size:16px" onchange="srcPick(this.value)">${SRCS.list.map(s=>`<option value="${s.id}" ${s.id===SRCS.sel?"selected":""}>${esc(s.name)}</option>`).join("")}</select><button class="g" onclick="srcModal()">管理</button></div><div class="mt" id="cinfo"></div>
+  modal(`<div class="mh">从商品源导入</div><div style="display:flex;gap:6px;margin:4px 0"><select id="csrc" style="flex:1;padding:6px;border:1px solid #e3d8c8;border-radius:8px;font-size:16px" onchange="srcPick(this.value)">${SRCS.list.map(s=>`<option value="${s.id}" ${s.id===SRCS.sel?"selected":""}>${esc(s.name)}</option>`).join("")}</select><button class="g" onclick="srcModal()">管理</button></div><div class="mt" id="cinfo"></div>
   <input class="sq" id="cq" style="border:1px solid #e3d8c8;margin:0 0 6px" placeholder="搜索官方品名" oninput="CQ=this.value;catRender()">
-  <label class="opt" style="margin:4px 0"><input type="checkbox" checked onchange="CML=this.checked;catRender()"> 包含 60ml 小规格（DIFUSORES）</label>
+  ${Object.values(OFFICIAL.cats).some(l=>l.some(it=>it[2]))?`<label class="opt" style="margin:4px 0"><input type="checkbox" checked onchange="CML=this.checked;catRender()"> 包含 60ml 小规格（DIFUSORES）</label>`:""}
   <div class="cl" id="cl"></div>
   <div class="mb2"><button class="g" onclick="closeModal()">取消</button><button id="cgo" onclick="catApply()">导入</button></div>`);
  }
@@ -1193,7 +1200,7 @@ function localPool(cat){const o=cur(),out=[],seen=new Set();
  const add=(n,src)=>{const k=skey(n);if(!k||seen.has(k))return;seen.add(k);const im=cat?picUrl(picOf(n,cat)):"";out.push({n,k,core:k,t:null,img:im||"",loc:src})};
  if(cat)cat.items.forEach(it=>it.n&&add(it.n,"本单"));
  if(o)o.cats.forEach(c=>c.items.forEach(it=>it.n&&add(it.n,"本单")));
- SRCS.list.forEach(sr=>{const d=srcData(sr.id);if(!d)return;Object.values(d.cats).forEach(l=>l.forEach(it=>add(it[0],"Saphirus 源")))});
+ SRCS.list.forEach(sr=>{const d=srcData(sr.id);if(!d)return;Object.values(d.cats).forEach(l=>l.forEach(it=>add(it[0],sr.name)))});
  (S.vocab||[]).forEach(v=>add(v,"品名库"));
  return out}
 /* 本地关键词搜索：每个词都要命中 */
@@ -1267,7 +1274,7 @@ function aiNextWeb(i){const h=AIR.items[i];if(!h||!h.webAlt||h.webAlt.length<2)r
 let AIR=null;
 /* ================= AI 文字搜索：按描述/问题找商品，再去官网与网上找图 ================= */
 function aiAskUI(ci){const c=cur().cats[ci];
- modal(`<div class="mh">搜索商品 · ${esc(c.name||"该类")}</div><div class="mt">先查本地（本单、Saphirus 源、品名库、官方目录），没有再联网 / AI。可以输入品名，也可以用一句话描述，比如「薰衣草味的喷雾」「适合卧室的扩香」「Saphirus 新出的香味」。${aiReady()?"":"未配置 API：只按关键词搜官网和官方目录。"}</div>
+ modal(`<div class="mh">搜索商品 · ${esc(c.name||"该类")}</div><div class="mt">先查本地（本单、Saphirus 源、香烟源、品名库、官方目录），没有再联网 / AI。可以输入品名，也可以用一句话描述，比如「薰衣草味的喷雾」「适合卧室的扩香」「Saphirus 新出的香味」。${aiReady()?"":"未配置 API：只按关键词搜官网和官方目录。"}</div>
  <textarea id="aiq" rows="3" style="width:100%;box-sizing:border-box;margin:6px 0;font-size:16px;border-radius:10px;padding:8px"></textarea>
  <div class="mb2"><button class="g" onclick="closeModal()">取消</button><button onclick="aiAsk(${ci},$('aiq').value)">搜索</button></div>`);setTimeout(()=>{const t=$("aiq");t&&t.focus()},80)}
 async function aiAskModel(q,pool){const names=pool.slice(0,400).map(p=>p.n).join("\n");
@@ -1430,16 +1437,16 @@ function vocSrcSet(){const s=new Set();SRCS.list.forEach(x=>{const d=srcData(x.i
 function vocFilter(f){VF=f;vocPageList()}
 function vocPageList(){if(!$("vpl"))return;const k=norm($("sq2")?$("sq2").value:"");const ss=vocSrcSet();
  const tag=v=>ss.has(skey(v));let nS=0;S.vocab.forEach(v=>{if(tag(v))nS++});
- $("vf").innerHTML=[["all","全部 "+S.vocab.length],["src","Saphirus 源有 "+nS],["man","仅手动 "+(S.vocab.length-nS)]].map(([f,t])=>`<button class="${VF==f?'on':''}" onclick="vocFilter('${f}')">${t}</button>`).join("");
+ $("vf").innerHTML=[["all","全部 "+S.vocab.length],["src","商品源有 "+nS],["man","仅手动 "+(S.vocab.length-nS)]].map(([f,t])=>`<button class="${VF==f?'on':''}" onclick="vocFilter('${f}')">${t}</button>`).join("");
  const l=[...S.vocab].sort((a,b)=>norm(a).localeCompare(norm(b))).filter(v=>(!k||norm(v).includes(k))&&(VF=="all"||(VF=="src")==tag(v)));
  $("sCnt").textContent=S.vocab.length+" 条";
- $("vpl").innerHTML=l.slice(0,300).map(v=>`<div class="srow"><span style="flex:1">${esc(v)} <small style="color:${tag(v)?"#b07a3a":"#999"}">${tag(v)?"Saphirus 源":"手动"}</small></span><button style="color:#c0392b" onclick="vocPageDel(${S.vocab.indexOf(v)})">删除</button></div>`).join("")+(l.length>300?`<div class="hint" style="text-align:center;color:#aaa;padding:6px">还有 ${l.length-300} 条，搜索缩小范围</div>`:"")||`<div class="hint" style="padding:16px;text-align:center;color:#bbb">没有匹配</div>`}
+ $("vpl").innerHTML=l.slice(0,300).map(v=>`<div class="srow"><span style="flex:1">${esc(v)} <small style="color:${tag(v)?"#b07a3a":"#999"}">${tag(v)?esc(srcNameOf(v)||"商品源"):"手动"}</small></span><button style="color:#c0392b" onclick="vocPageDel(${S.vocab.indexOf(v)})">删除</button></div>`).join("")+(l.length>300?`<div class="hint" style="text-align:center;color:#aaa;padding:6px">还有 ${l.length-300} 条，搜索缩小范围</div>`:"")||`<div class="hint" style="padding:16px;text-align:center;color:#bbb">没有匹配</div>`}
 function vocPageAdd(){const e=$("vnew"),n=fixName(e.value);if(!n)return;if(vocabFind(n)){toast("已有这个品名");return}addVocab(n);save();e.value="";vocPageList();toast("已添加："+n)}
 function vocPageDel(i){const n=S.vocab[i];if(n==null)return;if(!confirm("从品名库删除「"+n+"」？\n（只影响输入提示，不改已有订单）"))return;S.vocab.splice(i,1);save();vocPageList();toast("已删除："+n)}
 function setPage(){const L=S.orders.filter(o=>!o.del).length,sc=srcCur();
- $("setp").innerHTML=`<div class="pt">Saphirus 源</div><div class="card">
- <button class="setb" onclick="srcModal()"><span>🏷</span><span style="flex:1">Saphirus 源管理</span><small style="color:#999">${SRCS.list.length} 个源</small></button>
- <button class="setb" onclick="homeCat()"><span>📥</span><span style="flex:1">从 Saphirus 源导入到订单</span><small style="color:#999">${esc(sc.name)}</small></button></div>
+ $("setp").innerHTML=`<div class="pt">商品源</div><div class="card">
+ <button class="setb" onclick="srcModal()"><span>🏷</span><span style="flex:1">商品源管理</span><small style="color:#999">${SRCS.list.length} 个源</small></button>
+ <button class="setb" onclick="homeCat()"><span>📥</span><span style="flex:1">从商品源导入到订单</span><small style="color:#999">${esc(sc.name)}</small></button></div>
  <div class="pt">外观与反馈</div><div class="card">
  <div class="setb" style="flex-wrap:wrap"><span>🌗</span><span style="flex:1">外观</span><div class="seg3" style="display:flex;gap:4px">${[["auto","跟随系统"],["light","浅色"],["dark","深色"]].map(([k,t])=>`<button class="${themePref()==k?"on":""}" onclick="setThemePref('${k}')">${t}</button>`).join("")}</div></div>
  <button class="setb" onclick="setFxPref('haptic',${PREF("haptic","1")!="1"})"><span>📳</span><span style="flex:1">触感反馈（振动）</span><small style="color:${PREF("haptic","1")=="1"?"#3aa655":"#999"}">${PREF("haptic","1")=="1"?"已开":"已关"}</small></button>
