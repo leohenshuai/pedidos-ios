@@ -4,6 +4,7 @@ import UIKit
 import AudioToolbox
 import Vision
 import PhotosUI
+import Security
 
 struct ContentView: View {
     var body: some View {
@@ -109,6 +110,33 @@ enum Store {
         guard let out = try? JSONSerialization.data(withJSONObject: o, options: [.prettyPrinted]),
               (try? out.write(to: dataURL, options: .atomic)) != nil else { return (500, Data()) }
         return (200, Data("{\"ok\":true,\"rev\":\(curRev + 1)}".utf8))
+    }
+}
+
+/// AI 密钥存钥匙串（不进 localStorage / 数据文件）
+enum Keychain {
+    private static let service = "com.pedidos.app"
+    private static let account = "ai-key"
+    private static var query: [String: Any] {
+        [kSecClass as String: kSecClassGenericPassword,
+         kSecAttrService as String: service,
+         kSecAttrAccount as String: account]
+    }
+    static func getKey() -> String {
+        var q = query
+        q[kSecReturnData as String] = true
+        q[kSecMatchLimit as String] = kSecMatchLimitOne
+        var item: CFTypeRef?
+        guard SecItemCopyMatching(q as CFDictionary, &item) == errSecSuccess,
+              let d = item as? Data else { return "" }
+        return String(data: d, encoding: .utf8) ?? ""
+    }
+    static func setKey(_ key: String) {
+        SecItemDelete(query as CFDictionary)
+        guard !key.isEmpty else { return }
+        var q = query
+        q[kSecValueData as String] = Data(key.utf8)
+        SecItemAdd(q as CFDictionary, nil)
     }
 }
 
@@ -256,6 +284,33 @@ final class SchemeHandler: NSObject, WKURLSchemeHandler {
             }.resume()
             return
         }
+        if path == "/api/aikey" {
+            // AI 密钥钥匙串存取：GET 返回 {"key": "..."}；POST {"key": "..."} 保存，空值删除
+            if task.request.httpMethod == "POST" {
+                let k = ((try? JSONSerialization.jsonObject(with: readBody() ?? Data())) as? [String: Any])?["key"] as? String ?? ""
+                Keychain.setKey(k)
+                send(200, Data("{\"ok\":true}".utf8), json)
+            } else {
+                let d = (try? JSONSerialization.data(withJSONObject: ["key": Keychain.getKey()])) ?? Data("{\"key\":\"\"}".utf8)
+                send(200, d, json)
+            }
+            return
+        }
+        if path == "/api/export-file" {
+            // 把页面发来的完整数据直接写到 Documents/订货单/，在“文件”App 里可见
+            guard task.request.httpMethod == "POST", let body = readBody(),
+                  let o = (try? JSONSerialization.jsonObject(with: body)) as? [String: Any],
+                  o["orders"] is [Any],
+                  let out = try? JSONSerialization.data(withJSONObject: o, options: [.prettyPrinted]) else {
+                send(400, Data("{\"error\":\"bad data\"}".utf8), json); return
+            }
+            let f = DateFormatter(); f.dateFormat = "yyyyMMdd_HHmmss"; f.locale = Locale(identifier: "en_US_POSIX")
+            let name = "pedidos_export_\(f.string(from: Date())).json"
+            do { try out.write(to: Store.dir.appendingPathComponent(name), options: .atomic) }
+            catch { send(500, Data("{\"error\":\"write failed\"}".utf8), json); return }
+            let d = (try? JSONSerialization.data(withJSONObject: ["ok": true, "name": name])) ?? Data()
+            send(200, d, json); return
+        }
         if path == "/api/ai" {
             // 转发到用户配置的 OpenAI 兼容接口（绕开页面跨域限制）。请求体 JSON：{url,key,body}
             guard let o = (try? JSONSerialization.jsonObject(with: readBody() ?? Data())) as? [String: Any],
@@ -264,7 +319,8 @@ final class SchemeHandler: NSObject, WKURLSchemeHandler {
             var rq = URLRequest(url: remote, timeoutInterval: 90)
             rq.httpMethod = "POST"
             rq.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            if let k = o["key"] as? String, !k.isEmpty { rq.setValue("Bearer " + k, forHTTPHeaderField: "Authorization") }
+            let key = (o["key"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? Keychain.getKey()
+            if !key.isEmpty { rq.setValue("Bearer " + key, forHTTPHeaderField: "Authorization") }
             rq.httpBody = try? JSONSerialization.data(withJSONObject: b)
             URLSession.shared.dataTask(with: rq) { d, r, e in
                 let code = (r as? HTTPURLResponse)?.statusCode ?? 502

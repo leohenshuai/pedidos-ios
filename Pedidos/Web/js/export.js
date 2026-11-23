@@ -119,6 +119,17 @@ function setPage(){const L=S.orders.filter(o=>!o.del).length,sc=srcCur();
  <button class="setb" onclick="setFxPref('sound',${PREF("sound","1")!="1"})"><span>🔔</span><span style="flex:1">提示音</span><small style="color:${PREF("sound","1")=="1"?"#3aa655":"#999"}">${PREF("sound","1")=="1"?"已开":"已关"}</small></button></div>
  <div class="pt">数据</div><div class="card">
  <button class="setb" onclick="exportAll()"><span>💾</span><span style="flex:1">导出全部备份</span><small style="color:#999">${L} 个订单</small></button>
+ <button class="setb" onclick="exportToFile()"><span>📁</span><span style="flex:1">导出到「文件」App</span><small style="color:#999">Documents/订货单</small></button>
  <button class="setb" onclick="bkModal()"><span>🛟</span><span style="flex:1">恢复点（自动备份）</span><small style="color:#999">点开查看</small></button>
  <label class="setb"><span>📂</span><span style="flex:1">导入备份</span><input type="file" accept=".json,application/json" style="display:none" onchange="importAll(this)"></label></div>
  <div class="card">${NATIVE?`<button class="setb" onclick="checkUpd()"><span>🔄</span><span style="flex:1">检查更新</span><small style="color:#999">${esc(window.__BUILD__?"build "+window.__BUILD__:"")}</small></button>`:""}<div class="setb"><span>ℹ️</span><span style="flex:1">版本</span><small style="color:#999">${esc(APP_VERSION)}</small></div></div>`}
+
+/* 把当前数据直接写到 Documents/订货单/（原生 /api/export-file），在“文件”App 里可见 */
+async function exportToFile(){
+ if(!NATIVE){toast("⚠ 仅 App 内可用");return}
+ try{
+  const r=await fetch("api/export-file",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(S)});
+  const j=await r.json();
+  if(r.ok&&j.name)toast("已导出到「文件」App：订货单/"+j.name);else toast("⚠ 导出失败");
+ }catch(e){toast("⚠ 导出失败")}
+}

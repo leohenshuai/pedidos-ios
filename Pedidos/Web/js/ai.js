@@ -1,19 +1,36 @@
 /* ================= 拍照识别商品：本地文字识别 + 视觉模型(OpenAI 兼容) 兜底 ================= */
 const AI_KEY="pedidos_ai_v1";
+/* AI 配置：非密钥字段仍存 localStorage；密钥在 App 内只存钥匙串（/api/aikey），AIC.key 只放内存。
+   浏览器里没有钥匙串，保持旧行为（整份配置含密钥存 localStorage）。 */
 let AIC=(()=>{try{return Object.assign({url:"https://api.openai.com/v1",key:"",model:"gpt-4o-mini",mode:"hybrid",thr:80},JSON.parse(localStorage.getItem(AI_KEY))||{})}catch(e){return{url:"https://api.openai.com/v1",key:"",model:"gpt-4o-mini",mode:"hybrid",thr:80}}})();
-function aiSave(){try{localStorage.setItem(AI_KEY,JSON.stringify(AIC))}catch(e){}}
+function aiSave(){
+ if(NATIVE){
+  try{const c=Object.assign({},AIC);delete c.key;localStorage.setItem(AI_KEY,JSON.stringify(c))}catch(e){}
+  fetch("api/aikey",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:AIC.key||""})}).catch(()=>{});
+ }else{try{localStorage.setItem(AI_KEY,JSON.stringify(AIC))}catch(e){}}
+}
+/* App 内启动时从钥匙串取密钥；localStorage 里若还有旧明文密钥，一次性迁进钥匙串后清除 */
+async function aiKeyInit(){
+ if(!NATIVE)return;
+ const legacy=AIC.key||"";
+ try{const j=await (await fetch("api/aikey",{cache:"no-store"})).json();if(j&&j.key)AIC.key=j.key}catch(e){}
+ if(legacy&&legacy!==AIC.key){AIC.key=legacy;try{await fetch("api/aikey",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:legacy})})}catch(e){}}
+ if(legacy){try{const c=Object.assign({},AIC);delete c.key;localStorage.setItem(AI_KEY,JSON.stringify(c))}catch(e){}}
+}
+const AIKEY_READY=aiKeyInit();
 const aiReady=()=>!!(AIC.url&&AIC.key&&AIC.model);
 function aiEndpoint(){let u=AIC.url.trim().replace(/\/+$/,"");return /\/chat\/completions$/.test(u)?u:u+"/chat/completions"}
 function aiSettings(){
  modal(`<div class="mh">AI 密钥设置</div><div class="mt">用于拍照识别、AI 文字搜索、AI 生成搜图词。本地先查、读不准或没有时才调用下面的模型（需联网，按次计费）。接口须兼容 OpenAI 的 chat/completions 且支持图片输入。</div>
  <div class="opt">模式：<select id="aim" onchange="AIC.mode=this.value;aiSave()"><option value="hybrid" ${AIC.mode=="hybrid"?"selected":""}>混合（推荐）</option><option value="local" ${AIC.mode=="local"?"selected":""}>只本地</option><option value="api" ${AIC.mode=="api"?"selected":""}>只用 API</option></select></div>
  <input class="sq" id="aiu" style="border:1px solid #e3d8c8;margin:4px 0" placeholder="接口地址，如 https://api.openai.com/v1" value="${esc(AIC.url)}" oninput="AIC.url=this.value.trim();aiSave()">
- <input class="sq" id="aik" type="password" autocomplete="off" style="border:1px solid #e3d8c8;margin:4px 0" placeholder="API 密钥（只保存在本机）" value="${esc(AIC.key)}" oninput="AIC.key=this.value.trim();aiSave()">
+ <input class="sq" id="aik" type="password" autocomplete="off" style="border:1px solid #e3d8c8;margin:4px 0" placeholder="API 密钥（${NATIVE?"App 内保存在钥匙串":"只保存在本机"}）" value="${esc(AIC.key)}" oninput="AIC.key=this.value.trim();aiSave()">
  <input class="sq" id="aid" style="border:1px solid #e3d8c8;margin:4px 0" placeholder="模型名，如 gpt-4o-mini" value="${esc(AIC.model)}" oninput="AIC.model=this.value.trim();aiSave()">
  <div class="mt" id="ait"></div>
  <div class="mb2"><button class="g" onclick="aiTest()">测试连接</button><button onclick="closeModal()">完成</button></div>`)}
 async function aiTest(){const t=$("ait");t.textContent="测试中…";try{const r=await aiCall([{role:"user",content:"只回复 OK 两个字母"}],20);t.innerHTML='<span style="color:#3a8a4a">连接成功：'+esc(String(r).slice(0,40))+"</span>"}catch(e){t.innerHTML='<span style="color:#c0392b">失败：'+esc(e.message)+"</span>"}}
 async function aiCall(messages,maxTok){
+ if(NATIVE)await AIKEY_READY;
  if(!aiReady())throw new Error("还没填写接口地址 / 密钥 / 模型");
  const body={model:AIC.model,messages,max_tokens:maxTok||800,temperature:0};
  let r,txt;
