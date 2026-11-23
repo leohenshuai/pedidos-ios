@@ -1,7 +1,7 @@
 # 手动触发：GitHub → pedidos-ios → Actions → Build unsigned IPA → Run workflow
 # 与原版相比只改了第 1 项：去掉 push 触发和 Guard，改成纯手动触发。
 # 其余步骤（Prepare / Build / Package / 上传 / 发 Release / 写 STATUS.txt）原样保留。
-# 注意：第 3 项“精简 status 分支”还没做，这个文件仍会把 IPA 分片推到 status 分支。
+# status 分支只存 STATUS.txt（构建日志摘要 + IPA 字节数/md5），不再存 IPA 分片。
 name: Build unsigned IPA
 on:
   workflow_dispatch:
@@ -75,10 +75,8 @@ jobs:
           mkdir -p /tmp/st && cd /tmp/st && rm -rf .git
           { echo "prep=${{ steps.prep.outcome }} build=${{ steps.build.outcome }} pack=${{ steps.pack.outcome }}"; echo "----- build.log -----"; tail -150 "$GITHUB_WORKSPACE/build.log" 2>/dev/null || echo "no build.log"; } > STATUS.txt
           if [ -f "$GITHUB_WORKSPACE/Pedidos.ipa" ]; then
-            base64 < "$GITHUB_WORKSPACE/Pedidos.ipa" | fold -w 76 > ipa.b64
             echo "ipa bytes: $(wc -c < "$GITHUB_WORKSPACE/Pedidos.ipa" | tr -d ' ') md5: $(md5 -q "$GITHUB_WORKSPACE/Pedidos.ipa")" >> STATUS.txt
-            rm -f ipapart_*; split -b 600000 ipa.b64 ipapart_; rm ipa.b64
           fi
           git init -q && git config user.name ci && git config user.email ci@example.com
-          git checkout -q -b status && git add STATUS.txt; git add ipapart_* 2>/dev/null; git commit -q -m "build ${{ github.run_number }}"
+          git checkout -q -b status && git add STATUS.txt; git commit -q -m "build ${{ github.run_number }}"
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" status:status
