@@ -66,8 +66,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="build-${{ github.run_number }}"
-          gh release create "$TAG" Pedidos.ipa --title "Pedidos IPA $TAG" --notes "Unsigned IPA. Re-sign with TrollStore / AltStore / Sideloadly before installing." --repo "${{ github.repository }}"
+          VER=$(grep -m1 'MARKETING_VERSION' project.yml | sed 's/.*"\(.*\)".*/\1/')
+          TAG="v${VER}.${{ github.run_number }}"
+          gh release create "$TAG" Pedidos.ipa --title "Pedidos ${VER} (build ${{ github.run_number }})" --notes "Unsigned IPA. Re-sign with TrollStore / AltStore / Sideloadly before installing." --repo "${{ github.repository }}"
       - name: Save log
         if: always()
         run: |

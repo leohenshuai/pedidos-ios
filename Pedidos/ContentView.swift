@@ -409,7 +409,7 @@ struct WebContainer: UIViewRepresentable {
                 guard let data = data,
                       let j = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                       let tag = j["tag_name"] as? String,
-                      let latest = Int(tag.filter { $0.isNumber }) else {
+                      let (relVer, latest) = Self.parseReleaseTag(tag) else {
                     if manual { DispatchQueue.main.async { self.jsToast("⚠ 检查失败，请确认网络") } }
                     return
                 }
@@ -426,12 +426,24 @@ struct WebContainer: UIViewRepresentable {
                    let u = a["browser_download_url"] as? String { link = u }
                 var notes = (j["body"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 if notes.hasPrefix("Unsigned IPA") { notes = "" }
-                DispatchQueue.main.async { self.promptUpdate(latest, cur, link, notes) }
+                DispatchQueue.main.async { self.promptUpdate(relVer, latest, cur, link, notes) }
             }.resume()
         }
-        func promptUpdate(_ latest: Int, _ cur: Int, _ link: String, _ notes: String) {
+        /// Release 标签 → (对外版本, build 号)。新格式 v1.7.93；旧格式 build-92 兼容（版本显示当前 App 版本）。
+        static func parseReleaseTag(_ tag: String) -> (String, Int)? {
+            if tag.hasPrefix("build-") {
+                guard let n = Int(tag.dropFirst(6)) else { return nil }
+                let v = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+                return (v, n)
+            }
+            guard tag.hasPrefix("v") else { return nil }
+            let parts = tag.dropFirst().split(separator: ".")
+            guard parts.count >= 2, let n = Int(parts.last!) else { return nil }
+            return (parts.dropLast().joined(separator: "."), n)
+        }
+        func promptUpdate(_ ver: String, _ latest: Int, _ cur: Int, _ link: String, _ notes: String) {
             guard let top = topVC(), !(top is UIAlertController) else { return }
-            let msg = "当前 build \(cur)，最新 build \(latest)。\n下载后需用 TrollStore / AltStore / Sideloadly 重新签名安装；覆盖安装不会丢数据（请用同一证书）。" + (notes.isEmpty ? "" : "\n\n" + notes)
+            let msg = "当前 build \(cur)，最新 " + (ver.isEmpty ? "" : "\(ver) ") + "build \(latest)。\n下载后需用 TrollStore / AltStore / Sideloadly 重新签名安装；覆盖安装不会丢数据（请用同一证书）。" + (notes.isEmpty ? "" : "\n\n" + notes)
             let a = UIAlertController(title: "发现新版本", message: msg, preferredStyle: .alert)
             a.addAction(UIAlertAction(title: "下载", style: .default) { _ in
                 if let u = URL(string: link) { UIApplication.shared.open(u) }
