@@ -1,8 +1,10 @@
+# 手动触发：GitHub → pedidos-ios → Actions → Build unsigned IPA → Run workflow
+# 与原版相比只改了第 1 项：去掉 push 触发和 Guard，改成纯手动触发。
+# 其余步骤（Prepare / Build / Package / 上传 / 发 Release / 写 STATUS.txt）原样保留。
+# 注意：第 3 项“精简 status 分支”还没做，这个文件仍会把 IPA 分片推到 status 分支。
 name: Build unsigned IPA
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 permissions:
   contents: write
 jobs:
@@ -10,17 +12,7 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Guard (only the final trigger commit builds)
-        id: guard
-        run: |
-          msg=$(git log -1 --pretty=%s)
-          n=$(ls icon_parts/part_*.b64 2>/dev/null | wc -l | tr -d ' ')
-          echo "parts=$n msg=$msg" >> "$GITHUB_OUTPUT"
-          if [ "$msg" != "Trigger final build" ] || [ "$n" -lt 8 ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"; echo "skip: msg=$msg parts=$n/8" > build.log
-          fi
       - name: Prepare
-        if: steps.guard.outputs.skip != 'true'
         id: prep
         continue-on-error: true
         run: |
@@ -41,7 +33,7 @@ jobs:
           test -d Pedidos.xcodeproj
       - name: Build (no code signing)
         id: build
-        if: steps.guard.outputs.skip != 'true' && steps.prep.outcome == 'success'
+        if: steps.prep.outcome == 'success'
         continue-on-error: true
         run: |
           set +e
@@ -55,7 +47,7 @@ jobs:
           grep -q "BUILD SUCCEEDED" xcb.log
       - name: Package IPA
         id: pack
-        if: steps.guard.outputs.skip != 'true' && steps.build.outcome == 'success'
+        if: steps.build.outcome == 'success'
         run: |
           APP=$(find build/Build/Products -name "Pedidos.app" -maxdepth 3 | head -1)
           echo "APP=$APP" >> build.log
@@ -65,12 +57,12 @@ jobs:
           zip -qry Pedidos.ipa Payload
           ls -la Pedidos.ipa >> build.log
       - uses: actions/upload-artifact@v4
-        if: steps.guard.outputs.skip != 'true' && steps.pack.outcome == 'success'
+        if: steps.pack.outcome == 'success'
         with:
           name: Pedidos-ipa
           path: Pedidos.ipa
       - name: Publish to Release
-        if: steps.guard.outputs.skip != 'true' && steps.pack.outcome == 'success'
+        if: steps.pack.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
