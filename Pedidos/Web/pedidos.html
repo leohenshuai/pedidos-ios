@@ -1118,22 +1118,30 @@ function segPlace(seg,ln,key,tries){const act=seg.querySelector("button.on");if(
 
 /* ================= 商品图片：官方匹配 / 自己的图片（按类别匹配） ================= */
 const PIC_KEY="pedidos_pics_v2",IDX_KEY="pedidos_imgidx_v2",IDX_URL="https://raw.githubusercontent.com/leohenshuai/pedidos-ios/main/sources/saphirus_img.json",PIC_BASE="https://saphirus.com.ar/wp-content/uploads/";
-const PIC_ALIAS={aroma:"aerosol",aromas:"aerosol",aromatizante:"aerosol",aromatizantes:"aerosol",perfume:"parfum",perfumes:"parfum"};
+const PIC_ALIAS={cigarrillo:"cigarrillos",cigarro:"cigarrillos",tabaco:"cigarrillos",cigarette:"cigarrillos",aroma:"aerosol",aromas:"aerosol",aromatizante:"aerosol",aromatizantes:"aerosol",perfume:"parfum",perfumes:"parfum"};
 const PIC_STOP=new Set(["de","del","la","el","los","las","para","con","y","e","en","general"]);
 let PICS=(()=>{try{return JSON.parse(localStorage.getItem(PIC_KEY))||{}}catch(e){return{}}})(),PIDX=null,PM=null;
 function picSave(){try{localStorage.setItem(PIC_KEY,JSON.stringify(PICS));return true}catch(e){toast("⚠ 图片存储空间不足，请移除一些图片");return false}}
 const itId=it=>it.id||(it.id=uid());
 function picKey(n,c,it){return catKeyFor(c)+"|"+(skey(n)||"#"+(it?itId(it):""))}
 function picOf(n,c,it){return PICS[picKey(n,c,it)]}
-function picPrep(x){x.list=x.items.map(r=>{const k=skey(r[0]),w=k.split(" "),cl=String(r[3]||"").split("|").filter(Boolean);return{n:r[0],k,core:w.slice(1).join(" "),t:r[1],s:r[2],cl,cs:cl.map(norm)}});x.cats=new Set(x.list.flatMap(o=>o.cs));return x}
+const CIGI_KEY="pedidos_cigimg_v1",CIGI_URL="https://raw.githubusercontent.com/leohenshuai/pedidos-ios/main/sources/cigarrillos_img.json",CIGI_BASE="https://raw.githubusercontent.com/leohenshuai/pedidos-ios/main/sources/cigimg/";
+let CIGX=(()=>{try{return JSON.parse(localStorage.getItem(CIGI_KEY))}catch(e){return null}})();
+async function cigFetchIdx(){try{const r=await fetch(CIGI_URL+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const x=await r.json();if(!x||!x.items)return;CIGX=x;try{localStorage.setItem(CIGI_KEY,JSON.stringify(x))}catch(e){}if(PIDX&&PIDX._raw)PIDX=picPrep(PIDX._raw)}catch(e){}}
+/* 香烟候选 → 目录行 [名称, 图片绝对地址, 0, "品牌分类|Cigarrillos"] */
+function cigRows(){if(!CIGX||!CIGX.items)return[];const d=srcData("cigarrillos"),cat={};
+ if(d)Object.entries(d.cats).forEach(([c,l])=>l.forEach(it=>{cat[skey(it[0])]=c}));
+ const out=[];Object.entries(CIGX.items).forEach(([n,fs])=>(fs||[]).forEach(f=>{const c=cat[skey(n)]||"",b=c&&c!="OTRAS MARCAS"?c:n.split(" ")[0];out.push([n,CIGI_BASE+f,0,[b,c=="OTRAS MARCAS"?c:"","Cigarrillos"].filter(Boolean).join("|")])}));return out}
+function picPrep(x0){const x={...x0,_raw:x0._raw||x0,items:(x0._raw||x0).items.concat(cigRows())};x.list=x.items.map(r=>{const k=skey(r[0]),w=k.split(" "),cl=String(r[3]||"").split("|").filter(Boolean);return{n:r[0],k,core:w.slice(1).join(" "),t:r[1],s:r[2],cl,cs:cl.map(norm)}});x.cats=new Set(x.list.flatMap(o=>o.cs));return x}
 function picIdx(){if(PIDX)return PIDX;try{const x=JSON.parse(localStorage.getItem(IDX_KEY));if(x&&x.items)PIDX=picPrep(x)}catch(e){}return PIDX}
-async function picFetchIdx(force){if(PIDX&&PIDX.v>=2&&!force)return PIDX;try{const r=await fetch(IDX_URL+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw 0;const x=await r.json();if(!x.items)throw 0;try{localStorage.setItem(IDX_KEY,JSON.stringify(x))}catch(e){}PIDX=picPrep(x)}catch(e){}return picIdx()}
-let PIC_HOOK=null;const picSrc=u=>PIC_HOOK?PIC_HOOK(u):NATIVE?"api/img?p="+encodeURIComponent(u):PIC_BASE+u;
+async function picFetchIdx(force){if(!CIGX||force)await cigFetchIdx();else if(!picFetchIdx._c){picFetchIdx._c=1;cigFetchIdx()}if(PIDX&&PIDX.v>=2&&!force)return PIDX;try{const r=await fetch(IDX_URL+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw 0;const x=await r.json();if(!x.items)throw 0;try{localStorage.setItem(IDX_KEY,JSON.stringify(x))}catch(e){}PIDX=picPrep(x)}catch(e){}return picIdx()}
+let PIC_HOOK=null;const picSrc=u=>/^https?:/.test(u||"")?u:PIC_HOOK?PIC_HOOK(u):NATIVE?"api/img?p="+encodeURIComponent(u):PIC_BASE+u;
 function hiRes(u){return u.replace(/-430x430(\.\w+)$/,"-800x800$1")}
 function picUrl(p,hi){if(!p)return"";if(p.d)return p.d;if(p.u&&/^https?:/.test(p.u))return p.u;return p.u?picSrc(hi?hiRes(p.u):p.u):""}
 /* 该商品所在种类 → 官方分类过滤器（认不出种类时返回 null = 不限制） */
 function picCatFilter(c){const x=picIdx();if(!x)return null;
  const tk=s=>norm(s||"").split(/[^a-z0-9]+/).filter(w=>w.length>=3&&!PIC_STOP.has(w)).map(w=>PIC_ALIAS[w]||w.replace(/(es|s)$/,"")).filter(w=>w.length>=3),all=[...x.cats];
+ {const nn=norm(c.name||"").trim();if(nn&&all.includes(nn))return o=>o.cs.includes(nn);if(/烟/.test(c.name||"")||/烟/.test(c.sub||""))return o=>o.cs.includes("cigarrillos")}
  for(const s of [c.name,c.sub]){const hit=tk(s).filter(w=>all.some(cn=>cn.includes(w)));if(hit.length)return o=>o.cs.some(cn=>hit.some(w=>cn.includes(w)))}
  return null}
 function picScore(o,q){const s=Math.max(matchScore(o.k,q),o.core?matchScore(o.core,q):0);return s?s+(o.s?3:0):0}
@@ -1237,7 +1245,7 @@ async function aiOcr(blob){if(!NATIVE)return null;try{const r=await fetch("api/o
 /* 候选库：官方图片索引 + 品名库 + 本单已有品项 */
 function aiPool(cat){const x=picIdx(),f=x&&cat?picCatFilter(cat):null,out=[],seen=new Set();
  localPool(cat).forEach(p=>{if(seen.has(p.k))return;seen.add(p.k);out.push(p)});
- if(x&&srcOn("saphirus"))x.list.forEach(o=>{if(f&&!f(o))return;const k=skey(o.n);if(seen.has(k)){const e=out.find(p=>p.k==k);if(e&&!e.t&&!e.img)e.t=o.t;return}seen.add(k);out.push({n:o.n,k,core:o.core,t:o.t,off:1})});
+ if(x)x.list.forEach(o=>{if(f&&!f(o))return;if(!srcOn(o.cs.includes("cigarrillos")?"cigarrillos":"saphirus"))return;const k=skey(o.n);if(seen.has(k)){const e=out.find(p=>p.k==k);if(e&&!e.t&&!e.img)e.t=o.t;return}seen.add(k);out.push({n:o.n,k,core:o.core,t:o.t,off:1})});
  return out}
 /* 本地：本单品项 > Saphirus 源 > 品名库（带上已设置的图片） */
 function localPool(cat){const o=cur(),out=[],seen=new Set();
