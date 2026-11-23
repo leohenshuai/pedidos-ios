@@ -1095,7 +1095,6 @@ function catApply(){
 function moreMenu(){
  modal(`<div class="mh">更多</div><div class="ab" style="margin-top:6px">
   <button onclick="closeModal();importModal()">📋 批量导入（粘贴文字清单）</button>
-  <button class="g" onclick="closeModal();aiSettings()">📷 拍照识别设置（API）</button>
   <button class="g" onclick="closeModal()">关闭</button></div>`)}
 
 function openNC(){$("ncb").hidden=true;$("ncw").hidden=false;$("ncn").focus()}
@@ -1224,7 +1223,7 @@ function aiSave(){try{localStorage.setItem(AI_KEY,JSON.stringify(AIC))}catch(e){
 const aiReady=()=>!!(AIC.url&&AIC.key&&AIC.model);
 function aiEndpoint(){let u=AIC.url.trim().replace(/\/+$/,"");return /\/chat\/completions$/.test(u)?u:u+"/chat/completions"}
 function aiSettings(){
- modal(`<div class="mh">拍照识别设置</div><div class="mt">本地先读标签文字；读不准时才调用下面的视觉模型（需联网，按次计费）。接口须兼容 OpenAI 的 chat/completions 且支持图片输入。</div>
+ modal(`<div class="mh">AI 密钥设置</div><div class="mt">用于拍照识别、AI 文字搜索、AI 生成搜图词。本地先查、读不准或没有时才调用下面的模型（需联网，按次计费）。接口须兼容 OpenAI 的 chat/completions 且支持图片输入。</div>
  <div class="opt">模式：<select id="aim" onchange="AIC.mode=this.value;aiSave()"><option value="hybrid" ${AIC.mode=="hybrid"?"selected":""}>混合（推荐）</option><option value="local" ${AIC.mode=="local"?"selected":""}>只本地</option><option value="api" ${AIC.mode=="api"?"selected":""}>只用 API</option></select></div>
  <input class="sq" id="aiu" style="border:1px solid #e3d8c8;margin:4px 0" placeholder="接口地址，如 https://api.openai.com/v1" value="${esc(AIC.url)}" oninput="AIC.url=this.value.trim();aiSave()">
  <input class="sq" id="aik" type="password" autocomplete="off" style="border:1px solid #e3d8c8;margin:4px 0" placeholder="API 密钥（只保存在本机）" value="${esc(AIC.key)}" oninput="AIC.key=this.value.trim();aiSave()">
@@ -1376,7 +1375,7 @@ async function aiPickPhoto(ci,inp){const f=inp.files&&inp.files[0];inp.value="";
   let hits=[],lines=null,note="";
   if(AIC.mode!="api"){AIR.msg="本地读取标签文字…";aiPanel();lines=await aiOcr(sm.blob);AIR.chips=aiTextChips(lines);if(lines&&lines.length)hits=aiLocalMatch(lines,pool).filter(h=>h.s>=AIC.thr).map(h=>({...h,qty:1}))}
   const need=AIC.mode=="api"||(AIC.mode=="hybrid"&&!hits.length);
-  if(need){if(!aiReady()){if(AIC.mode=="api")throw new Error("请先在「更多 → 拍照识别设置」里填写 API");note=lines==null?"本机没有文字识别能力，且未配置 API":"官方目录里没有匹配的商品。可点下面读到的文字直接新建，或在设置里配置 API 让视觉模型再试"}
+  if(need){if(!aiReady()){if(AIC.mode=="api")throw new Error("请先在「设置 → AI 密钥设置」里填写 API");note=lines==null?"本机没有文字识别能力，且未配置 API":"官方目录里没有匹配的商品。可点下面读到的文字直接新建，或在设置里配置 API 让视觉模型再试"}
    else{AIR.msg="调用视觉模型…";aiPanel();try{hits=await aiVision(sm.url,pool,lines)}catch(e){note="视觉模型失败："+e.message}}}
   if(!hits.length&&AIR.chips.length&&!(AIC.mode!="local"&&aiReady())){AIR.msg="去官网搜索读到的文字…";aiPanel();const found=[];for(const t of AIR.chips.slice(0,6)){const l=await shopSearch(t),h=shopPick(t,l,c);if(h&&!found.some(f=>f.p.k==skey(h.x.n))){found.push({p:{n:h.x.n,k:skey(h.x.n),t:h.x.t,off:1},s:h.s>=100?90:75,qty:1,shop:1,txt:1})}}hits=found;if(found.length)note=""}
   AIR.note=note;const seen=new Set();
@@ -1520,6 +1519,8 @@ function setPage(){const L=S.orders.filter(o=>!o.del).length,sc=srcCur();
  $("setp").innerHTML=`<div class="pt">商品源</div><div class="card">
  <button class="setb" onclick="srcModal()"><span>🏷</span><span style="flex:1">商品源管理</span><small style="color:#999">${SRCS.list.length} 个源</small></button>
  <button class="setb" onclick="homeCat()"><span>📥</span><span style="flex:1">从商品源导入到订单</span><small style="color:#999">${esc(sc.name)}</small></button></div>
+ <div class="pt">AI</div><div class="card">
+ <button class="setb" onclick="aiSettings()"><span>🔑</span><span style="flex:1">AI 密钥设置</span><small style="color:${aiReady()?"#3aa655":"#999"}">${aiReady()?"已配置 · "+esc(AIC.model):"未配置"}</small></button></div>
  <div class="pt">外观与反馈</div><div class="card">
  <div class="setb" style="flex-wrap:wrap"><span>🌗</span><span style="flex:1">外观</span><div class="seg3" style="display:flex;gap:4px">${[["auto","跟随系统"],["light","浅色"],["dark","深色"]].map(([k,t])=>`<button class="${themePref()==k?"on":""}" onclick="setThemePref('${k}')">${t}</button>`).join("")}</div></div>
  <button class="setb" onclick="setFxPref('haptic',${PREF("haptic","1")!="1"})"><span>📳</span><span style="flex:1">触感反馈（振动）</span><small style="color:${PREF("haptic","1")=="1"?"#3aa655":"#999"}">${PREF("haptic","1")=="1"?"已开":"已关"}</small></button>
