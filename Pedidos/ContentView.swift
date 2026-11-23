@@ -299,7 +299,20 @@ final class SchemeHandler: NSObject, WKURLSchemeHandler {
         let found = Bundle.main.url(forResource: "Web/" + name, withExtension: nil)
             ?? Bundle.main.url(forResource: name, withExtension: nil)
         if let f = found, let d = try? Data(contentsOf: f) {
-            send(200, d, name.hasSuffix(".html") ? "text/html; charset=utf-8" : "application/octet-stream")
+            // 拆分后的 pedidos.css / pedidos.js 等静态文件必须按扩展名给 MIME，
+            // 否则 WebKit 会拒绝执行/应用 application/octet-stream 的脚本与样式。
+            let mime: String
+            switch (name as NSString).pathExtension.lowercased() {
+            case "html": mime = "text/html; charset=utf-8"
+            case "css": mime = "text/css; charset=utf-8"
+            case "js": mime = "text/javascript; charset=utf-8"
+            case "json": mime = "application/json; charset=utf-8"
+            case "jpg", "jpeg": mime = "image/jpeg"
+            case "png": mime = "image/png"
+            case "webp": mime = "image/webp"
+            default: mime = "application/octet-stream"
+            }
+            send(200, d, mime)
         } else {
             send(404, Data("not found".utf8), "text/plain")
         }
