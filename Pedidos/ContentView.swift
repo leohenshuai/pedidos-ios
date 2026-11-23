@@ -4,6 +4,7 @@ import UIKit
 import AudioToolbox
 import Vision
 import PhotosUI
+import Security
 
 struct ContentView: View {
     var body: some View {
@@ -109,6 +110,33 @@ enum Store {
         guard let out = try? JSONSerialization.data(withJSONObject: o, options: [.prettyPrinted]),
               (try? out.write(to: dataURL, options: .atomic)) != nil else { return (500, Data()) }
         return (200, Data("{\"ok\":true,\"rev\":\(curRev + 1)}".utf8))
+    }
+}
+
+/// AI 密钥存钥匙串（不进 localStorage / 数据文件）
+enum Keychain {
+    private static let service = "com.pedidos.app"
+    private static let account = "ai-key"
+    private static var query: [String: Any] {
+        [kSecClass as String: kSecClassGenericPassword,
+         kSecAttrService as String: service,
+         kSecAttrAccount as String: account]
+    }
+    static func getKey() -> String {
+        var q = query
+        q[kSecReturnData as String] = true
+        q[kSecMatchLimit as String] = kSecMatchLimitOne
+        var item: CFTypeRef?
+        guard SecItemCopyMatching(q as CFDictionary, &item) == errSecSuccess,
+              let d = item as? Data else { return "" }
+        return String(data: d, encoding: .utf8) ?? ""
+    }
+    static func setKey(_ key: String) {
+        SecItemDelete(query as CFDictionary)
+        guard !key.isEmpty else { return }
+        var q = query
+        q[kSecValueData as String] = Data(key.utf8)
+        SecItemAdd(q as CFDictionary, nil)
     }
 }
 
@@ -256,6 +284,33 @@ final class SchemeHandler: NSObject, WKURLSchemeHandler {
             }.resume()
             return
         }
+        if path == "/api/aikey" {
+            // AI 密钥钥匙串存取：GET 返回 {"key": "..."}；POST {"key": "..."} 保存，空值删除
+            if task.request.httpMethod == "POST" {
+                let k = ((try? JSONSerialization.jsonObject(with: readBody() ?? Data())) as? [String: Any])?["key"] as? String ?? ""
+                Keychain.setKey(k)
+                send(200, Data("{\"ok\":true}".utf8), json)
+            } else {
+                let d = (try? JSONSerialization.data(withJSONObject: ["key": Keychain.getKey()])) ?? Data("{\"key\":\"\"}".utf8)
+                send(200, d, json)
+            }
+            return
+        }
+        if path == "/api/export-file" {
+            // 把页面发来的完整数据直接写到 Documents/订货单/，在“文件”App 里可见
+            guard task.request.httpMethod == "POST", let body = readBody(),
+                  let o = (try? JSONSerialization.jsonObject(with: body)) as? [String: Any],
+                  o["orders"] is [Any],
+                  let out = try? JSONSerialization.data(withJSONObject: o, options: [.prettyPrinted]) else {
+                send(400, Data("{\"error\":\"bad data\"}".utf8), json); return
+            }
+            let f = DateFormatter(); f.dateFormat = "yyyyMMdd_HHmmss"; f.locale = Locale(identifier: "en_US_POSIX")
+            let name = "pedidos_export_\(f.string(from: Date())).json"
+            do { try out.write(to: Store.dir.appendingPathComponent(name), options: .atomic) }
+            catch { send(500, Data("{\"error\":\"write failed\"}".utf8), json); return }
+            let d = (try? JSONSerialization.data(withJSONObject: ["ok": true, "name": name])) ?? Data()
+            send(200, d, json); return
+        }
         if path == "/api/ai" {
             // 转发到用户配置的 OpenAI 兼容接口（绕开页面跨域限制）。请求体 JSON：{url,key,body}
             guard let o = (try? JSONSerialization.jsonObject(with: readBody() ?? Data())) as? [String: Any],
@@ -264,7 +319,8 @@ final class SchemeHandler: NSObject, WKURLSchemeHandler {
             var rq = URLRequest(url: remote, timeoutInterval: 90)
             rq.httpMethod = "POST"
             rq.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            if let k = o["key"] as? String, !k.isEmpty { rq.setValue("Bearer " + k, forHTTPHeaderField: "Authorization") }
+            let key = (o["key"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? Keychain.getKey()
+            if !key.isEmpty { rq.setValue("Bearer " + key, forHTTPHeaderField: "Authorization") }
             rq.httpBody = try? JSONSerialization.data(withJSONObject: b)
             URLSession.shared.dataTask(with: rq) { d, r, e in
                 let code = (r as? HTTPURLResponse)?.statusCode ?? 502
@@ -296,10 +352,23 @@ final class SchemeHandler: NSObject, WKURLSchemeHandler {
             return
         }
         let name = (path == "/" || path.isEmpty) ? "pedidos.html" : String(path.dropFirst())
-        let found = Bundle.main.url(forResource: "Web/" + name, withExtension: nil)
-            ?? Bundle.main.url(forResource: name, withExtension: nil)
+        // 打包后 Web 资源会被平铺到 App 包根目录（实测 build 94 的 IPA 里 app.css / *.js 都在根目录，
+        // 没有 Web/css、Web/js 子目录），只按 "Web/" + name 查找会让 css/js 全部 404、整页无样式无脚本。
+        // 依次按 Web/<name>、<name>、纯文件名三级查找，两种布局都能命中。
+        var cands: [URL] = []
+        if let res = Bundle.main.resourceURL {
+            cands = [res.appendingPathComponent("Web/" + name),
+                     res.appendingPathComponent(name),
+                     res.appendingPathComponent((name as NSString).lastPathComponent)]
+        }
+        let found = cands.first { FileManager.default.fileExists(atPath: $0.path) }
         if let f = found, let d = try? Data(contentsOf: f) {
-            send(200, d, name.hasSuffix(".html") ? "text/html; charset=utf-8" : "application/octet-stream")
+            let mime = name.hasSuffix(".html") ? "text/html; charset=utf-8"
+                : name.hasSuffix(".css") ? "text/css; charset=utf-8"
+                : name.hasSuffix(".js") ? "text/javascript; charset=utf-8"
+                : name.hasSuffix(".json") ? "application/json; charset=utf-8"
+                : "application/octet-stream"
+            send(200, d, mime)
         } else {
             send(404, Data("not found".utf8), "text/plain")
         }
@@ -409,7 +478,7 @@ struct WebContainer: UIViewRepresentable {
                 guard let data = data,
                       let j = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                       let tag = j["tag_name"] as? String,
-                      let latest = Int(tag.filter { $0.isNumber }) else {
+                      let (relVer, latest) = Self.parseReleaseTag(tag) else {
                     if manual { DispatchQueue.main.async { self.jsToast("⚠ 检查失败，请确认网络") } }
                     return
                 }
@@ -426,12 +495,24 @@ struct WebContainer: UIViewRepresentable {
                    let u = a["browser_download_url"] as? String { link = u }
                 var notes = (j["body"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 if notes.hasPrefix("Unsigned IPA") { notes = "" }
-                DispatchQueue.main.async { self.promptUpdate(latest, cur, link, notes) }
+                DispatchQueue.main.async { self.promptUpdate(relVer, latest, cur, link, notes) }
             }.resume()
         }
-        func promptUpdate(_ latest: Int, _ cur: Int, _ link: String, _ notes: String) {
+        /// Release 标签 → (对外版本, build 号)。新格式 v1.7.93；旧格式 build-92 兼容（版本显示当前 App 版本）。
+        static func parseReleaseTag(_ tag: String) -> (String, Int)? {
+            if tag.hasPrefix("build-") {
+                guard let n = Int(tag.dropFirst(6)) else { return nil }
+                let v = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+                return (v, n)
+            }
+            guard tag.hasPrefix("v") else { return nil }
+            let parts = tag.dropFirst().split(separator: ".")
+            guard parts.count >= 2, let n = Int(parts.last!) else { return nil }
+            return (parts.dropLast().joined(separator: "."), n)
+        }
+        func promptUpdate(_ ver: String, _ latest: Int, _ cur: Int, _ link: String, _ notes: String) {
             guard let top = topVC(), !(top is UIAlertController) else { return }
-            let msg = "当前 build \(cur)，最新 build \(latest)。\n下载后需用 TrollStore / AltStore / Sideloadly 重新签名安装；覆盖安装不会丢数据（请用同一证书）。" + (notes.isEmpty ? "" : "\n\n" + notes)
+            let msg = "当前 build \(cur)，最新 " + (ver.isEmpty ? "" : "\(ver) ") + "build \(latest)。\n下载后需用 TrollStore / AltStore / Sideloadly 重新签名安装；覆盖安装不会丢数据（请用同一证书）。" + (notes.isEmpty ? "" : "\n\n" + notes)
             let a = UIAlertController(title: "发现新版本", message: msg, preferredStyle: .alert)
             a.addAction(UIAlertAction(title: "下载", style: .default) { _ in
                 if let u = URL(string: link) { UIApplication.shared.open(u) }
