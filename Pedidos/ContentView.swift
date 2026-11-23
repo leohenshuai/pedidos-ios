@@ -352,8 +352,16 @@ final class SchemeHandler: NSObject, WKURLSchemeHandler {
             return
         }
         let name = (path == "/" || path.isEmpty) ? "pedidos.html" : String(path.dropFirst())
-        let found = Bundle.main.url(forResource: "Web/" + name, withExtension: nil)
-            ?? Bundle.main.url(forResource: name, withExtension: nil)
+        // 打包后 Web 资源会被平铺到 App 包根目录（实测 build 94 的 IPA 里 app.css / *.js 都在根目录，
+        // 没有 Web/css、Web/js 子目录），只按 "Web/" + name 查找会让 css/js 全部 404、整页无样式无脚本。
+        // 依次按 Web/<name>、<name>、纯文件名三级查找，两种布局都能命中。
+        var cands: [URL] = []
+        if let res = Bundle.main.resourceURL {
+            cands = [res.appendingPathComponent("Web/" + name),
+                     res.appendingPathComponent(name),
+                     res.appendingPathComponent((name as NSString).lastPathComponent)]
+        }
+        let found = cands.first { FileManager.default.fileExists(atPath: $0.path) }
         if let f = found, let d = try? Data(contentsOf: f) {
             let mime = name.hasSuffix(".html") ? "text/html; charset=utf-8"
                 : name.hasSuffix(".css") ? "text/css; charset=utf-8"
