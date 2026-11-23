@@ -18,6 +18,8 @@ jobs:
             ~/Library/Caches/Homebrew
             ~/.cache/pip
           key: ${{ runner.os }}-deps-v1
+      - name: Smoke check (web assets)
+        run: python3 tools/smoke_web.py
       - name: Prepare
         id: prep
         continue-on-error: true

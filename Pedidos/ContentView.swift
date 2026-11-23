@@ -299,7 +299,12 @@ final class SchemeHandler: NSObject, WKURLSchemeHandler {
         let found = Bundle.main.url(forResource: "Web/" + name, withExtension: nil)
             ?? Bundle.main.url(forResource: name, withExtension: nil)
         if let f = found, let d = try? Data(contentsOf: f) {
-            send(200, d, name.hasSuffix(".html") ? "text/html; charset=utf-8" : "application/octet-stream")
+            let mime = name.hasSuffix(".html") ? "text/html; charset=utf-8"
+                : name.hasSuffix(".css") ? "text/css; charset=utf-8"
+                : name.hasSuffix(".js") ? "text/javascript; charset=utf-8"
+                : name.hasSuffix(".json") ? "application/json; charset=utf-8"
+                : "application/octet-stream"
+            send(200, d, mime)
         } else {
             send(404, Data("not found".utf8), "text/plain")
         }
