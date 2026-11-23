@@ -1140,7 +1140,7 @@ function picSave(){try{localStorage.setItem(PIC_KEY,JSON.stringify(PICS));return
 const itId=it=>it.id||(it.id=uid());
 function picKey(n,c,it){return catKeyFor(c)+"|"+(skey(n)||"#"+(it?itId(it):""))}
 function picOf(n,c,it){return PICS[picKey(n,c,it)]}
-const CIGI_KEY="pedidos_cigimg_v1",CIGI_URL="https://raw.githubusercontent.com/leohenshuai/pedidos-ios/main/sources/cigarrillos_img.json",CIGI_BASE="https://raw.githubusercontent.com/leohenshuai/pedidos-ios/main/sources/cigimg/";
+const CIGI_KEY="pedidos_cigimg_v2",CIGI_URL="https://raw.githubusercontent.com/leohenshuai/pedidos-ios/main/sources/cigarrillos_img.json",CIGI_BASE="https://raw.githubusercontent.com/leohenshuai/pedidos-ios/main/sources/cigimg/";
 let CIGX=(()=>{try{return JSON.parse(localStorage.getItem(CIGI_KEY))}catch(e){return null}})();
 async function cigFetchIdx(){try{const r=await fetch(CIGI_URL+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const x=await r.json();if(!x||!x.items)return;CIGX=x;try{localStorage.setItem(CIGI_KEY,JSON.stringify(x))}catch(e){}if(PIDX&&PIDX._raw)PIDX=picPrep(PIDX._raw)}catch(e){}}
 /* 香烟候选 → 目录行 [名称, 图片绝对地址, 0, "品牌分类|Cigarrillos"] */
@@ -1160,7 +1160,13 @@ function picCatFilter(c){const x=picIdx();if(!x)return null;
  for(const s of [c.name,c.sub]){const hit=tk(s).filter(w=>all.some(cn=>cn.includes(w)));if(hit.length)return o=>o.cs.some(cn=>hit.some(w=>cn.includes(w)))}
  return null}
 function picScore(o,q){const s=Math.max(matchScore(o.k,q),o.core?matchScore(o.core,q):0);return s?s+(o.s?3:0):0}
-function picCands(name,c,lim,all){const x=picIdx();if(!x)return[];const q=skey(name);if(!q)return[];const f=all?null:picCatFilter(c);
+function cigExactRows(name){const k=skey(name||"");if(!CIGX||!CIGX.items||!k)return[];const d=srcData("cigarrillos"),out=[];let brand="";
+ if(d)for(const [b,l] of Object.entries(d.cats))if(l.some(it=>skey(it[0])==k)){brand=b;break}
+ if(!brand)return[];for(const [n,fs] of Object.entries(CIGX.items))if(skey(n)==k)for(const f of fs||[])out.push({n,t:CIGI_BASE+f,cl:[brand,"Cigarrillos"],cs:[norm(brand),"cigarrillos"],k:skey(n),core:skey(n).split(" ").slice(1).join(" "),s:0});return out}
+function picCands(name,c,lim,all){const x=picIdx();if(!x)return[];const q=skey(name);if(!q)return[];
+ // 香烟源的精确品名只显示该品名审核通过的图片，不再用模糊词匹配相似 SKU
+ if(srcNameOf(name)==="香烟源")return x.list.filter(o=>o.cs.includes("cigarrillos")&&skey(o.n)==q).map(o=>({o,s:100})).slice(0,lim||12);
+ const f=all?null:picCatFilter(c);
  return x.list.filter(o=>!f||f(o)).map(o=>({o,s:picScore(o,q)})).filter(r=>r.s>=55).sort((a,b)=>b.s-a.s).slice(0,lim||6)}
 function picBtn(ci,i,n){const c=cur().cats[ci],u=picUrl(picOf(n,c,c.items[i]));
  return `<button class="pxb ${u?"has":""}" onclick="picModal(${ci},${i})" title="商品图片">${u?`<img src="${esc(u)}" loading="lazy" onerror="this.parentNode.classList.remove('has');this.remove()">`:"🖼"}</button>`}
@@ -1175,13 +1181,14 @@ function picModal(ci,i){const o=cur(),c=o&&o.cats[ci],it=c&&c.items[i];if(!it)re
  <div class="ab picbar">${NATIVE?`<button onclick="nativePick(f=>picOwn({files:[f],value:''}))">📷 使用我的图片（拍照 / 相册）</button>`:`<label class="ab-l"><span>📷 使用我的图片（相册 / 文件）</span><input type="file" accept="image/*" style="display:none" onchange="picOwn(this)"></label>`}
  <button class="g" onclick="closeModal()">关闭</button></div>`);
  picFetchIdx().then(()=>{if(!$("pl"))return;picSearch("");if(NATIVE&&!$("pl").querySelector(".pxc"))picWebGo("")})}
-function picSearch(q){if(!$("pl"))return;const c=cur().cats[PM.ci],x=picIdx();
- if(!x){$("pinfo").innerHTML='<span style="color:#c0392b">无法获取官方图片目录，请检查网络</span>';return}
- const f=PM.all?null:picCatFilter(c);let r;
- if(q.trim()){const k=skey(q);r=x.list.filter(o=>!f||f(o)).map(o=>({o,s:picScore(o,k)})).filter(y=>y.s>0).sort((a,b)=>b.s-a.s).slice(0,18)}else r=picCands(PM.n,c,12,PM.all);
- $("pinfo").textContent=(PM.all?"全部类别":(f?"只显示和「"+(c.name||"")+"」同类":"认不出对应类别，显示全部"))+" · "+r.length+" 张";
- $("pall").textContent=PM.all?"只搜本类别":"搜全部类别";
- $("pl").innerHTML=r.map(y=>`<button class="pxc" onclick="picPick(${x.list.indexOf(y.o)})"><img src="${esc(picSrc(y.o.t))}" loading="lazy"><span>${esc(y.o.n)}</span><small>${esc(y.o.cl[0]||"")}</small></button>`).join("")||`<div class="hint">官方目录没有匹配${NATIVE?"，看下面的网上图片":"，换个关键词试试"}</div>`}
+function picSearch(q){if(!$('pl'))return;const c=cur().cats[PM.ci],x=picIdx();
+ if(!x){$('pinfo').innerHTML='<span style="color:#c0392b">无法获取官方图片目录，请检查网络</span>';return}
+ const cig=srcNameOf(PM.n)==="香烟源",f=PM.all?null:picCatFilter(c);let r;
+ if(cig){const k=skey(PM.n);r=x.list.filter(o=>o.cs.includes("cigarrillos")&&skey(o.n)==k).map(o=>({o,s:100}));if(q.trim()){const z=skey(q);r=r.filter(y=>picScore(y.o,z)>0)}}
+ else if(q.trim()){const k=skey(q);r=x.list.filter(o=>!f||f(o)).map(o=>({o,s:picScore(o,k)})).filter(y=>y.s>0).sort((a,b)=>b.s-a.s).slice(0,18)}else r=picCands(PM.n,c,12,PM.all);
+ $('pinfo').textContent=cig?("精确品名「"+PM.n+"」· 已核对候选 · "+r.length+" 张"):(PM.all?"全部类别":(f?"只显示和「"+(c.name||"")+"」同类":"认不出对应类别，显示全部"))+" · "+r.length+" 张";
+ $('pall').hidden=cig;$('pall').textContent=PM.all?"只搜本类别":"搜全部类别";
+ $('pl').innerHTML=r.map(y=>`<button class="pxc" onclick="picPick(${x.list.indexOf(y.o)})"><img src="${esc(picSrc(y.o.t))}" loading="lazy"><span>${esc(y.o.n)}</span><small>${esc(y.o.cl[0]||"")}</small></button>`).join("")||`<div class="hint">${cig?"这个精确品名暂无审核通过的官方候选图":"官方目录没有匹配"+(NATIVE?"，看下面的网上图片":"，换个关键词试试")}</div>`}
 /* 网上搜图：品名 + 所属商品源的提示词（香烟加 cigarrillos），列出多张让用户选 */
 function picWebQ(n){const c=cur().cats[PM.ci],sc=srcNameOf(n)||"";const hint=/香烟/.test(sc)?"cigarrillos":/saphirus/i.test(sc)?"Saphirus":"";
  return [hint,n,!sc&&c&&c.name&&!/^general$/i.test(c.name)?c.name:""].filter(Boolean).join(" ")}

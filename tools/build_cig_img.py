@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # 香烟图片目录：每个香烟品名预搜 4 张候选图（DuckDuckGo，优先阿根廷零售站），缩成 400px 存 sources/cigimg/
-# 索引 sources/cigarrillos_img.json = {"v":1,"date":..,"items":{品名:[文件名,...]}}；App 里「从官方匹配图片」列出候选让用户选，不自动套用
+# 输出未审核候选 staging/sources/cigarrillos_img_candidates.json；绝不写 App 正式索引。必须 OCR + 人工逐图核对后再复制到 sources/cigarrillos_img.json，避免错图上架。
 # 用法：python3 tools/build_cig_img.py [--redo]
 import json,re,os,sys,time,io,hashlib,urllib.request,urllib.parse,datetime
 from PIL import Image
@@ -35,7 +35,8 @@ def save(d,n,i):
     fn=hashlib.md5((n+"#"+str(i)).encode()).hexdigest()[:10]+".jpg";bg.save("sources/cigimg/"+fn,"JPEG",quality=80);return fn
 src=json.load(open("sources/cigarrillos.json"))
 os.makedirs("sources/cigimg",exist_ok=True)
-idxf="sources/cigarrillos_img.json"
+idxf="staging/sources/cigarrillos_img_candidates.json"
+os.makedirs("staging/sources",exist_ok=True)
 idx=json.load(open(idxf)) if os.path.exists(idxf) else {"v":1,"items":{}}
 redo="--redo" in sys.argv
 names=[it[0] for l in src["cats"].values() for it in l]
