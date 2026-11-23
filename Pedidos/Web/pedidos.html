@@ -107,7 +107,7 @@ html[data-theme=dark] .addimg{border-color:#5a4d44;color:#d9b98a}
 .nmr{display:flex;gap:6px;align-items:flex-start}.nmr textarea.nm{flex:1;min-width:0}
 .pxb{flex:none;width:40px;height:40px;border:1px dashed #d8cfc0;border-radius:10px;background:none;padding:0;font-size:16px;opacity:.7;overflow:hidden}
 .pxb.has{border:0;opacity:1;background:#fff}.pxb img{width:100%;height:100%;object-fit:cover;display:block}
-.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:50vh;overflow:auto}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:34vh;overflow:auto}
 .pxc{border:1px solid #e5e0d7;border-radius:10px;background:#fff;padding:4px;display:flex;flex-direction:column;gap:2px;font-size:11px;color:#3a2e2a}
 .pxc img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}
 .ab-l{display:block;text-align:center;padding:12px;border-radius:12px;background:#f1eee9;font-size:16px}
@@ -1149,20 +1149,22 @@ function picCands(name,c,lim,all){const x=picIdx();if(!x)return[];const q=skey(n
  return x.list.filter(o=>!f||f(o)).map(o=>({o,s:picScore(o,q)})).filter(r=>r.s>=55).sort((a,b)=>b.s-a.s).slice(0,lim||6)}
 function picBtn(ci,i,n){const c=cur().cats[ci],u=picUrl(picOf(n,c,c.items[i]));
  return `<button class="pxb ${u?"has":""}" onclick="picModal(${ci},${i})" title="商品图片">${u?`<img src="${esc(u)}" loading="lazy" onerror="this.parentNode.classList.remove('has');this.remove()">`:"🖼"}</button>`}
-function picModal(ci,i){const o=cur(),c=o&&o.cats[ci],it=c&&c.items[i];if(!it)return;PM={ci,i,n:it.n,k:picKey(it.n,c,it),all:false};const p=PICS[PM.k],u=picUrl(p);
- modal(`<div class="mh">商品图片 · ${esc(it.n||"无名称商品")}</div><div class="mt">类别：${esc(c.name||"未命名")}（图片按类别记录，不会和别的类别同名商品混用）</div>${u?`<div style="text-align:center;margin:6px 0"><img src="${esc(u)}" style="max-width:60%;border-radius:12px"></div>`:""}
- <div class="ab" style="margin-top:6px"><button onclick="picMatchUI()">🔎 从官方匹配图片</button>${NATIVE?`<button onclick="picWebUI()">🌐 网上搜图（多张可选）</button>`:""}
- ${NATIVE?`<button onclick="nativePick(f=>picOwn({files:[f],value:''}))">📷 使用我的图片（拍照/相册）</button>`:`<label class="ab-l"><span>📷 使用我的图片（相册/文件）</span><input type="file" accept="image/*" style="display:none" onchange="picOwn(this)"></label>`}
- ${p?`<button class="g" onclick="picDel()">移除图片</button>`:""}<button class="g" onclick="closeModal()">关闭</button></div>`)}
-async function picMatchUI(){const c=cur().cats[PM.ci];
- modal(`<div class="mh">官方图片 · ${esc(PM.n||"无名称商品")}</div><input class="sq" id="pq" style="border:1px solid #e3d8c8;margin:0 0 6px" placeholder="换个关键词搜索官方商品" oninput="picSearch(this.value)"><div class="mt" id="pinfo">加载官方目录…</div><div id="pl" class="pgrid"></div><div class="mb2"><button class="g" onclick="picModal(PM.ci,PM.i)">返回</button>${NATIVE?`<button class="g" onclick="picWebUI($('pq').value)">🌐 网上搜图</button>`:""}<button class="g" id="pall" onclick="PM.all=!PM.all;picSearch($('pq').value)">搜全部类别</button></div>`);
- await picFetchIdx();if(!picIdx()){$("pinfo").innerHTML='<span style="color:#c0392b">无法获取官方图片目录，请检查网络后重试</span>';return}
- picSearch("")}
-function picSearch(q){const c=cur().cats[PM.ci],f=PM.all?null:picCatFilter(c);let r;
- if(q.trim()){const k=skey(q);r=PIDX.list.filter(o=>!f||f(o)).map(o=>({o,s:picScore(o,k)})).filter(x=>x.s>0).sort((a,b)=>b.s-a.s).slice(0,18)}else r=picCands(PM.n,c,12,PM.all);
- $("pinfo").textContent=PM.all?"范围：全部类别 · "+PIDX.list.length+" 件":(f?"范围：只显示和「"+(c.name||"")+"」同类的官方商品":"这个种类认不出对应的官方类别，显示全部");
+function picModal(ci,i){const o=cur(),c=o&&o.cats[ci],it=c&&c.items[i];if(!it)return;PM={ci,i,n:it.n,k:picKey(it.n,c,it),all:false};PWL=[];
+ const p=PICS[PM.k],u=picUrl(p);
+ modal(`<div class="mh">商品图片 · ${esc(it.n||"无名称商品")}</div>${u?`<div style="text-align:center;margin:4px 0"><img src="${esc(u)}" style="max-height:90px;max-width:40%;border-radius:10px"></div>`:""}
+ <input class="sq" id="pq" style="border:1px solid #e3d8c8;margin:0 0 4px" placeholder="换个关键词搜索（回车搜网上）" oninput="picSearch(this.value)" onkeydown="if(event.key=='Enter'){event.preventDefault();picWebGo($('pq').value)}">
+ <div class="pt" style="margin:6px 2px 2px">🔎 官方图片</div><div class="mt" id="pinfo">加载官方目录…</div><div id="pl" class="pgrid"></div>
+ ${NATIVE?`<div class="pt" style="margin:10px 2px 2px">🌐 网上图片</div><div id="pwqs"></div><div class="mt" id="pwinfo"><button class="g" style="width:100%" onclick="picWebGo($('pq').value)">🌐 搜网上图片（AI 生成搜索词）</button></div><div id="pwl" class="pgrid"></div>`:""}
+ <div class="ab" style="margin-top:8px">${NATIVE?`<button onclick="nativePick(f=>picOwn({files:[f],value:''}))">📷 使用我的图片（拍照/相册）</button>`:`<label class="ab-l"><span>📷 使用我的图片（相册/文件）</span><input type="file" accept="image/*" style="display:none" onchange="picOwn(this)"></label>`}
+ <div style="display:flex;gap:6px"><button class="g" style="flex:1" id="pall" onclick="PM.all=!PM.all;picSearch($('pq').value)">搜全部类别</button>${p?`<button class="g" style="flex:1" onclick="picDel()">移除图片</button>`:""}<button class="g" style="flex:1" onclick="closeModal()">关闭</button></div></div>`);
+ picFetchIdx().then(()=>{if(!$("pl"))return;picSearch("");if(NATIVE&&!$("pl").querySelector(".pxc"))picWebGo("")})}
+function picSearch(q){if(!$("pl"))return;const c=cur().cats[PM.ci],x=picIdx();
+ if(!x){$("pinfo").innerHTML='<span style="color:#c0392b">无法获取官方图片目录，请检查网络</span>';return}
+ const f=PM.all?null:picCatFilter(c);let r;
+ if(q.trim()){const k=skey(q);r=x.list.filter(o=>!f||f(o)).map(o=>({o,s:picScore(o,k)})).filter(y=>y.s>0).sort((a,b)=>b.s-a.s).slice(0,18)}else r=picCands(PM.n,c,12,PM.all);
+ $("pinfo").textContent=PM.all?"范围：全部类别 · "+x.list.length+" 件":(f?"范围：只显示和「"+(c.name||"")+"」同类的官方商品":"这个种类认不出对应的官方类别，显示全部");
  $("pall").textContent=PM.all?"只搜本类别":"搜全部类别";
- $("pl").innerHTML=r.map(x=>`<button class="pxc" onclick="picPick(${PIDX.list.indexOf(x.o)})"><img src="${esc(picSrc(x.o.t))}" loading="lazy"><span>${esc(x.o.n)}</span><small>${esc(x.o.cl[0]||"")}</small></button>`).join("")||`<div class="hint">官方目录没有匹配${NATIVE?"，可以点下面「🌐 网上搜图」":"，换个关键词试试"}</div>`}
+ $("pl").innerHTML=r.map(y=>`<button class="pxc" onclick="picPick(${x.list.indexOf(y.o)})"><img src="${esc(picSrc(y.o.t))}" loading="lazy"><span>${esc(y.o.n)}</span><small>${esc(y.o.cl[0]||"")}</small></button>`).join("")||`<div class="hint">官方目录没有匹配${NATIVE?"，看下面的网上图片":"，换个关键词试试"}</div>`}
 /* 网上搜图：品名 + 所属商品源的提示词（香烟加 cigarrillos），列出多张让用户选 */
 function picWebQ(n){const c=cur().cats[PM.ci],sc=srcNameOf(n)||"";const hint=/香烟/.test(sc)?"cigarrillos":/saphirus/i.test(sc)?"Saphirus":"";
  return [hint,n,!sc&&c&&c.name&&!/^general$/i.test(c.name)?c.name:""].filter(Boolean).join(" ")}
@@ -1181,15 +1183,15 @@ async function aiImgQuery(n,ctx){const a=await aiImgQueries(n,ctx);return a[0]||
 function qChips(list,cur,fn){return list.length?`<div class="aichips" style="margin:0 0 6px">${list.map((x,i)=>`<button class="aichip ${x===cur?"on":""}" style="${x===cur?"outline:2px solid var(--c,#c0562f)":""}" onclick="${fn}(${i})">🤖 ${esc(x)}</button>`).join("")}</div>`:""}
 let PWL=[];
 let PWQ=[];
-function picWebQi(i){picWebUI(PWQ[i])}
-async function picWebUI(q){q=String(q||"").trim();
- if(PWQ.key!==PM.k){PWQ=[];PWQ.key=PM.k;if(aiReady()){modal(`<div class="mh">网上搜图 · ${esc(PM.n||"无名称商品")}</div><div class="mt">⏳ AI 生成搜索词候选…</div>`);const a=await aiImgQueries(PM.n,srcNameOf(PM.n)||(cur().cats[PM.ci]||{}).name);PWQ=a.slice();PWQ.key=PM.k}}
- q=q||PWQ[0]||picWebQ(PM.n);const byAi=PWQ.includes(q);
- modal(`<div class="mh">网上搜图 · ${esc(PM.n||"无名称商品")}</div>${PWQ.length?`<div class="mt">AI 搜索词候选（点一条换着搜）：</div>`+qChips(PWQ,q,"picWebQi"):""}<input class="sq" id="pwq" style="border:1px solid #e3d8c8;margin:0 0 6px" value="${esc(q)}" placeholder="换个关键词" onkeydown="if(event.key=='Enter')picWebUI(this.value)"><div class="mt" id="pwinfo">⏳ 搜索中…</div><div id="pwl" class="pgrid"></div><div class="mb2"><button class="g" onclick="picModal(PM.ci,PM.i)">返回</button><button class="g" onclick="picWebUI($('pwq').value)">重新搜索</button></div>`);
+function picWebQi(i){picWebGo(PWQ[i],1)}
+async function picWebGo(q,chip){q=String(q||"").trim();if(!$("pwl"))return;
+ if(PWQ.key!==PM.k){PWQ=[];PWQ.key=PM.k;if(aiReady()){$("pwinfo").textContent="⏳ AI 生成搜索词候选…";const a=await aiImgQueries(PM.n,srcNameOf(PM.n)||(cur().cats[PM.ci]||{}).name);PWQ=a.slice();PWQ.key=PM.k}}
+ if(!$("pwl"))return;q=q||PWQ[0]||picWebQ(PM.n);const byAi=PWQ.includes(q);
+ $("pwqs").innerHTML=PWQ.length?qChips(PWQ,q,"picWebQi"):"";$("pwl").innerHTML="";$("pwinfo").textContent="⏳ 搜索「"+q+"」…";
  const arr=await webImgSearch(q);if(!$("pwl"))return;
  if(arr===null){$("pwinfo").innerHTML='<span style="color:#c0392b">网上搜图失败，请检查网络后重试</span>';return}
  PWL=arr.filter(x=>x.t||x.u).filter(x=>!x.w||!x.h||(x.w/x.h>0.4&&x.w/x.h<2.5)).slice(0,30);
- $("pwinfo").textContent=(byAi?"🤖 AI 搜索词 · ":"")+(PWL.length?"找到 "+PWL.length+" 张，点一张设为商品图片（会下载保存到本机）":"没找到，换个关键词试试");
+ $("pwinfo").textContent=(byAi?"🤖 AI 搜索词 · ":"")+(PWL.length?"找到 "+PWL.length+" 张，点一张设为商品图片（会下载保存到本机）":"没找到，换个关键词试试（上面输入框回车重搜）");
  $("pwl").innerHTML=PWL.map((x,i)=>`<button class="pxc" onclick="picWebPick(${i})"><img src="${esc(x.t||x.u)}" loading="lazy" onerror="this.parentNode.remove()"><small>${esc((x.s||"").replace(/^www\./,"").slice(0,24))}${x.w?" · "+x.w+"×"+x.h:""}</small></button>`).join("")}
 async function picWebPick(i){const x=PWL[i];if(!x)return;toast("下载图片…");let d=await webImgData(x.u);if(!d&&x.t)d=await webImgData(x.t);
  if(!d){toast("⚠ 这张下载失败，换一张试试");return}PICS[PM.k]={d};if(picSave()){closeModal();renderEdit();toast("已设置图片")}}
