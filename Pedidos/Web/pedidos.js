@@ -745,11 +745,9 @@ async function picWebPick(i){const x=PWL[i];if(!x)return;toast("下载图片…"
  if(!d){toast("⚠ 这张下载失败，换一张试试");return}PICS[PM.k]={d};if(picSave()){closeModal();renderEdit();toast("已设置图片")}}
 function picPick(ix){const o=PIDX.list[ix];PICS[PM.k]={u:o.t};if(picSave()){closeModal();renderEdit();toast("已设置图片")}}
 function picDel(){delete PICS[PM.k];picSave();closeModal();renderEdit()}
-function picOwn(inp){const f=inp.files&&inp.files[0];inp.value="";if(!f)return Promise.resolve();const key=PM.k;return new Promise(resolve=>{const im=new Image(),u=URL.createObjectURL(f);
- im.onload=()=>{try{const m=520,s=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*s);cv.height=Math.round(im.height*s);
- const g=cv.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,cv.width,cv.height);g.drawImage(im,0,0,cv.width,cv.height);
- PICS[key]={d:cv.toDataURL("image/jpeg",.86)};if(picSave()){closeModal();renderEdit();toast("已设置我的图片")}}catch(e){toast("⚠ 照片保存失败")}finally{URL.revokeObjectURL(u);resolve()}};
- im.onerror=()=>{URL.revokeObjectURL(u);toast("⚠ 无法读取这张图片");resolve()};im.src=u})}
+async function picOwn(inp){const f=inp.files&&inp.files[0];inp.value="";if(!f)return;const key=PM&&PM.k;if(!key){toast("请重新打开商品图片后选图");return}toast("照片已收到，正在处理…");
+ try{const photo=await aiShrink(f,520);PICS[key]={d:photo.url};if(picSave()){closeModal();renderEdit();toast("已设置我的图片")}}
+ catch(e){toast("⚠ "+(e.message||"照片保存失败"))}}
 /* 一键匹配：当前订单所有品项，只在各自类别里找；自己的图片永远不覆盖 */
 async function picAuto(force){const o=cur();if(!o)return;toast("匹配中…");await picFetchIdx();if(!picIdx()){toast("⚠ 无法获取官方图片目录，请检查网络");return}
  let ok=0,skip=0;const miss=[];
@@ -790,7 +788,20 @@ async function aiCall(messages,maxTok){
  if(!r.ok||j.error)throw new Error((j.error&&(j.error.message||j.error))||("HTTP "+r.status));
  const c=j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content;if(!c)throw new Error("模型没有返回内容");return c}
 /* 图片压缩到 1280 像素 JPEG */
-function aiShrink(file,max){return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{const s=Math.min(1,max/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*s);cv.height=Math.round(im.height*s);cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);cv.toBlob(b=>b?res({blob:b,url:cv.toDataURL("image/jpeg",.85),w:cv.width,h:cv.height}):rej(new Error("压缩失败")),"image/jpeg",.9)};im.onerror=()=>rej(new Error("无法读取图片"));im.src=u})}
+// Bound photo decoding, free image/canvas storage on every exit; never wait silently forever.
+function aiShrink(file,max){return new Promise((res,rej)=>{
+ const im=new Image(),u=URL.createObjectURL(file);let cv=null,done=false;
+ const finish=(error,value)=>{if(done)return;done=true;clearTimeout(timer);im.onload=im.onerror=null;im.src="";URL.revokeObjectURL(u);if(cv){cv.width=cv.height=1}error?rej(error):res(value)};
+ const timer=setTimeout(()=>finish(new Error("读取照片超时，请改选相册里的 JPEG 照片")),15000);
+ im.onerror=()=>finish(new Error("无法读取这张照片，请尝试相册中的 JPEG 图片"));
+ im.onload=()=>{try{
+  if(!im.naturalWidth||!im.naturalHeight)throw new Error("照片尺寸无效");
+  const scale=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight));cv=document.createElement('canvas');cv.width=Math.max(1,Math.round(im.naturalWidth*scale));cv.height=Math.max(1,Math.round(im.naturalHeight*scale));
+  const g=cv.getContext('2d');if(!g)throw new Error("无法处理照片，请关闭其它页面后重试");g.drawImage(im,0,0,cv.width,cv.height);
+  const w=cv.width,h=cv.height;cv.toBlob(blob=>{if(done)return;if(!blob){finish(new Error("照片压缩失败"));return}try{const url=cv.toDataURL('image/jpeg',.85);finish(null,{blob,url,w,h})}catch(e){finish(e)}},'image/jpeg',.85);
+ }catch(e){finish(e)}};im.src=u;
+})}
+function photoWait(promise,ms){return new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(new Error("图片目录加载超时")),ms);Promise.resolve(promise).then(v=>{clearTimeout(t);resolve(v)},e=>{clearTimeout(t);reject(e)})})}
 async function aiOcr(blob){if(!NATIVE)return null;try{const r=await fetch("api/ocr",{method:"POST",body:blob});if(!r.ok)return null;const j=await r.json();return j.lines||[]}catch(e){return null}}
 /* 候选库：官方图片索引 + 品名库 + 本单已有品项 */
 function aiPool(cat){const x=picIdx(),f=x&&cat?picCatFilter(cat):null,out=[],seen=new Set();
@@ -917,11 +928,19 @@ async function aiAsk(ci,q,online){q=String(q||"").trim();if(!q){toast("请输入
   if(AIR.items.some(h=>h.fresh||(!h.p.t&&!h.p.img))){AIR.msg="去网上找商品图…";aiPanel();await Promise.all(AIR.items.map(h=>aiFindWeb(h)))}
   AIR.busy=0;AIR.msg="";aiPanel()}catch(e){AIR.busy=0;AIR.msg="";AIR.note=e.message;aiPanel()}}
 async function aiPickPhoto(ci,inp){const f=inp.files&&inp.files[0];inp.value="";if(!f)return;
- const o=cur(),c=catAt(o,ci);AIR={ci,items:[],busy:1,msg:"识别中…",src:"",photo:"",chips:[]};aiPanel();
- try{await picFetchIdx();const pool=aiPool(c);
-  const sm=await aiShrink(f,1280);AIR.src=sm.url;aiPanel();
-  try{AIR.photo=(await aiShrink(f,520)).url}catch(e){}
-  let hits=[],lines=null,note="";
+ const o=cur();if(!o){toast("请先打开一个订单再选照片");return}const c=catAt(o,ci);const task=AIR={ci,items:[],busy:1,msg:"照片已收到，正在读取…",src:"",photo:"",chips:[]};aiPanel();
+ try{
+  // Paint the receipt state before decoding. Decode the original only once.
+  await new Promise(resolve=>setTimeout(resolve,0));
+  const sm=await aiShrink(f,1280);if(AIR!==task)return;AIR.src=sm.url;
+  AIR.photo=sm.url;aiPanel();
+  try{AIR.photo=(await aiShrink(sm.blob,520)).url}catch(e){}if(AIR!==task)return;
+  // Browser previews have no native OCR. Without an API they must not wait for online catalogues.
+  if(!NATIVE&&(AIC.mode==='local'||!aiReady())){AIR.busy=0;AIR.msg="";AIR.note="照片已读取。网页版没有本地识别能力，可直接使用照片；需要识别时请配置 AI 或使用 App。";aiPanel();return}
+  AIR.msg="照片已读取，加载商品目录…";aiPanel();
+  let catalogNote="";try{await photoWait(picFetchIdx(),8000)}catch(e){catalogNote="图片目录加载失败，已用本地商品源继续。"}if(AIR!==task)return;
+  const pool=aiPool(c);
+  let hits=[],lines=null,note=catalogNote;
   if(AIC.mode!="api"){AIR.msg="本地读取标签文字…";aiPanel();lines=await aiOcr(sm.blob);AIR.chips=aiTextChips(lines);if(lines&&lines.length)hits=aiLocalMatch(lines,pool).filter(h=>h.s>=AIC.thr).map(h=>({...h,qty:1}))}
   const need=AIC.mode=="api"||(AIC.mode=="hybrid"&&!hits.length);
   if(need){if(!aiReady()){if(AIC.mode=="api")throw new Error("请先在「设置 → AI 密钥设置」里填写 API");note=lines==null?"本机没有文字识别能力，且未配置 API":"官方目录里没有匹配的商品。可点下面读到的文字直接新建，或在设置里配置 API 让视觉模型再试"}
@@ -931,7 +950,7 @@ async function aiPickPhoto(ci,inp){const f=inp.files&&inp.files[0];inp.value="";
   AIR.items=hits.filter(h=>{if(seen.has(h.p.k))return false;seen.add(h.p.k);return true}).slice(0,24).map(h=>({...h,on:h.fresh?h.s>=85:h.s>=AIC.thr,qty:h.qty||1}));
   if(AIR.items.some(h=>h.fresh)){AIR.msg="去官网搜索商品…";aiPanel();await Promise.all(AIR.items.map(h=>aiResolve(h,c)));AIR.items=AIR.items.filter((h,i,a)=>a.findIndex(y=>y.p.k==h.p.k)==i)}
   if(AIR.items.some(h=>h.fresh)){AIR.msg="去网上找商品图…";aiPanel();await Promise.all(AIR.items.map(h=>aiFindWeb(h)))}
-  AIR.busy=0;AIR.msg="";aiPanel()}catch(e){AIR.busy=0;AIR.msg="";AIR.note=e.message;aiPanel()}}
+  AIR.busy=0;AIR.msg="";aiPanel()}catch(e){if(AIR!==task)return;AIR.busy=0;AIR.msg="";AIR.note=e.message;aiPanel()}}
 async function aiAddText(i){const t=AIR.chips[i];if(!t)return;AIR.chips.splice(i,1);const k=skey(t);if(AIR.items.some(h=>h.p.k==k))return aiPanel();
  const it={p:{n:tcName(t),k,t:null,off:0},s:100,qty:1,on:true,fresh:1,txt:1};AIR.items.push(it);AIR.busy=1;AIR.msg="去官网搜索「"+t+"」…";aiPanel();
  await aiResolve(it,catAt(cur(),AIR.ci));it.s=it.shop?it.s:100;if(it.fresh){AIR.msg="去网上找商品图…";aiPanel();await aiFindWeb(it)}AIR.busy=0;AIR.msg="";AIR.items=AIR.items.filter((h,j,a)=>a.findIndex(y=>y.p.k==h.p.k)==j);aiPanel()}
