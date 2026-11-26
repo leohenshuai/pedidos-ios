@@ -326,14 +326,15 @@ let resumingPhoto=false,finishedPhoto=null;
 window.__resumeNativePick=async function(p){
  const c=p.context||{};if(resumingPhoto)return;if(finishedPhoto===c.id){webkit.messageHandlers.native.postMessage({type:"pickAck"});return}
  resumingPhoto=true;
+ cameraStage("resume entered");
  try{
   if(p.error)throw new Error(p.error);
   if(!p.url)return;
   const o=S.orders.find(o=>o.id===c.order);if(!o)throw new Error("原订单已不存在，照片未应用");
   CATO=o.id;location.hash='o='+o.id;await new Promise(r=>setTimeout(r,100));CATO=o.id;renderEdit();
   let ci=c.ci;if(ci>=0&&o.cats[ci]?.name!==c.cat)ci=o.cats.findIndex(x=>x.name===c.cat);
-  const response=await fetch(p.url);if(!response.ok)throw new Error("读取暂存照片失败");
-  const f=new File([await response.blob()],"photo.jpg",{type:"image/jpeg"});NPCB=null;
+  cameraStage("fetch photo");const response=await fetch(p.url);if(!response.ok)throw new Error("读取暂存照片失败");
+  cameraStage("photo fetched");const f=new File([await response.blob()],"photo.jpg",{type:"image/jpeg"});NPCB=null;
   if(c.kind==='own'){
    const cat=o.cats[ci];const it=cat?.items[c.i];
    if(!it||picKey(it.n,cat,it)!==c.k)throw new Error("商品已变化，未覆盖图片");
@@ -1192,4 +1193,7 @@ addEventListener("touchend",e=>{if(!on)return;on=false;const p=e.changedTouches[
  if(/^#o=/.test(location.hash)){if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();goHome();return}
  if(typeof TAB!="undefined"&&TAB!=="o"&&typeof setTab=="function")setTab("o")},{passive:true});
 })();
-Promise.resolve(boot()).finally(()=>{if(NATIVE)webkit.messageHandlers.native.postMessage({type:"pickReady"})});
+const cameraStage=stage=>{if(NATIVE)try{webkit.messageHandlers.native.postMessage({type:"cameraStage",stage})}catch(e){}};
+if(NATIVE){window.addEventListener('error',e=>cameraStage('error: '+e.message));window.addEventListener('unhandledrejection',e=>cameraStage('rejection: '+String(e.reason)))}
+cameraStage('script loaded');
+Promise.resolve(boot()).finally(()=>{cameraStage('boot finished');if(NATIVE)webkit.messageHandlers.native.postMessage({type:"pickReady"})});

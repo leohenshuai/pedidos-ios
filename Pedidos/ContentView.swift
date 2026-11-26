@@ -255,7 +255,7 @@ final class SchemeHandler: NSObject, WKURLSchemeHandler {
                 guard let d = d, (r as? HTTPURLResponse)?.statusCode == 200, d.count < 15_000_000, let img = UIImage(data: d) else { send(502, Data(), "text/plain"); return }
                 let m: CGFloat = 800, sc = min(1, m / max(img.size.width, img.size.height))
                 let sz = CGSize(width: img.size.width * sc, height: img.size.height * sc)
-                let fmt = UIGraphicsImageRendererFormat(); fmt.scale = 1; fmt.opaque = true
+                let fmt = UIGraphicsImageRendererFormat(); fmt.scale = 1; fmt.opaque = true; fmt.opaque = true
                 let out = UIGraphicsImageRenderer(size: sz, format: fmt).jpegData(withCompressionQuality: 0.88) { ctx in
                     UIColor.white.setFill(); ctx.fill(CGRect(origin: .zero, size: sz)); img.draw(in: CGRect(origin: .zero, size: sz))
                 }
@@ -362,19 +362,59 @@ struct WebContainer: UIViewRepresentable {
         private var pickContext: [String: Any] = [:]
         private var pendingPick: String?
         private var pageReady = false
+        private var recoveryAttempts = 0
+        private weak var recoveryLabel: UILabel?
+        private func cameraLog(_ stage: String) {
+            let line = "\(Date()) \(stage)\n"
+            let url = Store.dir.appendingPathComponent("camera-diagnostic.log")
+            if !FileManager.default.fileExists(atPath: url.path) { try? Data().write(to: url) }
+            if let h = try? FileHandle(forWritingTo: url) { h.seekToEndOfFile(); h.write(Data(line.utf8)); try? h.close() }
+        }
+        private func showRecovery(_ text: String) {
+            guard let web = web else { return }
+            let label = recoveryLabel ?? UILabel()
+            label.text = text; label.textAlignment = .center; label.numberOfLines = 0
+            label.font = .systemFont(ofSize: 17); label.textColor = .darkGray
+            label.backgroundColor = UIColor(red: 0.984, green: 0.957, blue: 0.918, alpha: 1)
+            label.frame = web.bounds; label.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            if label.superview == nil { web.addSubview(label) }
+            recoveryLabel = label
+        }
+        private func recoverPage() {
+            guard let web = web else { return }
+            recovering = true; pageReady = false; recoveryAttempts += 1
+            cameraLog("reload attempt \(recoveryAttempts)")
+            showRecovery("照片处理中，正在恢复订单…")
+            web.load(URLRequest(url: URL(string: "app://local/pedidos.html")!))
+            let attempt = recoveryAttempts
+            DispatchQueue.main.asyncAfter(deadline: .now() + 12) { [weak self] in
+                guard let self = self, !self.pageReady, self.recoveryAttempts == attempt else { return }
+                self.cameraLog("page ready timeout")
+                if self.recoveryAttempts < 2 { self.recoverPage() }
+                else { self.showRecovery("订单页面未能恢复。\n照片已暂存，请退出后重新打开 App。\n诊断日志：文件 → 订货单 → camera-diagnostic.log") }
+            }
+        }
         func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-            // Keep the native picker and its generation alive. Only the web process was lost.
-            pageReady = false
-            recovering = true
-            webView.load(URLRequest(url: URL(string: "app://local/pedidos.html")!))
+            cameraLog("web process terminated; picking=\(picking)")
+            pageReady = false; recovering = true
+            // Do NOT rebuild a WebContent process while the camera still owns its full-resolution buffers.
+            if picking { showRecovery("照片处理中，等待相机完成…"); return }
+            recoverPage()
         }
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            // Delivery waits for JS boot + data loading, not merely navigation completion.
+            cameraLog("navigation finished")
+        }
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            cameraLog("navigation failed: \(error.localizedDescription)")
+        }
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            cameraLog("navigation provisional failed: \(error.localizedDescription)")
         }
         private func deliverPendingPick() {
             guard pageReady, let json = pendingPick else { return }
             web?.evaluateJavaScript("void window.__resumeNativePick(\(json))") { [weak self] _, error in
-                if error != nil { self?.pageReady = false }
+                if let error = error { self?.cameraLog("delivery JS failed: \(error.localizedDescription)"); self?.recoverPage() }
+                else { self?.cameraLog("delivery JS accepted") }
             }
         }
 
@@ -388,6 +428,8 @@ struct WebContainer: UIViewRepresentable {
         // ---------- 原生拍照 / 相册（缩图后以 dataURL 回传，避免网页进程吃大图） ----------
         func presentPicker() {
             guard !picking else { return }
+            cameraLog("picker requested")
+            recoveryAttempts = 0
             picking = true
             pickGeneration += 1
             let generation = pickGeneration
@@ -453,7 +495,8 @@ struct WebContainer: UIViewRepresentable {
             guard let data = try? JSONSerialization.data(withJSONObject: payload),
                   let json = String(data: data, encoding: .utf8) else { return }
             pendingPick = json
-            deliverPendingPick()
+            cameraLog("photo staged; recovering=\(recovering), ready=\(pageReady)")
+            if recovering || !pageReady { recoverPage() } else { deliverPendingPick() }
         }
         func deliver(_ img: UIImage?, generation: Int) {
             guard picking, generation == pickGeneration else { return }
@@ -473,10 +516,17 @@ struct WebContainer: UIViewRepresentable {
             finishPick(url: "api/pick-photo")
         }
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-            guard activePicker === picker else { return }
+            guard activePicker === picker else { cameraLog("camera callback ignored: picker mismatch"); return }
+            cameraLog("use photo tapped; native delegate received")
             let img = info[.originalImage] as? UIImage
             let generation = pickGeneration
-            picker.dismiss(animated: true) { self.deliver(img, generation: generation) }
+            picker.dismiss(animated: true) {
+                self.cameraLog("camera dismissed")
+                // Let dismissal finish and camera buffers drain before JPEG processing.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    autoreleasepool { self.deliver(img, generation: generation) }
+                }
+            }
         }
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
             guard activePicker === picker else { return }
@@ -606,13 +656,20 @@ struct WebContainer: UIViewRepresentable {
                 return
             }
             if type == "pickReady" {
+                cameraLog("JS boot ready")
+                recoveryAttempts = 0
+                recoveryLabel?.removeFromSuperview()
                 pageReady = true
                 if recovering && !picking && pendingPick == nil { jsToast("页面已恢复") }
                 recovering = false
                 deliverPendingPick()
                 return
             }
+            if type == "cameraStage" {
+                cameraLog("JS: " + (d["stage"] as? String ?? "unknown")); return
+            }
             if type == "pickAck" {
+                cameraLog("photo acknowledged")
                 pendingPick = nil
                 return
             }
