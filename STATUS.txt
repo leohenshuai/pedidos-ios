@@ -1,0 +1,72 @@
+prep=success build=success pack=success
+----- build.log -----
+### xcodebuild -version
+Xcode 16.4
+Build version 16F6
+### brew install xcodegen
+[32m==>[0m [1mDownloading bottle manifests[0m
+✔︎ Bottle Manifest xcodegen (2.47.0)
+[32m==>[0m [1mFetching downloads for: [32mxcodegen[39m[0m
+✔︎ Bottle xcodegen (2.47.0)
+[34m==>[0m [1mPouring xcodegen--2.47.0.arm64_sequoia.bottle.tar.gz[0m
+🍺  /opt/homebrew/Cellar/xcodegen/2.47.0: 38 files, 7.5MB
+### which xcodegen
+/opt/homebrew/bin/xcodegen
+### pillow
+### make_icon
+icon ok (1024, 1024) RGB
+### xcodegen
+⚙️  Generating plists...
+⚙️  Generating project...
+⚙️  Writing project...
+Created project at /Users/runner/work/pedidos-ios/pedidos-ios/Pedidos.xcodeproj
+	objectVersion = 56;
+### ls
+build_stamp.txt
+build.log
+icon_parts
+make_icon.py
+Pedidos
+Pedidos.xcodeproj
+project.yml
+README.md
+sources
+tests
+tools
+### xcodebuild -list
+Command line invocation:
+    /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/xcodebuild -list -project Pedidos.xcodeproj
+
+Information about project "Pedidos":
+    Targets:
+        Pedidos
+
+    Build Configurations:
+        Debug
+        Release
+
+    If no build configuration is specified and -scheme is not passed then "Debug" is used.
+
+    Schemes:
+        Pedidos
+
+### pbxproj head
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		16B934DA59CDC3466C3617FC /* pedidos.js in Resources */ = {isa = PBXBuildFile; fileRef = 9D174F364AC1F5DCB12F1D89 /* pedidos.js */; };
+		4549E0FCDBA41906CE89EB43 /* pedidos.html in Resources */ = {isa = PBXBuildFile; fileRef = 2EBA166F1F1AD0FCDDA65E65 /* pedidos.html */; };
+		635C295C6A1883D2DE4384D3 /* PedidosApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 959FC2FBCEFF4A6284A2260C /* PedidosApp.swift */; };
+		6A624D4FDA87618E2EA0C74B /* pedidos.css in Resources *** BUILD SUCCEEDED **
+xcodebuild exit: 0
+APP=build/Build/Products/Release-iphoneos/Pedidos.app
+CFBundleShortVersionString: 1.7
+CFBundleVersion: 9
+-rw-r--r--  1 runner  staff  1850201 Nov 26 15:45 Pedidos.ipa
+ipa bytes: 1850201 md5: 9383a5ad14bd0a85181f2a5d13ebf51e
