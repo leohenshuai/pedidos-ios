@@ -35,7 +35,7 @@
 <div id="vEdit" style="display:none">
  <div class="top">
   <div class="r1"><button class="back" onclick="goHome()">‹ 列表</button><input id="eSup" class="tin" oninput="setf('sup',this.value)" placeholder="供应商 / 标题（点此输入）" autocapitalize="words"><input id="eDt" class="dti" oninput="setf('dt',this.value)" placeholder="dd/mm/aaaa" inputmode="numeric" aria-label="日期"><b id="eTotal"></b></div>
-  <div class="qrow"><input id="q" type="search" placeholder="搜索品名来订货" oninput="onSearch(this.value)" onkeydown="qKey(event)" onfocus="SF=true;refreshCand()" onblur="setTimeout(()=>{SF=false;refreshCand()},250)"><label class="qcam" id="qcam" title="拍照或选图识别" onclick="if(NATIVE){event.preventDefault();nativePick(f=>aiPickPhoto(QC,{files:[f],value:''}))}">📷<input type="file" accept="image/*" style="display:none" onchange="aiPickPhoto(QC,this)"></label></div>
+  <div class="qrow"><input id="q" type="search" placeholder="搜索品名来订货" oninput="onSearch(this.value)" onkeydown="qKey(event)" onfocus="SF=true;refreshCand()" onblur="setTimeout(()=>{SF=false;refreshCand()},250)"><label class="qcam" id="qcam" title="拍照或选图识别" onclick="if(NATIVE){event.preventDefault();nativePick(f=>aiPickPhoto(QC,{files:[f],value:''}),{kind:'recognize',ci:QC,cat:cur().cats[QC]?.name})}">📷<input type="file" accept="image/*" style="display:none" onchange="aiPickPhoto(QC,this)"></label></div>
   <div id="qc" class="qc"></div>
   <div id="cbox" onmousedown="event.preventDefault()"></div>
  </div>

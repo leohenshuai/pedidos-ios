@@ -133,6 +133,12 @@ final class SchemeHandler: NSObject, WKURLSchemeHandler {
             return body
         }
         let json = "application/json; charset=utf-8"
+        if path == "/api/pick-photo" {
+            if let d = try? Data(contentsOf: Store.dir.appendingPathComponent("pending-camera.jpg")) {
+                send(200, d, "image/jpeg")
+            } else { send(404, Data(), "text/plain") }
+            return
+        }
         if path == "/api/backups" {
             let d = (try? JSONSerialization.data(withJSONObject: ["list": Store.listBackups()])) ?? Data("{\"list\":[]}".utf8)
             send(200, d, json); return
@@ -353,18 +359,22 @@ struct WebContainer: UIViewRepresentable {
         private var recovering = false
 
         // 此回调属于 WKNavigationDelegate；进程退出不等同于已证实内存压力。
+        private var pickContext: [String: Any] = [:]
+        private var pendingPick: String?
+        private var pageReady = false
         func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-            pickGeneration += 1
-            picking = false
-            activePicker?.dismiss(animated: false)
-            activePicker = nil
+            // Keep the native picker and its generation alive. Only the web process was lost.
+            pageReady = false
             recovering = true
             webView.load(URLRequest(url: URL(string: "app://local/pedidos.html")!))
         }
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            if recovering {
-                recovering = false
-                jsToast("⚠ 页面已恢复，若选图中断请重新选择图片")
+            // Delivery waits for JS boot + data loading, not merely navigation completion.
+        }
+        private func deliverPendingPick() {
+            guard pageReady, let json = pendingPick else { return }
+            web?.evaluateJavaScript("void window.__resumeNativePick(\(json))") { [weak self] _, error in
+                if error != nil { self?.pageReady = false }
             }
         }
 
@@ -439,12 +449,11 @@ struct WebContainer: UIViewRepresentable {
         private func finishPick(url: String? = nil, error: String? = nil) {
             picking = false
             activePicker = nil
-            let values: [Any] = [url as Any? ?? NSNull(), error as Any? ?? NSNull()]
-            guard let data = try? JSONSerialization.data(withJSONObject: values),
+            let payload: [String: Any] = ["context": pickContext, "url": url as Any? ?? NSNull(), "error": error as Any? ?? NSNull()]
+            guard let data = try? JSONSerialization.data(withJSONObject: payload),
                   let json = String(data: data, encoding: .utf8) else { return }
-            web?.evaluateJavaScript("window.__nativeImg(...\(json))") { [weak self] _, error in
-                if error != nil { self?.jsToast("⚠ 图片未能送达页面，请重新选图") }
-            }
+            pendingPick = json
+            deliverPendingPick()
         }
         func deliver(_ img: UIImage?, generation: Int) {
             guard picking, generation == pickGeneration else { return }
@@ -458,7 +467,10 @@ struct WebContainer: UIViewRepresentable {
             guard let jpg = out.jpegData(compressionQuality: 0.85) else {
                 finishPick(error: "⚠ 照片转换失败，请重试"); return
             }
-            finishPick(url: "data:image/jpeg;base64," + jpg.base64EncodedString())
+            let file = Store.dir.appendingPathComponent("pending-camera.jpg")
+            do { try jpg.write(to: file, options: .atomic) }
+            catch { finishPick(error: "⚠ 照片暂存失败，请重试"); return }
+            finishPick(url: "api/pick-photo")
         }
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
             guard activePicker === picker else { return }
@@ -593,7 +605,20 @@ struct WebContainer: UIViewRepresentable {
                 }
                 return
             }
+            if type == "pickReady" {
+                pageReady = true
+                if recovering && !picking && pendingPick == nil { jsToast("页面已恢复") }
+                recovering = false
+                deliverPendingPick()
+                return
+            }
+            if type == "pickAck" {
+                pendingPick = nil
+                return
+            }
             if type == "pickImage" {
+                guard !picking, pendingPick == nil else { return }
+                pickContext = d["context"] as? [String: Any] ?? [:]
                 DispatchQueue.main.async { self.presentPicker() }
                 return
             }

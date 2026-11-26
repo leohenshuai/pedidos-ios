@@ -321,11 +321,31 @@ function delCat(ci){FX("warn");const n=cur().cats[ci].name;QC=-1;mut(o=>{o.cats.
 function addCat(){const n=$("ncn").value.trim();FX("add");mut(o=>{o.cats.push({name:n.toUpperCase(),sub:"",color:pickColor(o),items:[]})});closeNC();scrollTo(0,document.body.scrollHeight)}
 /* 原生拍照/相册：绕开 WebView 文件选择器（拍照后网页进程被系统杀掉会黑屏） */
 let NPCB=null;
-function nativePick(cb){if(NPCB)return;NPCB=cb;try{webkit.messageHandlers.native.postMessage({type:"pickImage"})}catch(e){NPCB=null;toast("⚠ 无法打开相机")}}
+function nativePick(cb,context){if(NPCB)return;NPCB=cb;try{save();webkit.messageHandlers.native.postMessage({type:"pickImage",context:{...context,order:cur()?.id,id:uid()}})}catch(e){NPCB=null;toast("⚠ 无法打开相机")}}
+let resumingPhoto=false,finishedPhoto=null;
+window.__resumeNativePick=async function(p){
+ const c=p.context||{};if(resumingPhoto)return;if(finishedPhoto===c.id){webkit.messageHandlers.native.postMessage({type:"pickAck"});return}
+ resumingPhoto=true;
+ try{
+  if(p.error)throw new Error(p.error);
+  if(!p.url)return;
+  const o=S.orders.find(o=>o.id===c.order);if(!o)throw new Error("原订单已不存在，照片未应用");
+  CATO=o.id;location.hash='o='+o.id;await new Promise(r=>setTimeout(r,100));CATO=o.id;renderEdit();
+  let ci=c.ci;if(ci>=0&&o.cats[ci]?.name!==c.cat)ci=o.cats.findIndex(x=>x.name===c.cat);
+  const response=await fetch(p.url);if(!response.ok)throw new Error("读取暂存照片失败");
+  const f=new File([await response.blob()],"photo.jpg",{type:"image/jpeg"});NPCB=null;
+  if(c.kind==='own'){
+   const cat=o.cats[ci];const it=cat?.items[c.i];
+   if(!it||picKey(it.n,cat,it)!==c.k)throw new Error("商品已变化，未覆盖图片");
+   PM={ci,i:c.i,k:c.k,n:c.n,all:false};await picOwn({files:[f],value:''});
+  }else await aiPickPhoto(ci,{files:[f],value:''});
+ }catch(e){toast(e.message||"照片处理失败")}
+ finally{finishedPhoto=c.id;NPCB=null;resumingPhoto=false;webkit.messageHandlers.native.postMessage({type:"pickAck"})}
+};
 window.__nativeImg=async function(url,error){const cb=NPCB;NPCB=null;if(error)toast(error);if(!cb||!url)return;try{const b=await (await fetch(url)).blob();await cb(new File([b],"photo.jpg",{type:"image/jpeg"}))}catch(e){toast("⚠ 读取照片失败")}};
 function addImgMenu(ci){const c=cur().cats[ci];
  modal(`<div class="mh">添加图片商品 · ${esc(c.name||"该类")}</div><div class="mt">不用写名字，只用图片也可以。识别后可以选「直接用这张图」或「从官方图片里选」。</div>
- <div class="ab" style="margin-top:6px">${NATIVE?`<button style="background:var(--c,#c0562f);color:#fff" onclick="closeModal();nativePick(f=>aiPickPhoto(${ci},{files:[f],value:''}))">📷 拍照或选图（自动识别；也可直接用图 / 选官方图）</button>`:`<label class="ab-l" style="background:var(--c,#c0562f);color:#fff"><span>📷 拍照或选图（自动识别；也可直接用图 / 选官方图）</span><input type="file" accept="image/*" style="display:none" onchange="closeModal();aiPickPhoto(${ci},this)"></label>`}
+ <div class="ab" style="margin-top:6px">${NATIVE?`<button style="background:var(--c,#c0562f);color:#fff" onclick="closeModal();nativePick(f=>aiPickPhoto(${ci},{files:[f],value:''}),{kind:'recognize',ci:${ci},cat:cur().cats[${ci}]?.name})">📷 拍照或选图（自动识别；也可直接用图 / 选官方图）</button>`:`<label class="ab-l" style="background:var(--c,#c0562f);color:#fff"><span>📷 拍照或选图（自动识别；也可直接用图 / 选官方图）</span><input type="file" accept="image/*" style="display:none" onchange="closeModal();aiPickPhoto(${ci},this)"></label>`}
  <button style="background:var(--c,#c0562f);color:#fff" onclick="aiAskUI(${ci})">🔎 文字搜索（先查本地，没有再联网 / AI）</button>
  <button class="g" onclick="closeModal()">取消</button></div>`)}
 function addBlank(ci){FX("add");const id=uid();mut(o=>{o.cats[ci].items.push({id,n:"",q:1,p:null})});const n=cur().cats[ci].items.length-1;setTimeout(()=>picModal(ci,n),60)}
@@ -682,7 +702,7 @@ function picModal(ci,i){const o=cur(),c=o&&o.cats[ci],it=c&&c.items[i];if(!it)re
  <div class="pich"><span>🔎 官方图片</span><button class="lnk" id="pall" onclick="PM.all=!PM.all;picSearch($('pq').value)">搜全部类别</button></div>
  <div class="picsub" id="pinfo">加载官方目录…</div><div id="pl" class="pgrid"></div>
  ${NATIVE?`<div class="pich"><span>🌐 网上图片</span><button class="lnk" id="pwre" onclick="picWebGo($('pq').value)" hidden>重新搜索</button></div><div id="pwqs"></div><div class="picsub" id="pwinfo"><button class="webbtn" onclick="picWebGo($('pq').value)">🌐 搜网上图片${aiReady()?"（AI 生成搜索词）":""}</button></div><div id="pwl" class="pgrid"></div>`:""}
- <div class="ab picbar">${NATIVE?`<button onclick="nativePick(f=>picOwn({files:[f],value:''}))">📷 使用我的图片（拍照 / 相册）</button>`:`<label class="ab-l"><span>📷 使用我的图片（相册 / 文件）</span><input type="file" accept="image/*" style="display:none" onchange="picOwn(this)"></label>`}
+ <div class="ab picbar">${NATIVE?`<button onclick="nativePick(f=>picOwn({files:[f],value:''}),{kind:'own',ci:PM.ci,i:PM.i,k:PM.k,n:PM.n,cat:cur().cats[PM.ci]?.name})">📷 使用我的图片（拍照 / 相册）</button>`:`<label class="ab-l"><span>📷 使用我的图片（相册 / 文件）</span><input type="file" accept="image/*" style="display:none" onchange="picOwn(this)"></label>`}
  <button class="g" onclick="closeModal()">关闭</button></div>`);
  picFetchIdx().then(()=>{if(!$("pl"))return;picSearch("");if(NATIVE&&!$("pl").querySelector(".pxc"))picWebGo("")})}
 function picSearch(q){if(!$('pl'))return;const c=cur().cats[PM.ci],x=picIdx();
@@ -725,11 +745,11 @@ async function picWebPick(i){const x=PWL[i];if(!x)return;toast("下载图片…"
  if(!d){toast("⚠ 这张下载失败，换一张试试");return}PICS[PM.k]={d};if(picSave()){closeModal();renderEdit();toast("已设置图片")}}
 function picPick(ix){const o=PIDX.list[ix];PICS[PM.k]={u:o.t};if(picSave()){closeModal();renderEdit();toast("已设置图片")}}
 function picDel(){delete PICS[PM.k];picSave();closeModal();renderEdit()}
-function picOwn(inp){const f=inp.files&&inp.files[0];inp.value="";if(!f)return;const im=new Image(),u=URL.createObjectURL(f);
- im.onload=()=>{const m=520,s=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*s);cv.height=Math.round(im.height*s);
-  const g=cv.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,cv.width,cv.height);g.drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);
-  PICS[PM.k]={d:cv.toDataURL("image/jpeg",.86)};if(picSave()){closeModal();renderEdit();toast("已设置我的图片")}};
- im.onerror=()=>toast("⚠ 无法读取这张图片");im.src=u}
+function picOwn(inp){const f=inp.files&&inp.files[0];inp.value="";if(!f)return Promise.resolve();const key=PM.k;return new Promise(resolve=>{const im=new Image(),u=URL.createObjectURL(f);
+ im.onload=()=>{try{const m=520,s=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*s);cv.height=Math.round(im.height*s);
+ const g=cv.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,cv.width,cv.height);g.drawImage(im,0,0,cv.width,cv.height);
+ PICS[key]={d:cv.toDataURL("image/jpeg",.86)};if(picSave()){closeModal();renderEdit();toast("已设置我的图片")}}catch(e){toast("⚠ 照片保存失败")}finally{URL.revokeObjectURL(u);resolve()}};
+ im.onerror=()=>{URL.revokeObjectURL(u);toast("⚠ 无法读取这张图片");resolve()};im.src=u})}
 /* 一键匹配：当前订单所有品项，只在各自类别里找；自己的图片永远不覆盖 */
 async function picAuto(force){const o=cur();if(!o)return;toast("匹配中…");await picFetchIdx();if(!picIdx()){toast("⚠ 无法获取官方图片目录，请检查网络");return}
  let ok=0,skip=0;const miss=[];
@@ -1153,4 +1173,4 @@ addEventListener("touchend",e=>{if(!on)return;on=false;const p=e.changedTouches[
  if(/^#o=/.test(location.hash)){if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();goHome();return}
  if(typeof TAB!="undefined"&&TAB!=="o"&&typeof setTab=="function")setTab("o")},{passive:true});
 })();
-boot();
+Promise.resolve(boot()).finally(()=>{if(NATIVE)webkit.messageHandlers.native.postMessage({type:"pickReady"})});
