@@ -4,6 +4,7 @@ import UIKit
 import AudioToolbox
 import Vision
 import PhotosUI
+import AVFoundation
 
 struct ContentView: View {
     var body: some View {
@@ -332,6 +333,7 @@ struct WebContainer: UIViewRepresentable {
         cfg.userContentController = uc
         let wv = WKWebView(frame: .zero, configuration: cfg)
         wv.uiDelegate = context.coordinator
+        wv.navigationDelegate = context.coordinator
         wv.scrollView.contentInsetAdjustmentBehavior = .never
         wv.scrollView.bounces = false
         wv.isOpaque = false
@@ -343,12 +345,27 @@ struct WebContainer: UIViewRepresentable {
     }
     func updateUIView(_ uiView: WKWebView, context: Context) {}
 
-    final class Coordinator: NSObject, WKScriptMessageHandler, WKUIDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, PHPickerViewControllerDelegate {
+    final class Coordinator: NSObject, WKScriptMessageHandler, WKUIDelegate, WKNavigationDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, PHPickerViewControllerDelegate {
         weak var web: WKWebView?
+        private var picking = false
+        private var pickGeneration = 0
+        private weak var activePicker: UIViewController?
+        private var recovering = false
 
-        // 拍照后系统内存吃紧会杀掉网页进程 → 黑屏；被杀后自动重新加载页面
+        // 此回调属于 WKNavigationDelegate；进程退出不等同于已证实内存压力。
         func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+            pickGeneration += 1
+            picking = false
+            activePicker?.dismiss(animated: false)
+            activePicker = nil
+            recovering = true
             webView.load(URLRequest(url: URL(string: "app://local/pedidos.html")!))
+        }
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            if recovering {
+                recovering = false
+                jsToast("⚠ 页面已恢复，若选图中断请重新选择图片")
+            }
         }
 
         override init() {
@@ -360,43 +377,112 @@ struct WebContainer: UIViewRepresentable {
 
         // ---------- 原生拍照 / 相册（缩图后以 dataURL 回传，避免网页进程吃大图） ----------
         func presentPicker() {
-            guard let top = topVC() else { return }
+            guard !picking else { return }
+            picking = true
+            pickGeneration += 1
+            let generation = pickGeneration
+            guard let top = topVC(), top.viewIfLoaded?.window != nil else {
+                finishPick(error: "⚠ 无法打开选图，请重试"); return
+            }
+            web?.endEditing(true)
             let sheet = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             if UIImagePickerController.isSourceTypeAvailable(.camera) {
                 sheet.addAction(UIAlertAction(title: "拍照", style: .default) { _ in
-                    let p = UIImagePickerController(); p.sourceType = .camera; p.delegate = self
-                    self.topVC()?.present(p, animated: true)
+                    // 先结束 actionSheet 的转场，再从稳定的 presenter 打开相机。
+                    top.dismiss(animated: true) {
+                        guard self.picking, generation == self.pickGeneration else { return }
+                        self.openCamera(from: top, generation: generation)
+                    }
                 })
             }
             sheet.addAction(UIAlertAction(title: "照片图库", style: .default) { _ in
-                var c = PHPickerConfiguration(); c.filter = .images; c.selectionLimit = 1
-                let p = PHPickerViewController(configuration: c); p.delegate = self
-                self.topVC()?.present(p, animated: true)
+                top.dismiss(animated: true) {
+                    guard self.picking, generation == self.pickGeneration else { return }
+                    var c = PHPickerConfiguration(); c.filter = .images; c.selectionLimit = 1
+                    let p = PHPickerViewController(configuration: c); p.delegate = self
+                    self.showPicker(p, from: top)
+                }
             })
-            sheet.addAction(UIAlertAction(title: "取消", style: .cancel))
+            sheet.addAction(UIAlertAction(title: "取消", style: .cancel) { _ in self.finishPick() })
             sheet.popoverPresentationController?.sourceView = top.view
             sheet.popoverPresentationController?.sourceRect = CGRect(x: top.view.bounds.midX, y: top.view.bounds.maxY - 40, width: 1, height: 1)
+            activePicker = sheet
             top.present(sheet, animated: true)
         }
-        func deliver(_ img: UIImage?) {
-            guard let img = img else { return }
+        private func openCamera(from top: UIViewController, generation: Int) {
+            switch AVCaptureDevice.authorizationStatus(for: .video) {
+            case .notDetermined:
+                AVCaptureDevice.requestAccess(for: .video) { granted in
+                    DispatchQueue.main.async {
+                        guard self.picking, generation == self.pickGeneration else { return }
+                        if granted { self.openCamera(from: top, generation: generation) }
+                        else { self.finishPick(error: "⚠ 相机权限未开启，请在系统设置中允许访问相机") }
+                    }
+                }
+            case .authorized:
+                let p = UIImagePickerController()
+                p.sourceType = .camera; p.cameraCaptureMode = .photo; p.delegate = self
+                p.modalPresentationStyle = .fullScreen
+                showPicker(p, from: top)
+            default:
+                finishPick(error: "⚠ 相机权限未开启，请在系统设置中允许访问相机")
+            }
+        }
+        private func showPicker(_ picker: UIViewController, from top: UIViewController) {
+            guard top.viewIfLoaded?.window != nil, top.presentedViewController == nil else {
+                finishPick(error: "⚠ 选图窗口暂时无法打开，请重试"); return
+            }
+            activePicker = picker
+            picker.isModalInPresentation = true
+            top.present(picker, animated: true)
+        }
+        private func finishPick(url: String? = nil, error: String? = nil) {
+            picking = false
+            activePicker = nil
+            let values: [Any] = [url as Any? ?? NSNull(), error as Any? ?? NSNull()]
+            guard let data = try? JSONSerialization.data(withJSONObject: values),
+                  let json = String(data: data, encoding: .utf8) else { return }
+            web?.evaluateJavaScript("window.__nativeImg(...\(json))") { [weak self] _, error in
+                if error != nil { self?.jsToast("⚠ 图片未能送达页面，请重新选图") }
+            }
+        }
+        func deliver(_ img: UIImage?, generation: Int) {
+            guard picking, generation == pickGeneration else { return }
+            guard let img = img, img.size.width > 0, img.size.height > 0 else {
+                finishPick(error: "⚠ 读取照片失败，请重试"); return
+            }
             let m: CGFloat = 1600, s = min(1, m / max(img.size.width, img.size.height))
             let sz = CGSize(width: img.size.width * s, height: img.size.height * s)
             let fmt = UIGraphicsImageRendererFormat(); fmt.scale = 1
             let out = UIGraphicsImageRenderer(size: sz, format: fmt).image { _ in img.draw(in: CGRect(origin: .zero, size: sz)) }
-            guard let jpg = out.jpegData(compressionQuality: 0.85) else { return }
-            let js = "window.__nativeImg('data:image/jpeg;base64," + jpg.base64EncodedString() + "')"
-            DispatchQueue.main.async { self.web?.evaluateJavaScript(js, completionHandler: nil) }
+            guard let jpg = out.jpegData(compressionQuality: 0.85) else {
+                finishPick(error: "⚠ 照片转换失败，请重试"); return
+            }
+            finishPick(url: "data:image/jpeg;base64," + jpg.base64EncodedString())
         }
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+            guard activePicker === picker else { return }
             let img = info[.originalImage] as? UIImage
-            picker.dismiss(animated: true) { self.deliver(img) }
+            let generation = pickGeneration
+            picker.dismiss(animated: true) { self.deliver(img, generation: generation) }
         }
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) { picker.dismiss(animated: true) }
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            guard activePicker === picker else { return }
+            picker.dismiss(animated: true) { self.finishPick() }
+        }
         func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-            picker.dismiss(animated: true)
-            guard let r = results.first, r.itemProvider.canLoadObject(ofClass: UIImage.self) else { return }
-            r.itemProvider.loadObject(ofClass: UIImage.self) { o, _ in self.deliver(o as? UIImage) }
+            guard activePicker === picker else { return }
+            let generation = pickGeneration
+            picker.dismiss(animated: true) {
+                guard self.picking, generation == self.pickGeneration else { return }
+                guard let r = results.first else { self.finishPick(); return }
+                guard r.itemProvider.canLoadObject(ofClass: UIImage.self) else {
+                    self.finishPick(error: "⚠ 不支持这张图片"); return
+                }
+                r.itemProvider.loadObject(ofClass: UIImage.self) { o, _ in
+                    DispatchQueue.main.async { self.deliver(o as? UIImage, generation: generation) }
+                }
+            }
         }
 
         // ---------- 版本检查（GitHub 最新 Release，标签 build-N，N 即 IPA 的 CFBundleVersion） ----------

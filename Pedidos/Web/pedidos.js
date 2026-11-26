@@ -321,8 +321,8 @@ function delCat(ci){FX("warn");const n=cur().cats[ci].name;QC=-1;mut(o=>{o.cats.
 function addCat(){const n=$("ncn").value.trim();FX("add");mut(o=>{o.cats.push({name:n.toUpperCase(),sub:"",color:pickColor(o),items:[]})});closeNC();scrollTo(0,document.body.scrollHeight)}
 /* 原生拍照/相册：绕开 WebView 文件选择器（拍照后网页进程被系统杀掉会黑屏） */
 let NPCB=null;
-function nativePick(cb){NPCB=cb;try{webkit.messageHandlers.native.postMessage({type:"pickImage"})}catch(e){toast("⚠ 无法打开相机")}}
-window.__nativeImg=async function(url){const cb=NPCB;NPCB=null;if(!cb||!url)return;try{const b=await (await fetch(url)).blob();cb(new File([b],"photo.jpg",{type:"image/jpeg"}))}catch(e){toast("⚠ 读取照片失败")}};
+function nativePick(cb){if(NPCB)return;NPCB=cb;try{webkit.messageHandlers.native.postMessage({type:"pickImage"})}catch(e){NPCB=null;toast("⚠ 无法打开相机")}}
+window.__nativeImg=async function(url,error){const cb=NPCB;NPCB=null;if(error)toast(error);if(!cb||!url)return;try{const b=await (await fetch(url)).blob();await cb(new File([b],"photo.jpg",{type:"image/jpeg"}))}catch(e){toast("⚠ 读取照片失败")}};
 function addImgMenu(ci){const c=cur().cats[ci];
  modal(`<div class="mh">添加图片商品 · ${esc(c.name||"该类")}</div><div class="mt">不用写名字，只用图片也可以。识别后可以选「直接用这张图」或「从官方图片里选」。</div>
  <div class="ab" style="margin-top:6px">${NATIVE?`<button style="background:var(--c,#c0562f);color:#fff" onclick="closeModal();nativePick(f=>aiPickPhoto(${ci},{files:[f],value:''}))">📷 拍照或选图（自动识别；也可直接用图 / 选官方图）</button>`:`<label class="ab-l" style="background:var(--c,#c0562f);color:#fff"><span>📷 拍照或选图（自动识别；也可直接用图 / 选官方图）</span><input type="file" accept="image/*" style="display:none" onchange="closeModal();aiPickPhoto(${ci},this)"></label>`}
